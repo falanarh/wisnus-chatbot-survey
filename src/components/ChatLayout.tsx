@@ -1,17 +1,17 @@
-//component/ChatLayout.tsx
+// src/components/ChatLayout.tsx
 
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Send, Bot, Loader2, Square, ArrowDown } from "lucide-react";
-import type { NextPage } from "next";
+import { User, Send, Bot, Loader2, Square, ArrowDown, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { Merriweather_Sans } from "next/font/google";
 import ModeToggle from "./ModeToggle";
 import { useTheme } from "@/components/ThemeProvider";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { useChatPersistence } from "@/utils/chatPersistence";
 import MenuToggle from "./MenuToggle";
+import { ThemeToggle } from "./ThemeToggle";
 
 const merriweatherSans = Merriweather_Sans({
     variable: "--font-merriweather-sans",
@@ -19,8 +19,10 @@ const merriweatherSans = Merriweather_Sans({
     weight: ["400", "700"],
 });
 
-const ChatLayout: NextPage = () => {
-    const [messages, setMessages] = useState<{ text: string; user: boolean; loading?: boolean }[]>([]);
+const ChatLayout = () => {
+    // Gunakan custom hook untuk persistensi chat
+    const { messages, addMessage, updateLastMessage, clearChat } = useChatPersistence();
+    
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [botIsTyping, setBotIsTyping] = useState(false);
@@ -107,31 +109,17 @@ const ChatLayout: NextPage = () => {
         setShowScrollButton(false);
     };
 
-    // Function untuk menambah pesan
-    const addMessage = (newMessage: { text: string; user: boolean; loading?: boolean }) => {
-        setMessages((prevMessages) => [...prevMessages, newMessage]);
-    };
-
     // Function to stop token generation
     const stopTokenGeneration = () => {
         // Clear all scheduled token generation timeouts
         tokenGenerationRef.current.timeouts.forEach(timeout => clearTimeout(timeout));
         tokenGenerationRef.current.stopped = true;
 
-        // Update the last bot message to show it's been stopped
-        setMessages(prev => {
-            const lastMessageIndex = prev.length - 1;
-            if (lastMessageIndex >= 0 && !prev[lastMessageIndex].user) {
-                const updatedMessages = [...prev];
-                updatedMessages[lastMessageIndex] = {
-                    ...updatedMessages[lastMessageIndex],
-                    loading: false,
-                    text: updatedMessages[lastMessageIndex].text + " [berhenti mengetik]"
-                };
-                return updatedMessages;
-            }
-            return prev;
-        });
+        // Update the last bot message
+        const lastMessage = messages[messages.length - 1];
+        if (lastMessage && !lastMessage.user) {
+            updateLastMessage(lastMessage.text + " [berhenti mengetik]", false);
+        }
 
         setBotIsTyping(false);
     };
@@ -172,9 +160,7 @@ const ChatLayout: NextPage = () => {
                             if (tokenGenerationRef.current.stopped) return;
 
                             currentText += (index === 0 ? "" : " ") + token;
-                            setMessages((prev) =>
-                                prev.map((msg, idx) => (idx === prev.length - 1 ? { ...msg, loading: false, text: currentText } : msg))
-                            );
+                            updateLastMessage(currentText, false);
 
                             // Setelah token terakhir, izinkan pengguna mengirim pesan lagi
                             if (index === tokens.length - 1) {
@@ -210,6 +196,18 @@ const ChatLayout: NextPage = () => {
 
     // Menentukan apakah tombol kirim dinonaktifkan
     const isSendButtonDisabled = loading || botIsTyping || !input.trim();
+
+    // Menambahkan menu item baru untuk reset chat
+    const extraMenuItems = [
+        {
+            name: "Hapus Percakapan",
+            icon: <Trash2 className={`w-4 h-4 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />,
+            onClick: () => {
+                clearChat();
+                setMenuOpen(false);
+            }
+        }
+    ];
 
     return (
         <div className={`flex flex-col min-h-screen relative
@@ -269,6 +267,7 @@ const ChatLayout: NextPage = () => {
                             isOpen={menuOpen}
                             setIsOpen={setMenuOpen}
                             closeOtherDropdowns={closeOtherDropdownsExceptMenu}
+                            extraMenuItems={extraMenuItems}
                         />
                     </div>
                 </div>
