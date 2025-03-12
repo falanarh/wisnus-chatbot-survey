@@ -1,22 +1,34 @@
+// src/components/MenuToggle.tsx
+
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, ReactElement } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, UserCircle, Info, LogOut } from "lucide-react";
+
+// Tipe untuk item menu yang bisa ditambahkan
+export interface MenuItem {
+  name: string;
+  icon: ReactElement;
+  onClick?: () => void;
+}
 
 interface MenuToggleProps {
   isDarkMode: boolean;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   closeOtherDropdowns?: () => void;
+  extraMenuItems?: MenuItem[]; // Properti baru untuk item menu tambahan
 }
 
-const MenuToggle: React.FC<MenuToggleProps> = ({ 
+// Pastikan ini menggunakan export default
+export default function MenuToggle({ 
   isDarkMode, 
   isOpen, 
   setIsOpen, 
-  closeOtherDropdowns 
-}) => {
+  closeOtherDropdowns,
+  extraMenuItems = []
+}: MenuToggleProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
   const toggleMenu = () => {
@@ -41,7 +53,7 @@ const MenuToggle: React.FC<MenuToggleProps> = ({
   }, [setIsOpen]);
 
   // Menu items with colors
-  const menuItems = [
+  const defaultMenuItems: MenuItem[] = [
     { 
       name: "Profil", 
       icon: <UserCircle className={`w-4 h-4 ${isDarkMode ? 'text-blue-400' : 'text-purple-600'}`} />
@@ -55,6 +67,9 @@ const MenuToggle: React.FC<MenuToggleProps> = ({
       icon: <LogOut className={`w-4 h-4 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} /> 
     },
   ];
+
+  // Gabungkan menu default dengan menu tambahan
+  const allMenuItems = [...defaultMenuItems, ...extraMenuItems];
 
   return (
     <div className="relative" ref={menuRef}>
@@ -79,15 +94,19 @@ const MenuToggle: React.FC<MenuToggleProps> = ({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="absolute right-0 mt-2 py-2 w-36 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-lg z-20 backdrop-blur-lg"
+            className="absolute right-0 mt-2 py-2 w-48 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-lg z-20 backdrop-blur-lg"
           >
-            {menuItems.map((item) => (
+            {allMenuItems.map((item, index) => (
               <motion.button
-                key={item.name}
+                key={`${item.name}-${index}`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
-                  console.log(`Clicked on ${item.name}`);
+                  if (item.onClick) {
+                    item.onClick();
+                  } else {
+                    console.log(`Clicked on ${item.name}`);
+                  }
                   setIsOpen(false);
                 }}
                 className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -101,6 +120,4 @@ const MenuToggle: React.FC<MenuToggleProps> = ({
       </AnimatePresence>
     </div>
   );
-};
-
-export default MenuToggle;
+}
