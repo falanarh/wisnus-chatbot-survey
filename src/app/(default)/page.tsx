@@ -90,7 +90,7 @@ export default function Home() {
         initial="hidden"
         animate={isLoaded ? "visible" : "hidden"}
         variants={staggerContainer}
-        className="z-10 mt-[80px] w-full max-w-4xl px-4"
+        className="z-10 mt-[70px] sm:mt-[80px] w-full max-w-4xl px-4"
       >
         <motion.div variants={fadeIn} className="flex justify-center mb-2">
           <div className="bg-blue-100/50 dark:bg-blue-900/30 px-4 py-1 rounded-full backdrop-blur-sm border border-blue-200/40 dark:border-blue-800/40 flex items-center gap-2">
@@ -130,12 +130,12 @@ export default function Home() {
         </motion.div>
       </motion.div>
 
-      {/* Hero Image */}
+      {/* Hero Image section modification to properly center CTA */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, delay: 0.2 }}
-        className='z-10 relative'
+        className='z-10 relative flex flex-col items-center'
       >
         <div className="absolute -top-3 left-[20%] hidden md:block z-50">
           <motion.div
@@ -173,12 +173,42 @@ export default function Home() {
           className="mt-2 w-full mx-auto max-w-[650px] h-auto rounded-lg dark:brightness-90 dark:contrast-125"
         />
 
+        {/* Call to action buttons with enhanced styling - Now using flex layout for centering */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
+          className="absolute md:bottom-[160px] w-full flex justify-center items-center"
+        >
+          <div className="bg-blue-400/40 dark:bg-blue-600/30 backdrop-blur-md w-36 md:w-40 p-3 rounded-3xl flex flex-col gap-2 shadow-lg border border-white/30 dark:border-white/10">
+            <motion.a
+              whileHover={{ scale: 1.05, y: -5 }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 dark:from-blue-600 dark:to-blue-700 py-2 rounded-2xl text-center font-bold text-white text-sm cursor-pointer shadow-md flex items-center justify-center gap-1"
+            >
+              <span>Panduan</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7 17L17 7M17 7H8M17 7V16" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </motion.a>
+
+            <motion.a
+              href="/survey"
+              whileHover={{ scale: 1.05, y: 5 }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 dark:from-indigo-600 dark:to-purple-700 py-2 rounded-2xl text-center text-white font-bold text-sm cursor-pointer shadow-md"
+            >
+              Mulai Survei
+            </motion.a>
+          </div>
+        </motion.div>
+
         {/* Feature Cards above Hero - Updated with book information */}
         <motion.div
           initial="hidden"
           animate={isLoaded ? "visible" : "hidden"}
           variants={staggerContainer}
-          className="z-10 flex flex-wrap justify-center gap-4 px-4 my-6"
+          className="z-10 flex flex-wrap justify-center gap-4 px-4 mb-6 mt-[140px] sm:my-6"
         >
           {[
             { icon: <MapPin className="w-5 h-5 text-rose-500" />, title: "Wisatawan Nusantara", desc: "Seseorang yang melakukan perjalanan di wilayah Indonesia dengan lama < 12 bulan" },
@@ -202,37 +232,10 @@ export default function Home() {
           ))}
         </motion.div>
 
-
         {/* Decorative Circles */}
         <div className="absolute -z-10 -top-8 -left-8 w-20 h-20 rounded-full border-4 border-dashed border-blue-100 dark:border-blue-900 opacity-60"></div>
         <div className="absolute -z-10 -bottom-10 -right-5 w-16 h-16 rounded-full border-4 border-dashed border-rose-100 dark:border-rose-900 opacity-60"></div>
-          {/* Call to action buttons with enhanced styling */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
-            className="absolute -bottom-[120px] md:bottom-[160px] left-[38%] flex flex-col bg-blue-400/40 dark:bg-blue-600/30 backdrop-blur-md w-40 md:w-48 p-3 rounded-3xl gap-2 shadow-lg border border-white/30 dark:border-white/10"
-          >
-            <motion.a
-              whileHover={{ scale: 1.05, y: -5 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 dark:from-blue-600 dark:to-blue-700 px-6 py-2 rounded-2xl text-center font-bold text-white text-sm md:text-[16px] cursor-pointer shadow-md flex items-center justify-center gap-1"
-            >
-              <span>Panduan</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7 17L17 7M17 7H8M17 7V16" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </motion.a>
-
-            <motion.a
-              href="/survey"
-              whileHover={{ scale: 1.05, y: 5 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 dark:from-indigo-600 dark:to-purple-700 px-6 py-2 rounded-2xl text-center text-white font-bold text-sm md:text-[16px] cursor-pointer shadow-md"
-            >
-              Mulai Survei
-            </motion.a>
-          </motion.div>
+        
       </motion.div>
 
 
