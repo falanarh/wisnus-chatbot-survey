@@ -195,13 +195,13 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
 
                 {/* Hamburger Menu Button */}
                 <button
-                    className="text-white relative w-[38px] h-[38px] flex items-center justify-center rounded-full bg-white/20 backdrop-blur-sm"
+                    className="text-white relative w-10 h-10 flex items-center justify-center rounded-full bg-white/80 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm backdrop-blur"
                     onClick={toggleMenu}
                     aria-label="Toggle Menu"
                 >
-                    <div className={`absolute w-5 h-[2px] bg-white transition-transform duration-200 ${isOpen ? 'rotate-45 translate-y-0' : 'translate-y-[-6px]'}`} />
-                    <div className={`absolute w-5 h-[2px] bg-white transition-opacity duration-200 ${isOpen ? 'opacity-0' : 'opacity-100'}`} />
-                    <div className={`absolute w-5 h-[2px] bg-white transition-transform duration-300 ${isOpen ? '-rotate-45 translate-y-0' : 'translate-y-[6px]'}`} />
+                    <div className={`absolute w-5 h-[2px] bg-green-500 dark:bg-blue-400 transition-transform duration-200 ${isOpen ? 'rotate-45 translate-y-0' : 'translate-y-[-6px]'}`} />
+                    <div className={`absolute w-5 h-[2px] bg-green-500 dark:bg-blue-400 transition-opacity duration-200 ${isOpen ? 'opacity-0' : 'opacity-100'}`} />
+                    <div className={`absolute w-5 h-[2px] bg-green-500 dark:bg-blue-400 transition-transform duration-300 ${isOpen ? '-rotate-45 translate-y-0' : 'translate-y-[6px]'}`} />
                 </button>
             </div>
 
