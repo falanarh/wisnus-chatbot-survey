@@ -1,0 +1,131 @@
+/* Modern auth component styles */
+
+/* Custom input focus styles with soft glow */
+.modern-input:focus-within {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  }
+  
+  .dark .modern-input:focus-within {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  }
+  
+  /* Elegant background patterns */
+  .dot-pattern {
+    background-image: radial-gradient(circle, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  
+  .dark .dot-pattern {
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  }
+  
+  /* Fancy glass card effect */
+  .glass-card {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dark .glass-card {
+    background-color: rgba(17, 24, 39, 0.7);
+    border: 1px solid rgba(55, 65, 81, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Smooth tab transitions */
+  .tab-transition {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Glowing active tab indicator */
+  .tab-indicator {
+    position: absolute;
+    bottom: 0;
+    height: 2px;
+    background: linear-gradient(to right, #3b82f6, #6366f1);
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+  }
+  
+  .dark .tab-indicator {
+    background: linear-gradient(to right, #60a5fa, #818cf8);
+    box-shadow: 0 0 8px rgba(96, 165, 250, 0.5);
+  }
+  
+  /* Elegant hover effects for buttons */
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dark .hover-lift:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Subtle animation for form transitions */
+  .form-appear {
+    animation: formAppear 0.4s ease forwards;
+  }
+  
+  @keyframes formAppear {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Custom focus styles for form fields */
+  .modern-input {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .modern-input:focus-within {
+    border-color: #3b82f6;
+  }
+  
+  .dark .modern-input:focus-within {
+    border-color: #60a5fa;
+  }
+  
+  /* Subtle gradient background for buttons */
+  .gradient-button {
+    background-image: linear-gradient(to right, #3b82f6, #6366f1);
+    transition: all 0.3s ease;
+  }
+  
+  .gradient-button:hover {
+    background-image: linear-gradient(to right, #2563eb, #4f46e5);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  }
+  
+  .dark .gradient-button {
+    background-image: linear-gradient(to right, #2563eb, #4f46e5);
+  }
+  
+  .dark .gradient-button:hover {
+    background-image: linear-gradient(to right, #1d4ed8, #4338ca);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+  
+  /* Pulse animation for active elements */
+  @keyframes pulse-glow {
+    0%, 100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  
+  .pulse-effect {
+    animation: pulse-glow 2s infinite;
+  }

@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import '@/css/modern-auth.css';
 
 export const metadata: Metadata = {
   title: 'Akses Akun - Survei Digital Wisatawan Nusantara',
