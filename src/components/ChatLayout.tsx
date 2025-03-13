@@ -277,7 +277,7 @@ const ChatLayout = () => {
             <div className="flex-1 overflow-hidden relative justify-center">
                 <div
                     ref={chatContainerRef}
-                    className={`w-full mx-auto overflow-y-auto ${messages.length === 0 ? 'h-[90vh]' : 'h-[calc(100vh-180px)]'} flex justify-center`}
+                    className={`w-full mx-auto overflow-y-auto ${messages.length === 0 ? 'h-[87vh]' : 'h-[calc(100vh-180px)]'} flex justify-center`}
                 >
                     {messages.length === 0 && (
                         <div className="flex flex-col items-center justify-center text-center space-y-2 px-3 mb-[180px]">
