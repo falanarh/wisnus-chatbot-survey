@@ -62,7 +62,7 @@ const GuidesSection = () => {
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           variants={fadeIn}
-          className="text-center text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-12"
+          className="text-center text-[14px] sm:text-[16px] text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-12"
         >
           Ikuti panduan berikut untuk membantu Anda mengisi survei dengan lancar dan efisien.
           Panduan ini akan membantu Anda memahami proses survei secara keseluruhan.
