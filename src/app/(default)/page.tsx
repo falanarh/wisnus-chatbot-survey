@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import HomeSection from '@/components/HomeSection';
 import GuidesSection from '@/components/GuidesSection';
 import AboutSection from '@/components/AboutSection';
+import Footer from '@/components/Footer'; // Import the new Footer component
 
 export default function Home() {
   const guidesRef = useRef<HTMLDivElement>(null);
@@ -67,6 +68,9 @@ export default function Home() {
         <div ref={aboutRef}>
           <AboutSection />
         </div>
+        
+        {/* Add the new Footer component */}
+        <Footer />
       </div>
     </>
   );
