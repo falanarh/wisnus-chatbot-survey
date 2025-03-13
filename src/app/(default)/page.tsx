@@ -14,16 +14,16 @@ const merriweatherSans = Merriweather_Sans({
 
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
-  
+
   useEffect(() => {
     setIsLoaded(true);
   }, []);
-  
+
   const fadeIn = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
   };
-  
+
   const staggerContainer = {
     hidden: { opacity: 0 },
     visible: {
@@ -33,7 +33,7 @@ export default function Home() {
       }
     }
   };
-  
+
   const floatAnimation = {
     y: [0, -10, 0],
     transition: {
@@ -44,62 +44,33 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-white dark:bg-gray-950 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center relative overflow-hidden
+                    bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100
+                    dark:bg-gradient-to-br dark:from-gray-900 dark:via-purple-900 dark:to-blue-900">
       {/* Grid Background */}
       <div className="absolute inset-0 opacity-30 dark:opacity-10" style={{
         backgroundImage: `linear-gradient(to right, #e0e0e0 1px, transparent 1px),
                           linear-gradient(to bottom, #e0e0e0 1px, transparent 1px)`,
         backgroundSize: '30px 30px'
       }}></div>
-      
-      {/* Animated Gradients */}
-      <motion.div 
-        animate={{ rotate: 360 }}
-        transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
-        className="absolute top-40 left-10 w-72 h-72 rounded-full opacity-40 dark:opacity-20 blur-3xl" 
-        style={{
-          background: 'radial-gradient(circle, rgba(172, 23, 84, 1) 0%, rgba(255,255,255,0) 70%)',
-        }}
-      ></motion.div>
-      
-      <motion.div 
-        animate={{ rotate: -360 }}
-        transition={{ duration: 100, repeat: Infinity, ease: "linear" }}
-        className="absolute bottom-20 right-10 w-72 h-72 rounded-full opacity-40 dark:opacity-20 blur-3xl" 
-        style={{
-          background: 'radial-gradient(circle, rgba(23, 84, 172, 1) 0%, rgba(255,255,255,0) 70%)',
-        }}
-      ></motion.div>
-      
-      {/* Additional Gradient Decorations */}
-      <motion.div 
-        animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.3, 0.2] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-1/4 right-1/4 w-40 h-40 rounded-full opacity-30 dark:opacity-15 blur-3xl" 
-        style={{
-          background: 'radial-gradient(circle, rgba(255, 153, 0, 1) 0%, rgba(255,255,255,0) 70%)',
-        }}
-      ></motion.div>
-      
-      <motion.div 
-        animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute bottom-1/3 left-1/3 w-48 h-48 rounded-full opacity-30 dark:opacity-15 blur-3xl" 
-        style={{
-          background: 'radial-gradient(circle, rgba(76, 211, 136, 1) 0%, rgba(255,255,255,0) 70%)',
-        }}
-      ></motion.div>
-      
+
+      {/* Background Pattern */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+      </div>
+
       {/* Decorative Elements */}
-      <motion.div 
+      <motion.div
         animate={floatAnimation}
         className="absolute top-20 right-[15%] hidden md:block">
         <div className="bg-white dark:bg-gray-800 p-2 rounded-full shadow-lg">
           <Star className="w-6 h-6 text-yellow-400" />
         </div>
       </motion.div>
-      
-      <motion.div 
+
+      <motion.div
         animate={floatAnimation}
         transition={{ delay: 1 }}
         className="absolute bottom-40 left-[15%] hidden md:block">
@@ -107,15 +78,15 @@ export default function Home() {
           <MapPin className="w-6 h-6 text-blue-500" />
         </div>
       </motion.div>
-      
+
       {/* Subtle Dots Pattern */}
       <div className="absolute inset-0 opacity-10 dark:opacity-5" style={{
         backgroundImage: `radial-gradient(#333 1px, transparent 1px)`,
         backgroundSize: '20px 20px'
       }}></div>
-      
+
       {/* Main Content */}
-      <motion.div 
+      <motion.div
         initial="hidden"
         animate={isLoaded ? "visible" : "hidden"}
         variants={staggerContainer}
@@ -127,23 +98,23 @@ export default function Home() {
             <span className="text-xs text-blue-700 dark:text-blue-300 font-medium">BPS Republik Indonesia</span>
           </div>
         </motion.div>
-        
-        <motion.h1 
+
+        <motion.h1
           variants={fadeIn}
-          className={`md:max-w-[700px] mx-auto px-5 ${merriweatherSans.className} text-xl sm:text-3xl md:text-4xl lg:text-5xl text-center font-bold text-[#1E40AF] dark:text-blue-300 md:leading-[3rem] lg:leading-[3.5rem]`}
+          className={`md:max-w-[700px] mx-auto px-5 ${merriweatherSans.className} text-xl sm:text-3xl md:text-4xl lg:text-5xl text-center font-bold text-blue-800 dark:text-blue-300 md:leading-[3rem] lg:leading-[3.5rem]`}
         >
           Asisten AI untuk Survei Digital Wisatawan Nusantara!
         </motion.h1>
-        
-        <motion.p 
+
+        <motion.p
           variants={fadeIn}
           className={`my-4 px-4 text-sm sm:text-base text-center text-gray-700 dark:text-gray-300 max-w-2xl mx-auto`}
         >
           Permudah wawancara, otomatisasi survei, dan nikmati interaksi yang personal dengan platform AI
           yang dirancang khusus untuk kebutuhan Wisatawan Nusantara.
         </motion.p>
-        
-        <motion.div 
+
+        <motion.div
           variants={fadeIn}
           className="flex justify-center gap-4 my-4"
         >
@@ -151,16 +122,16 @@ export default function Home() {
             <span>Pelajari lebih lanjut</span>
             <ChevronDown className="w-4 h-4" />
           </a>
-          
+
           <a className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium">
             <span>Tentang BPS</span>
             <ChevronRight className="w-4 h-4" />
           </a>
         </motion.div>
       </motion.div>
-      
+
       {/* Feature Cards above Hero */}
-      <motion.div 
+      <motion.div
         initial="hidden"
         animate={isLoaded ? "visible" : "hidden"}
         variants={staggerContainer}
@@ -171,7 +142,7 @@ export default function Home() {
           { icon: <Calendar className="w-5 h-5 text-green-500" />, title: "Survei Terjadwal", desc: "Pengumpulan data efisien" },
           { icon: <Users className="w-5 h-5 text-amber-500" />, title: "Analisis Pengunjung", desc: "Pola kunjungan wisata" },
         ].map((feature, idx) => (
-          <motion.div 
+          <motion.div
             key={idx}
             variants={fadeIn}
             whileHover={{ y: -5, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
@@ -187,16 +158,16 @@ export default function Home() {
           </motion.div>
         ))}
       </motion.div>
-      
+
       {/* Hero Image */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, delay: 0.2 }}
         className='z-10 relative'
       >
         <div className="absolute -top-4 left-[20%] hidden md:block">
-          <motion.div 
+          <motion.div
             animate={{
               y: [0, -10, 0],
               rotate: [0, 5, 0]
@@ -207,9 +178,9 @@ export default function Home() {
             <span className="text-xs font-medium text-blue-700 dark:text-blue-300">250+ Destinasi</span>
           </motion.div>
         </div>
-        
+
         <div className="absolute -top-2 right-[25%] hidden md:block">
-          <motion.div 
+          <motion.div
             animate={{
               y: [0, -8, 0],
               rotate: [0, -3, 0]
@@ -227,7 +198,7 @@ export default function Home() {
             </div>
           </motion.div>
         </div>
-        
+
         <Image
           src="/hero_pict.svg"
           alt="Hero Picture"
@@ -235,39 +206,40 @@ export default function Home() {
           height={900}
           className="mt-2 w-full max-w-[900px] h-auto rounded-lg dark:brightness-90 dark:contrast-125"
         />
-        
+
         {/* Decorative Circles */}
         <div className="absolute -z-10 -top-8 -left-8 w-20 h-20 rounded-full border-4 border-dashed border-blue-100 dark:border-blue-900 opacity-60"></div>
         <div className="absolute -z-10 -bottom-10 -right-5 w-16 h-16 rounded-full border-4 border-dashed border-rose-100 dark:border-rose-900 opacity-60"></div>
-        
+
         {/* Call to action buttons with enhanced styling */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
-          className="absolute -bottom-[120px] md:bottom-0 left-1/2 transform -translate-x-1/2 flex flex-col bg-[#ac175575] dark:bg-[#ac175545] backdrop-blur-md w-40 md:w-48 p-3 rounded-3xl gap-2 shadow-lg border border-white/30 dark:border-white/10"
+          className="absolute -bottom-[120px] md:bottom-0 left-1/2 transform -translate-x-1/2 flex flex-col bg-blue-400/40 dark:bg-blue-600/30 backdrop-blur-md w-40 md:w-48 p-3 rounded-3xl gap-2 shadow-lg border border-white/30 dark:border-white/10"
         >
           <motion.a
             whileHover={{ scale: 1.05, y: -5 }}
             whileTap={{ scale: 0.95 }}
-            className="bg-gradient-to-r from-[#41bf28] to-[#34a71f] hover:from-[#34a71f] hover:to-[#2d8f1b] dark:from-[#36a622] dark:to-[#2d8f1b] px-6 py-2 rounded-2xl text-center font-bold text-white text-sm md:text-[16px] cursor-pointer shadow-md flex items-center justify-center gap-1"
+            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 dark:from-blue-600 dark:to-blue-700 px-6 py-2 rounded-2xl text-center font-bold text-white text-sm md:text-[16px] cursor-pointer shadow-md flex items-center justify-center gap-1"
           >
             <span>Panduan</span>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M7 17L17 7M17 7H8M17 7V16" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M7 17L17 7M17 7H8M17 7V16" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </motion.a>
-          
+
           <motion.a
+            href="/survey"
             whileHover={{ scale: 1.05, y: 5 }}
             whileTap={{ scale: 0.95 }}
-            className="bg-gradient-to-r from-[#ff9b29] to-[#ff8c10] hover:from-[#ff8c10] hover:to-[#e67800] dark:from-[#e67800] dark:to-[#cc6a00] px-6 py-2 rounded-2xl text-center text-white font-bold text-sm md:text-[16px] cursor-pointer shadow-md"
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 dark:from-indigo-600 dark:to-purple-700 px-6 py-2 rounded-2xl text-center text-white font-bold text-sm md:text-[16px] cursor-pointer shadow-md"
           >
             Mulai Survei
           </motion.a>
         </motion.div>
       </motion.div>
-      
+
       {/* Statistics Counters */}
       <motion.div
         initial={{ opacity: 0 }}
