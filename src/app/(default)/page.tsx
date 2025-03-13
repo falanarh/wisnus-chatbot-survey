@@ -4,27 +4,54 @@ import { useEffect, useRef } from 'react';
 import HomeSection from '@/components/HomeSection';
 import GuidesSection from '@/components/GuidesSection';
 import AboutSection from '@/components/AboutSection';
-import Footer from '@/components/Footer'; // Import the new Footer component
+import Footer from '@/components/Footer';
+import { Header } from '@/components/Header';
+import { Mulish } from 'next/font/google';
+
+const mulish = Mulish({
+  variable: "--font-mulish",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+});
 
 export default function Home() {
+  const homeRef = useRef<HTMLDivElement>(null);
   const guidesRef = useRef<HTMLDivElement>(null);
   const aboutRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Any initialization code can go here
+    // Check if there's a hash in the URL when the page loads
+    if (window.location.hash) {
+      const sectionId = window.location.hash.substring(1); // remove the # symbol
+      scrollToSection(sectionId);
+    }
   }, []);
 
-  const scrollToGuides = () => {
-    guidesRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const scrollToSection = (section: string) => {
+    let targetRef;
+    
+    switch (section) {
+      case 'home':
+        targetRef = homeRef;
+        break;
+      case 'guides':
+        targetRef = guidesRef;
+        break;
+      case 'about':
+        targetRef = aboutRef;
+        break;
+      default:
+        targetRef = null;
+    }
 
-  const scrollToAbout = () => {
-    aboutRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (targetRef && targetRef.current) {
+      targetRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
     <>
-      {/* Fixed Background Layer - Will stay fixed while scrolling and be visible across all sections */}
+      {/* Fixed Background Layer */}
       <div 
         className="fixed top-0 left-0 w-full h-full pointer-events-none"
         style={{ zIndex: 0 }}
@@ -57,19 +84,23 @@ export default function Home() {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20" />
       </div>
 
-      {/* Content Container - This will scroll over the fixed background */}
+      {/* Custom Header with scroll functionality */}
+      <Header fontClass={mulish.className} scrollToSection={scrollToSection} />
+
+      {/* Content Container */}
       <div className="relative" style={{ zIndex: 1 }}>
-        <HomeSection onGuideClick={scrollToGuides} onAboutClick={scrollToAbout} />
+        <div ref={homeRef} id="home">
+          <HomeSection onGuideClick={() => scrollToSection('guides')} onAboutClick={() => scrollToSection('about')} />
+        </div>
         
-        <div ref={guidesRef}>
+        <div ref={guidesRef} id="guides">
           <GuidesSection />
         </div>
         
-        <div ref={aboutRef}>
+        <div ref={aboutRef} id="about">
           <AboutSection />
         </div>
         
-        {/* Add the new Footer component */}
         <Footer />
       </div>
     </>

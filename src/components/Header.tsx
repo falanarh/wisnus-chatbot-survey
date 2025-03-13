@@ -5,20 +5,29 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useTheme } from '@/components/ThemeProvider';
-import Link from 'next/link';
-import { Home, Book, Info, LogIn, X } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Home, Book, Info, LogIn, X } from 'lucide-react';import { Merriweather_Sans } from "next/font/google";
+
+const merriweatherSans = Merriweather_Sans({
+  variable: "--font-merriweather-sans",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+});
 
 interface HeaderProps {
     fontClass?: string;
+    scrollToSection?: (section: string) => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans' }) => {
+export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollToSection }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isDesktop, setIsDesktop] = useState(false);
     const [themeMenuOpen, setThemeMenuOpen] = useState(false);
     const { theme } = useTheme();
+    const pathname = usePathname();
     const isDarkMode = theme === 'dark';
     const menuRef = useRef<HTMLDivElement>(null);
+    const isHomePage = pathname === '/';
 
     useEffect(() => {
         const handleResize = () => {
@@ -68,10 +77,21 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans' }) => {
         setIsOpen(false);
     };
 
+    // Function to handle navigation - either use scrollToSection or link to external page
+    const handleNavigation = (section: string) => {
+        if (isHomePage && scrollToSection) {
+            scrollToSection(section);
+            setIsOpen(false); // Close mobile menu after clicking
+        } else {
+            // For other pages, we'll use URLs with hash fragments
+            window.location.href = `/#${section}`;
+        }
+    };
+
     const menuItems = [
-        { name: 'Beranda', icon: <Home size={18} />, path: '/' },
-        { name: 'Panduan', icon: <Book size={18} />, path: '#' },
-        { name: 'Tentang', icon: <Info size={18} />, path: '#' },
+        { name: 'Beranda', icon: <Home size={18} />, section: 'home' },
+        { name: 'Panduan', icon: <Book size={18} />, section: 'guides' },
+        { name: 'Tentang', icon: <Info size={18} />, section: 'about' },
     ];
 
     // Animations
@@ -161,7 +181,7 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans' }) => {
                     height={48}
                     className="mr-3"
                 />
-                <h1 className="text-[14px] sm:text-lg font-bold text-white">Badan Pusat Statistik</h1>
+                <h1 className={`${merriweatherSans.className} text-[14px] sm:text-lg font-bold text-white`}>Badan Pusat Statistik</h1>
             </div>
 
             {/* Mobile Controls in a Flex Container */}
@@ -188,9 +208,15 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans' }) => {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-6">
                 <nav className="flex space-x-6 text-white text-[14px]">
-                    <a href="#" className="hover:text-blue-200 dark:hover:text-blue-300 transition-colors duration-300">Beranda</a>
-                    <a href="#" className="hover:text-blue-200 dark:hover:text-blue-300 transition-colors duration-300">Panduan</a>
-                    <a href="#" className="hover:text-blue-200 dark:hover:text-blue-300 transition-colors duration-300">Tentang</a>
+                    {menuItems.map((item, index) => (
+                        <button
+                            key={index}
+                            onClick={() => handleNavigation(item.section)}
+                            className="hover:text-blue-200 dark:hover:text-blue-300 transition-colors duration-300 cursor-pointer"
+                        >
+                            {item.name}
+                        </button>
+                    ))}
                 </nav>
                 <div className="flex items-center space-x-4">
                     <ThemeToggle
@@ -258,16 +284,15 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans' }) => {
                                             key={index}
                                             variants={menuItemVariants}
                                         >
-                                            <Link
-                                                href={item.path}
-                                                className="flex items-center gap-3 px-3 py-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 group transition-colors"
-                                                onClick={() => setIsOpen(false)}
+                                            <button
+                                                onClick={() => handleNavigation(item.section)}
+                                                className="flex items-center gap-3 px-3 py-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 group transition-colors w-full text-left"
                                             >
                                                 <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-800/50 text-blue-600 dark:text-blue-400 group-hover:bg-blue-500 group-hover:text-white dark:group-hover:bg-blue-700 transition-colors">
                                                     {item.icon}
                                                 </div>
                                                 <span className="font-medium">{item.name}</span>
-                                            </Link>
+                                            </button>
                                         </motion.li>
                                     ))}
                                 </ul>
