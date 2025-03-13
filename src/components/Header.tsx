@@ -69,17 +69,30 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans' }) => {
                 />
                 <h1 className="text-[14px] sm:text-lg font-bold text-white">Badan Pusat Statistik</h1>
             </div>
-            <button
-                className="md:hidden text-white relative w-5 h-5"
-                onClick={toggleMenu}
-                aria-label="Toggle Menu"
-            >
-                <div className={`absolute w-5 h-[2px] top-0 bg-white transition-transform duration-200 ${isOpen ? 'rotate-45 translate-y-2' : 'translate-y-0'}`} />
-                <div className={`absolute w-5 h-[2px] top-1 bg-white transition-opacity duration-200 ${isOpen ? 'opacity-0' : 'opacity-100'} translate-y-1`} />
-                <div className={`absolute w-5 h-[2px] top-2 bg-white transition-transform duration-300 ${isOpen ? '-rotate-45 translate-y-0' : 'translate-y-2'}`} />
-            </button>
+            
+            {/* Mobile Controls in a Flex Container */}
+            <div className="md:hidden flex items-center gap-3">
+                {/* Theme Toggle for Mobile - Always visible */}
+                <ThemeToggle 
+                    isOpen={themeMenuOpen}
+                    setIsOpen={setThemeMenuOpen}
+                    closeOtherDropdowns={closeOtherDropdowns}
+                />
+                
+                {/* Hamburger Menu Button */}
+                <button
+                    className="text-white relative w-5 h-5"
+                    onClick={toggleMenu}
+                    aria-label="Toggle Menu"
+                >
+                    <div className={`absolute w-5 h-[2px] top-0 bg-white transition-transform duration-200 ${isOpen ? 'rotate-45 translate-y-2' : 'translate-y-0'}`} />
+                    <div className={`absolute w-5 h-[2px] top-1 bg-white transition-opacity duration-200 ${isOpen ? 'opacity-0' : 'opacity-100'} translate-y-1`} />
+                    <div className={`absolute w-5 h-[2px] top-2 bg-white transition-transform duration-300 ${isOpen ? '-rotate-45 translate-y-0' : 'translate-y-2'}`} />
+                </button>
+            </div>
+            
             <AnimatePresence>
-                {isOpen && !isDesktop && ( // Kondisi tambahan !isDesktop
+                {isOpen && !isDesktop && (
                     <motion.nav
                         className="absolute md:static top-12 left-0 w-full md:w-auto bg-blue-400/90 dark:bg-gray-900/90 backdrop-blur-md md:bg-transparent shadow-sm dark:shadow-gray-800 md:shadow-none md:flex justify-center"
                         initial="closed"
@@ -99,12 +112,7 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans' }) => {
                                     <a href="#" className="hover:text-blue-200 dark:hover:text-blue-300 transition-colors duration-300">Tentang</a>
                                 </li>
                             </ul>
-                            <div className="flex items-center mt-4 gap-4">
-                                <ThemeToggle 
-                                    isOpen={themeMenuOpen}
-                                    setIsOpen={setThemeMenuOpen}
-                                    closeOtherDropdowns={closeOtherDropdowns}
-                                />
+                            <div className="flex items-center mt-4">
                                 <motion.button
                                     className="ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 items-center justify-center px-4 py-2 border-0 rounded-full text-sm font-medium text-white bg-gradient-to-l from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 shadow-lg hover:from-indigo-600 hover:to-purple-700 dark:hover:from-indigo-700 dark:hover:to-purple-800 focus:outline-none"
                                     whileHover={{ scale: 1.05 }}
