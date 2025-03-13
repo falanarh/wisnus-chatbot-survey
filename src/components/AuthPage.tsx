@@ -115,7 +115,7 @@ export default function AuthPage({ initialTab = "login" }: AuthPageProps) {
           </div>
 
           {/* Card Body */}
-          <div className="p-6 md:p-8">
+          <div className="p-6 md:p-8 overflow-hidden">
             {/* Form Header */}
             <div className="text-center mb-6">
               <h2 className={`${merriweatherSans.className} text-2xl font-bold ${
