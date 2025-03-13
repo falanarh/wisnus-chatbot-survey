@@ -91,7 +91,7 @@ export default function Home() {
         initial="hidden"
         animate={isLoaded ? "visible" : "hidden"}
         variants={staggerContainer}
-        className="z-10 mt-[70px] sm:mt-[80px] w-full max-w-4xl px-4"
+        className="z-10 mt-[75px] sm:mt-[80px] w-full max-w-4xl px-4"
       >
         <motion.div variants={fadeIn} className="flex justify-center mb-2">
           <div className="bg-blue-100/50 dark:bg-blue-900/30 px-4 py-1 rounded-full backdrop-blur-sm border border-blue-200/40 dark:border-blue-800/40 flex items-center gap-2">
