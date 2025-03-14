@@ -4,7 +4,7 @@
 
 import { useEffect, useRef, ReactElement } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, UserCircle, Info, LogOut } from "lucide-react";
+import { Menu, X, UserCircle, LogOut } from "lucide-react";
 
 // Tipe untuk item menu yang bisa ditambahkan
 export interface MenuItem {
@@ -58,10 +58,10 @@ export default function MenuToggle({
       name: "Profil", 
       icon: <UserCircle className={`w-4 h-4 ${isDarkMode ? 'text-blue-400' : 'text-purple-600'}`} />
     },
-    { 
-      name: "Tentang", 
-      icon: <Info className={`w-4 h-4 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} /> 
-    },
+    // { 
+    //   name: "Tentang", 
+    //   icon: <Info className={`w-4 h-4 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} /> 
+    // },
     { 
       name: "Logout", 
       icon: <LogOut className={`w-4 h-4 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} /> 

@@ -8,6 +8,7 @@ import { useTheme } from '@/components/ThemeProvider';
 import { usePathname } from 'next/navigation';
 import { Home, Book, Info, LogIn, X, UserPlus } from 'lucide-react';
 import { Merriweather_Sans } from "next/font/google";
+import { useRouter } from 'next/navigation';
 
 const merriweatherSans = Merriweather_Sans({
   variable: "--font-merriweather-sans",
@@ -27,6 +28,7 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
     const { theme } = useTheme();
     const pathname = usePathname();
     const isDarkMode = theme === 'dark';
+    const router = useRouter();
     const menuRef = useRef<HTMLDivElement>(null);
     const isHomePage = pathname === '/';
 
@@ -230,6 +232,7 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
                         className="ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 items-center justify-center px-4 py-2 border border-white/30 rounded-full text-sm font-medium text-white bg-white/20 hover:bg-white/30 backdrop-blur-sm focus:outline-none hidden sm:flex"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        onClick={() => router.push('/auth?tab=register')}
                     >
                         <UserPlus size={16} className="mr-1.5" />
                         <span>Register</span>
@@ -239,6 +242,7 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
                         className="ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 items-center justify-center px-4 py-2 border-0 rounded-full text-sm font-medium text-white bg-gradient-to-l from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 shadow-lg hover:from-indigo-600 hover:to-purple-700 dark:hover:from-indigo-700 dark:hover:to-purple-800 focus:outline-none flex"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        onClick={() => router.push('/auth?tab=login')}
                     >
                         <LogIn size={16} className="mr-1.5" />
                         <span>Login</span>
@@ -321,6 +325,7 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
                                         animate="visible"
                                         whileHover="hover"
                                         whileTap="tap"
+                                        onClick={() => router.push('/auth?tab=register')}
                                         className="flex-1 py-2.5 px-3 flex items-center justify-center gap-2 bg-white dark:bg-gray-700 text-blue-600 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-lg shadow transition-shadow hover:shadow-md"
                                     >
                                         <UserPlus size={16} />
@@ -334,6 +339,7 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
                                         animate="visible"
                                         whileHover="hover"
                                         whileTap="tap"
+                                        onClick={() => router.push('/auth?tab=login')}
                                         className="flex-1 py-2.5 px-3 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-shadow"
                                     >
                                         <LogIn size={16} />

@@ -12,6 +12,7 @@ import { LogIn, UserPlus, ArrowLeft } from "lucide-react";
 import ModernFormTransition from "./ModernFormTransition";
 import ModernLoginForm from "./ModernLoginForm";
 import ModernRegisterForm from "./ModernRegisterForm";
+import { useSearchParams } from "next/navigation";
 
 const merriweatherSans = Merriweather_Sans({
   variable: "--font-merriweather-sans",
@@ -24,11 +25,20 @@ interface AuthPageProps {
 }
 
 export default function ModernAuthPage({ initialTab = "login" }: AuthPageProps) {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<"login" | "register">(initialTab);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { theme } = useTheme();
   const isDarkMode = theme === "dark";
+
+  // Check URL query parameter for initial tab
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'login' || tabParam === 'register') {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   // Ensure hydration matching
   useEffect(() => {
@@ -96,7 +106,7 @@ export default function ModernAuthPage({ initialTab = "login" }: AuthPageProps) 
       </div>
 
       {/* Top Navigation */}
-      <div className="w-full py-4 px-6 flex justify-between items-center relative z-10">
+      <div className="w-full py-4 px-4 md:px-36 flex justify-between items-center relative z-10">
         <Link href="/" className="group flex items-center gap-2">
           <div className="relative overflow-hidden rounded-full p-0.5">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 opacity-70 group-hover:opacity-100 transition-opacity duration-300"></div>
