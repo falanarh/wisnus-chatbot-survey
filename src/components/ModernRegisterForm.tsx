@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, User, Mail, Lock, ArrowRight, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, User, Mail, Lock, ArrowRight, ShieldCheck, AlertTriangle } from "lucide-react";
 import ModernSocialLoginButton from "./ModernSocialLoginButton";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 interface RegisterFormProps {
   isDarkMode: boolean;
@@ -20,6 +22,12 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
     email: false,
     password: false
   });
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  
+  // Auth context dan router
+  const { register } = useAuth();
+  const router = useRouter();
   
   // Password strength indicators
   const [passwordStrength, setPasswordStrength] = useState(0); // 0-3 strength
@@ -80,12 +88,30 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Registration data:", formData);
+    setError(null);
+    setSuccess(false);
+    
+    try {
+      // Gunakan service untuk registrasi melalui API
+      await register(formData.name, formData.email, formData.password);
+      
+      // Jika sampai di sini, artinya pendaftaran berhasil
+      setSuccess(true);
+      
+      // Redirect ke halaman survey setelah 1.5 detik
+      setTimeout(() => {
+        router.push('/survey');
+      }, 1500);
+      
+    } catch (err) {
+      // Menampilkan pesan error jika terjadi kesalahan
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Terjadi kesalahan saat mendaftar. Silakan coba lagi.');
+      }
       setIsLoading(false);
-      // Handle success (would navigate to login or dashboard)
-    }, 1500);
+    }
   };
 
   // Input field animation variants
@@ -102,6 +128,26 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Error Message */}
+      {error && (
+        <div className={`p-3 rounded-lg flex items-start gap-2 text-sm ${
+          isDarkMode ? 'bg-red-900/30 text-red-200 border border-red-800' : 'bg-red-50 text-red-600 border border-red-200'
+        }`}>
+          <AlertTriangle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+          <div>{error}</div>
+        </div>
+      )}
+      
+      {/* Success Message */}
+      {success && (
+        <div className={`p-3 rounded-lg flex items-start gap-2 text-sm ${
+          isDarkMode ? 'bg-green-900/30 text-green-200 border border-green-800' : 'bg-green-50 text-green-600 border border-green-200'
+        }`}>
+          <ShieldCheck className="w-5 h-5 mt-0.5 flex-shrink-0" />
+          <div>Pendaftaran berhasil! Anda akan dialihkan ke halaman survey...</div>
+        </div>
+      )}
+
       {/* Name Field */}
       <div className="space-y-2">
         <label htmlFor="name" className={`block text-sm font-medium ${
@@ -348,7 +394,7 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
           whileHover={{ scale: 1.01, y: -1, boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)" }}
           whileTap={{ scale: 0.99 }}
           type="submit"
-          disabled={isLoading}
+          disabled={isLoading || success}
           className={`
             w-full py-3 px-4 flex justify-center items-center 
             rounded-xl text-white font-medium
@@ -367,6 +413,11 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
               <span>Memproses...</span>
+            </div>
+          ) : success ? (
+            <div className="flex items-center">
+              <ShieldCheck className="h-5 w-5 mr-2" />
+              <span>Berhasil Terdaftar</span>
             </div>
           ) : (
             <>
