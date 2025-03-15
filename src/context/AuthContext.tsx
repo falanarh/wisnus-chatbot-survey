@@ -6,17 +6,13 @@ import {
   registerUser, 
   loginUser, 
   logoutUser, 
-  isAuthenticated,  
+  isAuthenticated,
+  getUserData,
+  LoginResponseData
 } from '@/services/authService';
 
-interface User {
-  _id: string;
-  name: string;
-  email: string;
-}
-
 interface AuthContextType {
-  user: User | null;
+  user: LoginResponseData | null;
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
@@ -28,7 +24,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<LoginResponseData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
@@ -41,9 +37,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthenticated(isAuth);
       
       if (isAuth) {
-        try {
-          
-        } catch {
+        const userData = getUserData();
+        if (userData) {
+          setUser(userData);
+        } else {
           // Jika gagal mendapatkan user data, logout
           logoutUser();
           setAuthenticated(false);
@@ -62,17 +59,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setError(null);
       
-      const result = await registerUser({ name, email, password });
+      const loginData = await registerUser({ name, email, password });
       
-      if (result.success && result.data) {
-        setUser(result.data);
-        setAuthenticated(true);
-        
-        // Redirect ke halaman survey setelah berhasil
-        router.push('/survey');
-      } else {
-        throw new Error(result.message || 'Pendaftaran gagal');
-      }
+      setUser(loginData);
+      setAuthenticated(true);
+      
+      // Redirect ke halaman survey setelah berhasil
+      router.push('/survey');
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message || 'Terjadi kesalahan saat pendaftaran');
@@ -92,17 +85,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setError(null);
       
-      const result = await loginUser({ email, password });
+      const loginData = await loginUser({ email, password });
       
-      if (result.success && result.data) {
-        setUser(result.data);
-        setAuthenticated(true);
-        
-        // Redirect ke halaman survey setelah berhasil
-        router.push('/survey');
-      } else {
-        throw new Error(result.message || 'Login gagal');
-      }
+      setUser(loginData);
+      setAuthenticated(true);
+      
+      // Redirect ke halaman survey setelah berhasil
+      router.push('/survey');
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message || 'Gagal login');

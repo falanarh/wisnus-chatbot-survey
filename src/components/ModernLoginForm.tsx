@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, LogIn, AlertTriangle } from "lucide-react";
 import ModernSocialLoginButton from "./ModernSocialLoginButton";
+import { useAuth } from "@/context/AuthContext";
 
 interface LoginFormProps {
   isDarkMode: boolean;
@@ -20,6 +21,9 @@ const ModernLoginForm: React.FC<LoginFormProps> = ({ isDarkMode }) => {
     password: false
   });
 
+  // Gunakan hook useAuth
+  const { login, error } = useAuth();
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -35,13 +39,20 @@ const ModernLoginForm: React.FC<LoginFormProps> = ({ isDarkMode }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Login data:", formData);
+    
+    try {
+      // Set loading state
+      setIsLoading(true);
+      
+      // Panggil fungsi login dari context
+      await login(formData.email, formData.password);
+    } catch (err) {
+      // Error handling sudah dilakukan di AuthContext
+      console.error("Login error:", err);
+    } finally {
+      // Matikan loading state
       setIsLoading(false);
-      // Handle success (would navigate to dashboard)
-    }, 1500);
+    }
   };
 
   // Input field animation variants
@@ -58,6 +69,18 @@ const ModernLoginForm: React.FC<LoginFormProps> = ({ isDarkMode }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Error Message */}
+      {error && (
+        <div className={`p-3 rounded-lg flex items-start gap-2 text-sm ${
+          isDarkMode 
+            ? 'bg-red-900/30 text-red-200 border border-red-800' 
+            : 'bg-red-50 text-red-600 border border-red-200'
+        }`}>
+          <AlertTriangle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+          <div>{error}</div>
+        </div>
+      )}
+
       {/* Email Field */}
       <div className="space-y-2">
         <label htmlFor="email" className={`block text-sm font-medium ${
