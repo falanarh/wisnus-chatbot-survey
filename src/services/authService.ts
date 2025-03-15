@@ -1,4 +1,3 @@
-// src/services/authService.ts
 import { apiRequest } from '@/utils/authConfig';
 
 // Tipe untuk response API
@@ -24,10 +23,23 @@ export interface RegisterUserData {
   password: string;
 }
 
+// Fungsi untuk menangani kesalahan API
+function handleApiError(result: ApiResponse<unknown>): never {
+  const errorMessage = result.message || 'Terjadi kesalahan pada server';
+  throw new Error(errorMessage);
+}
+
+// Fungsi untuk menyimpan token
+function saveToken(token: string) {
+  // Simpan token di cookie
+  document.cookie = `auth_token=${token}; path=/; max-age=86400; SameSite=Strict; ${process.env.NODE_ENV === 'production' ? 'Secure' : ''}`;
+  
+  // Simpan token di localStorage sebagai fallback
+  localStorage.setItem('auth_token', token);
+}
+
 /**
  * Fungsi untuk melakukan registrasi pengguna baru
- * @param userData Data registrasi user (name, email, password)
- * @returns Promise dengan data login
  */
 export async function registerUser(userData: RegisterUserData): Promise<LoginResponseData> {
   try {
@@ -36,25 +48,30 @@ export async function registerUser(userData: RegisterUserData): Promise<LoginRes
       body: JSON.stringify(userData)
     });
 
-    // Simpan token dan user data jika registrasi berhasil
-    if (result.success && result.data) {
-      const loginData = result.data;
-      
-      // Simpan token di localStorage
-      localStorage.setItem('auth_token', loginData.token);
-      
-      // Simpan user data di localStorage
-      localStorage.setItem('user_data', JSON.stringify({
-        _id: loginData._id,
-        name: loginData.name,
-        email: loginData.email,
-        activeSurveySessionId: loginData.activeSurveySessionId
-      }));
-
-      return loginData;
-    } else {
-      throw new Error(result.message || 'Registrasi gagal');
+    // Periksa keberhasilan response
+    if (!result.success) {
+      return handleApiError(result);
     }
+
+    // Pastikan data tersedia
+    if (!result.data) {
+      throw new Error('Tidak ada data yang dikembalikan dari server');
+    }
+
+    const loginData = result.data;
+    
+    // Simpan token
+    saveToken(loginData.token);
+    
+    // Simpan user data di localStorage
+    localStorage.setItem('user_data', JSON.stringify({
+      _id: loginData._id,
+      name: loginData.name,
+      email: loginData.email,
+      activeSurveySessionId: loginData.activeSurveySessionId
+    }));
+
+    return loginData;
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error("Registrasi error:", error.message);
@@ -67,8 +84,6 @@ export async function registerUser(userData: RegisterUserData): Promise<LoginRes
 
 /**
  * Fungsi untuk melakukan login pengguna
- * @param credentials Data login (email, password)
- * @returns Promise dengan data login
  */
 export async function loginUser(credentials: {
   email: string;
@@ -80,25 +95,30 @@ export async function loginUser(credentials: {
       body: JSON.stringify(credentials)
     });
 
-    // Simpan token dan user data jika login berhasil
-    if (result.success && result.data) {
-      const loginData = result.data;
-      
-      // Simpan token di localStorage
-      localStorage.setItem('auth_token', loginData.token);
-      
-      // Simpan user data di localStorage
-      localStorage.setItem('user_data', JSON.stringify({
-        _id: loginData._id,
-        name: loginData.name,
-        email: loginData.email,
-        activeSurveySessionId: loginData.activeSurveySessionId
-      }));
-
-      return loginData;
-    } else {
-      throw new Error(result.message || 'Login gagal');
+    // Periksa keberhasilan response
+    if (!result.success) {
+      return handleApiError(result);
     }
+
+    // Pastikan data tersedia
+    if (!result.data) {
+      throw new Error('Tidak ada data yang dikembalikan dari server');
+    }
+
+    const loginData = result.data;
+    
+    // Simpan token
+    saveToken(loginData.token);
+    
+    // Simpan user data di localStorage
+    localStorage.setItem('user_data', JSON.stringify({
+      _id: loginData._id,
+      name: loginData.name,
+      email: loginData.email,
+      activeSurveySessionId: loginData.activeSurveySessionId
+    }));
+
+    return loginData;
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error("Login error:", error.message);
@@ -113,6 +133,9 @@ export async function loginUser(credentials: {
  * Fungsi untuk logout pengguna
  */
 export function logoutUser() {
+  // Hapus token dari cookie
+  document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+
   // Hapus token dan user data dari localStorage
   localStorage.removeItem('auth_token');
   localStorage.removeItem('user_data');
@@ -120,24 +143,30 @@ export function logoutUser() {
 
 /**
  * Fungsi untuk memeriksa apakah pengguna sedang login
- * @returns boolean status login
  */
 export function isAuthenticated() {
-  const token = localStorage.getItem('auth_token');
+  // Cek token dari localStorage atau cookie
+  const tokenFromStorage = localStorage.getItem('auth_token');
+  const tokenFromCookie = document.cookie.replace(/(?:(?:^|.*;\s*)auth_token\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+  
+  const token = tokenFromStorage || tokenFromCookie;
+  
+  // Cek apakah token ada dan tidak kosong
   return !!token;
 }
 
 /**
  * Fungsi untuk mendapatkan token
- * @returns string token
  */
 export function getAuthToken() {
-  return localStorage.getItem('auth_token');
+  // Cek dari cookie terlebih dahulu
+  const tokenFromCookie = document.cookie.replace(/(?:(?:^|.*;\s*)auth_token\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+  
+  return tokenFromCookie || localStorage.getItem('auth_token');
 }
 
 /**
  * Fungsi untuk mendapatkan data pengguna
- * @returns User data atau null
  */
 export function getUserData(): LoginResponseData | null {
   const userData = localStorage.getItem('user_data');

@@ -1,71 +1,76 @@
 // src/utils/authConfig.ts
-// Konfigurasi untuk menghubungkan ke API eksternal
+export const authConfig = {
+  // Base URL API Anda
+  baseUrl: process.env.NEXT_PUBLIC_API_URL,
+  
+  // Endpoint spesifik
+  endpoints: {
+    register: '/api/auth/register',
+    login: '/api/auth/login',
+  },
+  
+  // Nama key untuk token di localStorage
+  tokenKey: 'auth_token',
+  
+  // Headers default
+  headers: {
+    'Content-Type': 'application/json',
+  }
+};
 
 /**
- * Konfigurasi untuk API autentikasi
- * Ganti URL dengan endpoint API yang sebenarnya
+ * Fungsi helper untuk request API
  */
-export const authConfig = {
-    // Base URL API Anda
-    baseUrl: process.env.NEXT_PUBLIC_API_URL,
-    
-    // Endpoint spesifik
-    endpoints: {
-      register: '/api/auth/register',
-      login: '/api/auth/login',
-    },
-    
-    // Nama key untuk token di localStorage
-    tokenKey: 'auth_token',
+export async function apiRequest(endpoint: string, options: RequestInit = {}) {
+  try {
+    // Mengambil token dari localStorage atau cookie
+    const token = 
+      localStorage.getItem(authConfig.tokenKey) || 
+      document.cookie.replace(/(?:(?:^|.*;\s*)auth_token\s*\=\s*([^;]*).*$)|^.*$/, "$1");
     
     // Headers default
-    headers: {
-      'Content-Type': 'application/json',
+    const headers: Record<string, string> = {
+      ...authConfig.headers,
+      ...((options.headers as Record<string, string>) || {}),
+    };
+    
+    // Tambahkan token ke header Authorization jika ada
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
-  };
-  
-  /**
-   * Fungsi helper untuk request API
-   * @param endpoint Endpoint API
-   * @param options Options fetch
-   * @returns Promise dengan hasil dari API
-   */
-  export async function apiRequest(endpoint: string, options: RequestInit = {}) {
-    try {
-      // Mengambil token dari localStorage jika ada
-      const token = localStorage.getItem(authConfig.tokenKey);
+    
+    // Buat URL lengkap
+    const url = `${authConfig.baseUrl}${endpoint}`;
+    
+    // Kirim request
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
+    
+    // Handle unauthorized access (token expired/invalid)
+    if (response.status === 401) {
+      // Logout user
+      localStorage.removeItem(authConfig.tokenKey);
+      document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       
-      // Headers default
-      const headers: Record<string, string> = {
-        ...authConfig.headers,
-        ...((options.headers as Record<string, string>) || {}),
-      };
+      // Redirect to login page
+      window.location.href = '/auth';
       
-      // Tambahkan token ke header Authorization jika ada
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      // Buat URL lengkap
-      const url = `${authConfig.baseUrl}${endpoint}`;
-      
-      // Kirim request
-      const response = await fetch(url, {
-        ...options,
-        headers,
-      });
-      
-      // Parse response
-      const data = await response.json();
-      
-      // Jika response tidak ok, throw error
-      if (!response.ok) {
-        throw new Error(data.message || 'Terjadi kesalahan pada server');
-      }
-      
-      return data;
-    } catch (error) {
-      console.error('API Request Error:', error);
-      throw error;
+      throw new Error('Sesi anda telah berakhir. Silakan login kembali.');
     }
+    
+    // Parse response
+    const data = await response.json();
+    
+    // Jika response tidak ok, throw error
+    if (!response.ok) {
+      throw new Error(data.message || 'Terjadi kesalahan pada server');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('API Request Error:', error);
+    throw error;
   }
+}

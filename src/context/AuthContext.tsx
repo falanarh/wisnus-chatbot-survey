@@ -1,7 +1,6 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
 import { 
   registerUser, 
   loginUser, 
@@ -19,6 +18,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,30 +28,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
-  const router = useRouter();
 
   // Memeriksa apakah pengguna sudah login saat aplikasi dimuat
   useEffect(() => {
     const checkAuth = async () => {
-      const isAuth = isAuthenticated();
-      setAuthenticated(isAuth);
-      
-      if (isAuth) {
-        const userData = getUserData();
-        if (userData) {
-          setUser(userData);
-        } else {
-          // Jika gagal mendapatkan user data, logout
-          logoutUser();
-          setAuthenticated(false);
+      try {
+        const isAuth = isAuthenticated();
+        setAuthenticated(isAuth);
+        
+        if (isAuth) {
+          const userData = getUserData();
+          if (userData) {
+            setUser(userData);
+          } else {
+            // Jika gagal mendapatkan user data, logout
+            logoutUser();
+            setAuthenticated(false);
+          }
         }
+      } catch (err) {
+        console.error("Authentication check failed", err);
+        logoutUser();
+        setAuthenticated(false);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     };
     
     checkAuth();
   }, []);
+
+  // Fungsi untuk membersihkan error
+  const clearError = () => {
+    setError(null);
+  };
 
   // Fungsi untuk mendaftarkan pengguna baru
   const register = async (name: string, email: string, password: string) => {
@@ -64,15 +74,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(loginData);
       setAuthenticated(true);
       
-      // Redirect ke halaman survey setelah berhasil
-      router.push('/survey');
+      // Redirect ke halaman survey 
+      window.location.href = '/survey';
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message || 'Terjadi kesalahan saat pendaftaran');
-        throw err;
+        const errorMessage = err.message || 'Terjadi kesalahan saat pendaftaran';
+        setError(errorMessage);
+        throw new Error(errorMessage);
       } else {
-        setError('Terjadi kesalahan saat pendaftaran');
-        throw new Error(String(err));
+        const errorMessage = 'Terjadi kesalahan saat pendaftaran';
+        setError(errorMessage);
+        throw new Error(errorMessage);
       }
     } finally {
       setLoading(false);
@@ -90,15 +102,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(loginData);
       setAuthenticated(true);
       
-      // Redirect ke halaman survey setelah berhasil
-      router.push('/survey');
+      // Redirect ke halaman survey 
+      window.location.href = '/survey';
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message || 'Gagal login');
-        throw err;
+        const errorMessage = err.message || 'Gagal login';
+        setError(errorMessage);
+        throw new Error(errorMessage);
       } else {
-        setError('Gagal login');
-        throw new Error(String(err));
+        const errorMessage = 'Gagal login';
+        setError(errorMessage);
+        throw new Error(errorMessage);
       }
     } finally {
       setLoading(false);
@@ -110,7 +124,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logoutUser();
     setUser(null);
     setAuthenticated(false);
-    router.push('/auth');
+    
+    // Redirect ke halaman login
+    window.location.href = '/auth';
   };
 
   const value = {
@@ -121,6 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     register,
     login,
     logout,
+    clearError,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
