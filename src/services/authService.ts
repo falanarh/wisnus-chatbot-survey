@@ -30,7 +30,7 @@ function handleApiError(result: ApiResponse<unknown>): never {
 }
 
 // Fungsi untuk menyimpan token
-function saveToken(token: string) {
+export function saveToken(token: string) {
   // Simpan token di cookie
   document.cookie = `auth_token=${token}; path=/; max-age=86400; SameSite=Strict; ${process.env.NODE_ENV === 'production' ? 'Secure' : ''}`;
   

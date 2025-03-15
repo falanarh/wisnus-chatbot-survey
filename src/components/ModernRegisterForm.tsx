@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, User, Mail, Lock, ArrowRight, ShieldCheck, AlertTriangle } from "lucide-react";
-import ModernSocialLoginButton from "./ModernSocialLoginButton";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import ModernGoogleAuthButton from "./GoogleAuthButton";
 
 interface RegisterFormProps {
   isDarkMode: boolean;
@@ -24,18 +24,18 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  
+
   // Auth context dan router
   const { register } = useAuth();
   const router = useRouter();
-  
+
   // Password strength indicators
   const [passwordStrength, setPasswordStrength] = useState(0); // 0-3 strength
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    
+
     // Calculate password strength if password field is changed
     if (name === 'password') {
       calculatePasswordStrength(value);
@@ -52,16 +52,16 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
 
   const calculatePasswordStrength = (password: string) => {
     let strength = 0;
-    
+
     // Length check
     if (password.length >= 8) strength += 1;
-    
+
     // Character variety checks
     if (/[A-Z]/.test(password)) strength += 0.5;
     if (/[a-z]/.test(password)) strength += 0.5;
     if (/[0-9]/.test(password)) strength += 0.5;
     if (/[^A-Za-z0-9]/.test(password)) strength += 0.5;
-    
+
     setPasswordStrength(Math.min(Math.floor(strength), 3));
   };
 
@@ -90,19 +90,19 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
     setIsLoading(true);
     setError(null);
     setSuccess(false);
-    
+
     try {
       // Gunakan service untuk registrasi melalui API
       await register(formData.name, formData.email, formData.password);
-      
+
       // Jika sampai di sini, artinya pendaftaran berhasil
       setSuccess(true);
-      
+
       // Redirect ke halaman survey setelah 1.5 detik
       setTimeout(() => {
         router.push('/survey');
       }, 1500);
-      
+
     } catch (err) {
       // Menampilkan pesan error jika terjadi kesalahan
       if (err instanceof Error) {
@@ -130,19 +130,17 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Error Message */}
       {error && (
-        <div className={`p-3 rounded-lg flex items-start gap-2 text-sm ${
-          isDarkMode ? 'bg-red-900/30 text-red-200 border border-red-800' : 'bg-red-50 text-red-600 border border-red-200'
-        }`}>
+        <div className={`p-3 rounded-lg flex items-start gap-2 text-sm ${isDarkMode ? 'bg-red-900/30 text-red-200 border border-red-800' : 'bg-red-50 text-red-600 border border-red-200'
+          }`}>
           <AlertTriangle className="w-5 h-5 mt-0.5 flex-shrink-0" />
           <div>{error}</div>
         </div>
       )}
-      
+
       {/* Success Message */}
       {success && (
-        <div className={`p-3 rounded-lg flex items-start gap-2 text-sm ${
-          isDarkMode ? 'bg-green-900/30 text-green-200 border border-green-800' : 'bg-green-50 text-green-600 border border-green-200'
-        }`}>
+        <div className={`p-3 rounded-lg flex items-start gap-2 text-sm ${isDarkMode ? 'bg-green-900/30 text-green-200 border border-green-800' : 'bg-green-50 text-green-600 border border-green-200'
+          }`}>
           <ShieldCheck className="w-5 h-5 mt-0.5 flex-shrink-0" />
           <div>Pendaftaran berhasil! Anda akan dialihkan ke halaman survey...</div>
         </div>
@@ -150,35 +148,33 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
 
       {/* Name Field */}
       <div className="space-y-2">
-        <label htmlFor="name" className={`block text-sm font-medium ${
-          isDarkMode ? 'text-gray-200' : 'text-gray-700'
-        }`}>
+        <label htmlFor="name" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'
+          }`}>
           Nama Lengkap
         </label>
-        <motion.div 
+        <motion.div
           variants={inputVariants}
           animate={isFocused.name ? "focus" : "blur"}
           className={`
             flex items-center rounded-xl border 
-            ${isDarkMode 
-              ? 'bg-gray-800/70 border-gray-700' 
+            ${isDarkMode
+              ? 'bg-gray-800/70 border-gray-700'
               : 'bg-white/80 border-gray-200'
             }
             px-4 py-3 
-            ${isFocused.name 
-              ? isDarkMode 
-                ? 'ring-2 ring-blue-500/30 border-blue-400' 
-                : 'ring-2 ring-blue-200 border-blue-300' 
+            ${isFocused.name
+              ? isDarkMode
+                ? 'ring-2 ring-blue-500/30 border-blue-400'
+                : 'ring-2 ring-blue-200 border-blue-300'
               : ''
             }
             transition-all duration-200
           `}
         >
-          <User className={`h-5 w-5 mr-3 ${
-            isFocused.name
+          <User className={`h-5 w-5 mr-3 ${isFocused.name
               ? isDarkMode ? 'text-blue-400' : 'text-blue-500'
               : isDarkMode ? 'text-gray-400' : 'text-gray-500'
-          } transition-colors`} />
+            } transition-colors`} />
           <input
             type="text"
             id="name"
@@ -200,35 +196,33 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
 
       {/* Email Field */}
       <div className="space-y-2">
-        <label htmlFor="email" className={`block text-sm font-medium ${
-          isDarkMode ? 'text-gray-200' : 'text-gray-700'
-        }`}>
+        <label htmlFor="email" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'
+          }`}>
           Email
         </label>
-        <motion.div 
+        <motion.div
           variants={inputVariants}
           animate={isFocused.email ? "focus" : "blur"}
           className={`
             flex items-center rounded-xl border 
-            ${isDarkMode 
-              ? 'bg-gray-800/70 border-gray-700' 
+            ${isDarkMode
+              ? 'bg-gray-800/70 border-gray-700'
               : 'bg-white/80 border-gray-200'
             }
             px-4 py-3 
-            ${isFocused.email 
-              ? isDarkMode 
-                ? 'ring-2 ring-blue-500/30 border-blue-400' 
-                : 'ring-2 ring-blue-200 border-blue-300' 
+            ${isFocused.email
+              ? isDarkMode
+                ? 'ring-2 ring-blue-500/30 border-blue-400'
+                : 'ring-2 ring-blue-200 border-blue-300'
               : ''
             }
             transition-all duration-200
           `}
         >
-          <Mail className={`h-5 w-5 mr-3 ${
-            isFocused.email
+          <Mail className={`h-5 w-5 mr-3 ${isFocused.email
               ? isDarkMode ? 'text-blue-400' : 'text-blue-500'
               : isDarkMode ? 'text-gray-400' : 'text-gray-500'
-          } transition-colors`} />
+            } transition-colors`} />
           <input
             type="email"
             id="email"
@@ -250,35 +244,33 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
 
       {/* Password Field */}
       <div className="space-y-2">
-        <label htmlFor="password" className={`block text-sm font-medium ${
-          isDarkMode ? 'text-gray-200' : 'text-gray-700'
-        }`}>
+        <label htmlFor="password" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'
+          }`}>
           Kata Sandi
         </label>
-        <motion.div 
+        <motion.div
           variants={inputVariants}
           animate={isFocused.password ? "focus" : "blur"}
           className={`
             flex items-center rounded-xl border 
-            ${isDarkMode 
-              ? 'bg-gray-800/70 border-gray-700' 
+            ${isDarkMode
+              ? 'bg-gray-800/70 border-gray-700'
               : 'bg-white/80 border-gray-200'
             }
             px-4 py-3 
-            ${isFocused.password 
-              ? isDarkMode 
-                ? 'ring-2 ring-blue-500/30 border-blue-400' 
-                : 'ring-2 ring-blue-200 border-blue-300' 
+            ${isFocused.password
+              ? isDarkMode
+                ? 'ring-2 ring-blue-500/30 border-blue-400'
+                : 'ring-2 ring-blue-200 border-blue-300'
               : ''
             }
             transition-all duration-200
           `}
         >
-          <Lock className={`h-5 w-5 mr-3 ${
-            isFocused.password
+          <Lock className={`h-5 w-5 mr-3 ${isFocused.password
               ? isDarkMode ? 'text-blue-400' : 'text-blue-500'
               : isDarkMode ? 'text-gray-400' : 'text-gray-500'
-          } transition-colors`} />
+            } transition-colors`} />
           <input
             type={showPassword ? "text" : "password"}
             id="password"
@@ -301,8 +293,8 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
             onClick={() => setShowPassword(!showPassword)}
             className={`
               p-1.5 rounded-full
-              ${isDarkMode 
-                ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700' 
+              ${isDarkMode
+                ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700'
                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
               }
               transition-colors
@@ -321,30 +313,27 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
           <div className="mt-2">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-1.5">
-                <ShieldCheck className={`h-4 w-4 ${
-                  passwordStrength >= 2 
-                    ? isDarkMode ? 'text-green-400' : 'text-green-500' 
+                <ShieldCheck className={`h-4 w-4 ${passwordStrength >= 2
+                    ? isDarkMode ? 'text-green-400' : 'text-green-500'
                     : isDarkMode ? 'text-gray-500' : 'text-gray-400'
-                }`} />
-                <span className={`text-xs font-medium ${
-                  passwordStrength >= 2 
-                    ? isDarkMode ? 'text-green-400' : 'text-green-600' 
+                  }`} />
+                <span className={`text-xs font-medium ${passwordStrength >= 2
+                    ? isDarkMode ? 'text-green-400' : 'text-green-600'
                     : isDarkMode ? 'text-gray-500' : 'text-gray-500'
-                }`}>
+                  }`}>
                   Kekuatan Kata Sandi
                 </span>
               </div>
-              <span className={`text-xs font-medium ${
-                passwordStrength === 0 ? (isDarkMode ? 'text-red-400' : 'text-red-500') :
-                passwordStrength === 1 ? (isDarkMode ? 'text-orange-400' : 'text-orange-500') :
-                passwordStrength === 2 ? (isDarkMode ? 'text-green-400' : 'text-green-500') :
-                (isDarkMode ? 'text-green-400' : 'text-green-500')
-              }`}>
+              <span className={`text-xs font-medium ${passwordStrength === 0 ? (isDarkMode ? 'text-red-400' : 'text-red-500') :
+                  passwordStrength === 1 ? (isDarkMode ? 'text-orange-400' : 'text-orange-500') :
+                    passwordStrength === 2 ? (isDarkMode ? 'text-green-400' : 'text-green-500') :
+                      (isDarkMode ? 'text-green-400' : 'text-green-500')
+                }`}>
                 {getStrengthLabel()}
               </span>
             </div>
             <div className="h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-              <motion.div 
+              <motion.div
                 className={`h-full ${getStrengthColor()}`}
                 initial={{ width: '0%' }}
                 animate={{ width: `${(passwordStrength + 1) * 25}%` }}
@@ -368,8 +357,8 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
             required
             className={`
               h-4 w-4 rounded-sm border-2 focus:ring-0 focus:ring-offset-0
-              ${isDarkMode 
-                ? 'border-gray-600 bg-gray-800 checked:bg-blue-500 checked:border-blue-500' 
+              ${isDarkMode
+                ? 'border-gray-600 bg-gray-800 checked:bg-blue-500 checked:border-blue-500'
                 : 'border-gray-300 bg-white checked:bg-blue-500 checked:border-blue-500'
               }
               appearance-none cursor-pointer
@@ -381,9 +370,8 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
             </svg>
           </div>
         </div>
-        <label htmlFor="terms" className={`ml-2 block text-xs ${
-          isDarkMode ? 'text-gray-300' : 'text-gray-600'
-        }`}>
+        <label htmlFor="terms" className={`ml-2 block text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'
+          }`}>
           Saya menyetujui <span className="text-blue-500 hover:underline cursor-pointer">Syarat dan Ketentuan</span> serta <span className="text-blue-500 hover:underline cursor-pointer">Kebijakan Privasi</span> yang berlaku
         </label>
       </div>
@@ -444,13 +432,12 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
       </div>
 
       {/* Social Login Buttons */}
-      <ModernSocialLoginButton 
-        provider="google" 
-        label="Lanjutkan dengan Google" 
-        isDarkMode={isDarkMode} 
-        onClick={() => console.log("Google register")}
+      <ModernGoogleAuthButton
+        label="Lanjutkan dengan Google"
+        isDarkMode={isDarkMode}
+        isSignIn={true}
       />
-      
+
       <style jsx>{`
         .check-mark {
           opacity: 0;

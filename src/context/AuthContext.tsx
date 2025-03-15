@@ -9,6 +9,7 @@ import {
   getUserData,
   LoginResponseData
 } from '@/services/authService';
+import { authenticateWithGoogle } from '@/services/googleAuthService';
 
 interface AuthContextType {
   user: LoginResponseData | null;
@@ -17,6 +18,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   register: (name: string, email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
+  googleAuth: (idToken: string) => Promise<void>;
   logout: () => void;
   clearError: () => void;
 }
@@ -119,6 +121,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Fungsi untuk autentikasi dengan Google
+  const googleAuth = async (idToken: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const loginData = await authenticateWithGoogle(idToken);
+      
+      setUser(loginData);
+      setAuthenticated(true);
+      
+      // Redirect ke halaman home 
+      window.location.href = '/';
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        const errorMessage = err.message || 'Google authentication failed';
+        setError(errorMessage);
+        throw new Error(errorMessage);
+      } else {
+        const errorMessage = 'Google authentication failed';
+        setError(errorMessage);
+        throw new Error(errorMessage);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fungsi untuk logout pengguna
   const logout = () => {
     logoutUser();
@@ -126,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthenticated(false);
     
     // Redirect ke halaman login
-    window.location.href = '/auth';
+    window.location.href = '/auth?tab=login';
   };
 
   const value = {
@@ -136,6 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: authenticated,
     register,
     login,
+    googleAuth,
     logout,
     clearError,
   };

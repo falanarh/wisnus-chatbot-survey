@@ -2,8 +2,9 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock, LogIn, AlertTriangle } from "lucide-react";
-import ModernSocialLoginButton from "./ModernSocialLoginButton";
+// import ModernSocialLoginButton from "./ModernSocialLoginButton";
 import { useAuth } from "@/context/AuthContext";
+import GoogleAuthButton from "./GoogleAuthButton";
 
 interface LoginFormProps {
   isDarkMode: boolean;
@@ -39,11 +40,11 @@ const ModernLoginForm: React.FC<LoginFormProps> = ({ isDarkMode }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       // Set loading state
       setIsLoading(true);
-      
+
       // Panggil fungsi login dari context
       await login(formData.email, formData.password);
     } catch (err) {
@@ -71,11 +72,10 @@ const ModernLoginForm: React.FC<LoginFormProps> = ({ isDarkMode }) => {
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Error Message */}
       {error && (
-        <div className={`p-3 rounded-lg flex items-start gap-2 text-sm ${
-          isDarkMode 
-            ? 'bg-red-900/30 text-red-200 border border-red-800' 
+        <div className={`p-3 rounded-lg flex items-start gap-2 text-sm ${isDarkMode
+            ? 'bg-red-900/30 text-red-200 border border-red-800'
             : 'bg-red-50 text-red-600 border border-red-200'
-        }`}>
+          }`}>
           <AlertTriangle className="w-5 h-5 mt-0.5 flex-shrink-0" />
           <div>{error}</div>
         </div>
@@ -83,35 +83,33 @@ const ModernLoginForm: React.FC<LoginFormProps> = ({ isDarkMode }) => {
 
       {/* Email Field */}
       <div className="space-y-2">
-        <label htmlFor="email" className={`block text-sm font-medium ${
-          isDarkMode ? 'text-gray-200' : 'text-gray-700'
-        }`}>
+        <label htmlFor="email" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'
+          }`}>
           Email
         </label>
-        <motion.div 
+        <motion.div
           variants={inputVariants}
           animate={isFocused.email ? "focus" : "blur"}
           className={`
             flex items-center rounded-xl border 
-            ${isDarkMode 
-              ? 'bg-gray-800/70 border-gray-700' 
+            ${isDarkMode
+              ? 'bg-gray-800/70 border-gray-700'
               : 'bg-white/80 border-gray-200'
             }
             px-4 py-3 
-            ${isFocused.email 
-              ? isDarkMode 
-                ? 'ring-2 ring-blue-500/30 border-blue-400' 
-                : 'ring-2 ring-blue-200 border-blue-300' 
+            ${isFocused.email
+              ? isDarkMode
+                ? 'ring-2 ring-blue-500/30 border-blue-400'
+                : 'ring-2 ring-blue-200 border-blue-300'
               : ''
             }
             transition-all duration-200
           `}
         >
-          <Mail className={`h-5 w-5 mr-3 ${
-            isFocused.email
+          <Mail className={`h-5 w-5 mr-3 ${isFocused.email
               ? isDarkMode ? 'text-blue-400' : 'text-blue-500'
               : isDarkMode ? 'text-gray-400' : 'text-gray-500'
-          } transition-colors`} />
+            } transition-colors`} />
           <input
             type="email"
             id="email"
@@ -134,13 +132,12 @@ const ModernLoginForm: React.FC<LoginFormProps> = ({ isDarkMode }) => {
       {/* Password Field */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label htmlFor="password" className={`block text-sm font-medium ${
-            isDarkMode ? 'text-gray-200' : 'text-gray-700'
-          }`}>
+          <label htmlFor="password" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'
+            }`}>
             Kata Sandi
           </label>
-          <Link 
-            href="/forgot-password" 
+          <Link
+            href="/forgot-password"
             className={`
               text-xs font-medium relative overflow-hidden group
               ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}
@@ -152,30 +149,29 @@ const ModernLoginForm: React.FC<LoginFormProps> = ({ isDarkMode }) => {
             <span className="absolute inset-0 bg-blue-500 dark:bg-blue-600 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300 rounded-sm"></span>
           </Link>
         </div>
-        <motion.div 
+        <motion.div
           variants={inputVariants}
           animate={isFocused.password ? "focus" : "blur"}
           className={`
             flex items-center rounded-xl border 
-            ${isDarkMode 
-              ? 'bg-gray-800/70 border-gray-700' 
+            ${isDarkMode
+              ? 'bg-gray-800/70 border-gray-700'
               : 'bg-white/80 border-gray-200'
             }
             px-4 py-3 
-            ${isFocused.password 
-              ? isDarkMode 
-                ? 'ring-2 ring-blue-500/30 border-blue-400' 
-                : 'ring-2 ring-blue-200 border-blue-300' 
+            ${isFocused.password
+              ? isDarkMode
+                ? 'ring-2 ring-blue-500/30 border-blue-400'
+                : 'ring-2 ring-blue-200 border-blue-300'
               : ''
             }
             transition-all duration-200
           `}
         >
-          <Lock className={`h-5 w-5 mr-3 ${
-            isFocused.password
+          <Lock className={`h-5 w-5 mr-3 ${isFocused.password
               ? isDarkMode ? 'text-blue-400' : 'text-blue-500'
               : isDarkMode ? 'text-gray-400' : 'text-gray-500'
-          } transition-colors`} />
+            } transition-colors`} />
           <input
             type={showPassword ? "text" : "password"}
             id="password"
@@ -197,8 +193,8 @@ const ModernLoginForm: React.FC<LoginFormProps> = ({ isDarkMode }) => {
             onClick={() => setShowPassword(!showPassword)}
             className={`
               p-1.5 rounded-full
-              ${isDarkMode 
-                ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700' 
+              ${isDarkMode
+                ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700'
                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
               }
               transition-colors
@@ -222,8 +218,8 @@ const ModernLoginForm: React.FC<LoginFormProps> = ({ isDarkMode }) => {
             type="checkbox"
             className={`
               h-4 w-4 rounded-sm border-2 focus:ring-0 focus:ring-offset-0
-              ${isDarkMode 
-                ? 'border-gray-600 bg-gray-800 checked:bg-blue-500 checked:border-blue-500' 
+              ${isDarkMode
+                ? 'border-gray-600 bg-gray-800 checked:bg-blue-500 checked:border-blue-500'
                 : 'border-gray-300 bg-white checked:bg-blue-500 checked:border-blue-500'
               }
               appearance-none cursor-pointer
@@ -235,9 +231,8 @@ const ModernLoginForm: React.FC<LoginFormProps> = ({ isDarkMode }) => {
             </svg>
           </div>
         </div>
-        <label htmlFor="remember-me" className={`ml-2 block text-sm ${
-          isDarkMode ? 'text-gray-300' : 'text-gray-700'
-        }`}>
+        <label htmlFor="remember-me" className={`ml-2 block text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'
+          }`}>
           Ingat saya
         </label>
       </div>
@@ -293,13 +288,12 @@ const ModernLoginForm: React.FC<LoginFormProps> = ({ isDarkMode }) => {
       </div>
 
       {/* Social Login Buttons */}
-      <ModernSocialLoginButton 
-        provider="google" 
-        label="Lanjutkan dengan Google" 
-        isDarkMode={isDarkMode} 
-        onClick={() => console.log("Google login")}
+      <GoogleAuthButton
+        label="Lanjutkan dengan Google"
+        isDarkMode={isDarkMode}
+        isSignIn={true}
       />
-      
+
       <style jsx>{`
         .check-mark {
           opacity: 0;
