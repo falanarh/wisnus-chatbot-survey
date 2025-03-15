@@ -36,13 +36,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Memeriksa apakah pengguna sudah login saat aplikasi dimuat
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       const isAuth = isAuthenticated();
       setAuthenticated(isAuth);
-      setLoading(false);
       
-      // Todo: Fetch user data jika sudah ada token
-      // Implementasikan endpoint /api/auth/me
+      if (isAuth) {
+        try {
+          
+        } catch {
+          // Jika gagal mendapatkan user data, logout
+          logoutUser();
+          setAuthenticated(false);
+        }
+      }
+      
+      setLoading(false);
     };
     
     checkAuth();
@@ -59,6 +67,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (result.success && result.data) {
         setUser(result.data);
         setAuthenticated(true);
+        
+        // Redirect ke halaman survey setelah berhasil
+        router.push('/survey');
+      } else {
+        throw new Error(result.message || 'Pendaftaran gagal');
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -84,6 +97,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (result.success && result.data) {
         setUser(result.data);
         setAuthenticated(true);
+        
+        // Redirect ke halaman survey setelah berhasil
+        router.push('/survey');
+      } else {
+        throw new Error(result.message || 'Login gagal');
       }
     } catch (err: unknown) {
       if (err instanceof Error) {

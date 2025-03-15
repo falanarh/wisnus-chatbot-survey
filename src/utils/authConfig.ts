@@ -7,15 +7,12 @@
  */
 export const authConfig = {
     // Base URL API Anda
-    baseUrl: 'https://your-api-endpoint.com/api',
+    baseUrl: process.env.NEXT_PUBLIC_API_URL,
     
     // Endpoint spesifik
     endpoints: {
-      register: '/register',
-      login: '/login',
-      logout: '/logout',
-      verify: '/verify',
-      me: '/me',
+      register: '/api/auth/register',
+      login: '/api/auth/login',
     },
     
     // Nama key untuk token di localStorage
@@ -34,36 +31,41 @@ export const authConfig = {
    * @returns Promise dengan hasil dari API
    */
   export async function apiRequest(endpoint: string, options: RequestInit = {}) {
-    // Mengambil token dari localStorage jika ada
-    const token = localStorage.getItem(authConfig.tokenKey);
-    
-    // Headers default
-    const headers: Record<string, string> = {
-      ...authConfig.headers,
-      ...((options.headers as Record<string, string>) || {}),
-    };
-    
-    // Tambahkan token ke header Authorization jika ada
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+    try {
+      // Mengambil token dari localStorage jika ada
+      const token = localStorage.getItem(authConfig.tokenKey);
+      
+      // Headers default
+      const headers: Record<string, string> = {
+        ...authConfig.headers,
+        ...((options.headers as Record<string, string>) || {}),
+      };
+      
+      // Tambahkan token ke header Authorization jika ada
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      // Buat URL lengkap
+      const url = `${authConfig.baseUrl}${endpoint}`;
+      
+      // Kirim request
+      const response = await fetch(url, {
+        ...options,
+        headers,
+      });
+      
+      // Parse response
+      const data = await response.json();
+      
+      // Jika response tidak ok, throw error
+      if (!response.ok) {
+        throw new Error(data.message || 'Terjadi kesalahan pada server');
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('API Request Error:', error);
+      throw error;
     }
-    
-    // Buat URL lengkap
-    const url = `${authConfig.baseUrl}${endpoint}`;
-    
-    // Kirim request
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
-    
-    // Parse response
-    const data = await response.json();
-    
-    // Jika response tidak ok, throw error
-    if (!response.ok) {
-      throw new Error(data.message || 'Terjadi kesalahan pada server');
-    }
-    
-    return data;
   }

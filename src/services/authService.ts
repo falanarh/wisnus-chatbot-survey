@@ -1,4 +1,5 @@
 // src/services/authService.ts
+import { apiRequest } from '@/utils/authConfig';
 
 /**
  * Fungsi untuk melakukan registrasi pengguna baru
@@ -11,35 +12,24 @@ export async function registerUser(userData: {
   password: string;
 }) {
   try {
-    const response = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(userData),
+    const result = await apiRequest('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(userData)
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Terjadi kesalahan pada server");
-    }
-
     // Simpan token jika ada
-    if (data.success && data.data && data.data.token) {
-      localStorage.setItem("auth_token", data.data.token);
+    if (result.success && result.data && result.data.token) {
+      localStorage.setItem('auth_token', result.data.token);
     }
 
-    return data;
+    return result;
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error("Registration error:", error.message);
       throw error;
     }
     console.error("Registration error:", error);
-    throw new Error("Unknown error occurred");
-    console.error("Registration error:", error);
-    throw error;
+    throw new Error("Terjadi kesalahan saat pendaftaran");
   }
 }
 
@@ -53,33 +43,24 @@ export async function loginUser(credentials: {
   password: string;
 }) {
   try {
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(credentials),
+    const result = await apiRequest('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials)
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Login gagal");
-    }
-
     // Simpan token jika ada
-    if (data.success && data.data && data.data.token) {
-      localStorage.setItem("auth_token", data.data.token);
+    if (result.success && result.data && result.data.token) {
+      localStorage.setItem('auth_token', result.data.token);
     }
 
-    return data;
+    return result;
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error("Login error:", error.message);
       throw error;
     }
     console.error("Login error:", error);
-    throw new Error("Unknown error occurred");
+    throw new Error("Login gagal");
   }
 }
 
@@ -88,7 +69,7 @@ export async function loginUser(credentials: {
  */
 export function logoutUser() {
   // Hapus token dari localStorage
-  localStorage.removeItem("auth_token");
+  localStorage.removeItem('auth_token');
 }
 
 /**
@@ -96,7 +77,7 @@ export function logoutUser() {
  * @returns boolean status login
  */
 export function isAuthenticated() {
-  const token = localStorage.getItem("auth_token");
+  const token = localStorage.getItem('auth_token');
   return !!token;
 }
 
@@ -105,5 +86,5 @@ export function isAuthenticated() {
  * @returns string token
  */
 export function getAuthToken() {
-  return localStorage.getItem("auth_token");
+  return localStorage.getItem('auth_token');
 }
