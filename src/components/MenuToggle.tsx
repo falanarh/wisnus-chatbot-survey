@@ -5,6 +5,7 @@
 import { useEffect, useRef, ReactElement } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, UserCircle, LogOut } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 // Tipe untuk item menu yang bisa ditambahkan
 export interface MenuItem {
@@ -30,6 +31,7 @@ export default function MenuToggle({
   extraMenuItems = []
 }: MenuToggleProps) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const { logout } = useAuth();
 
   const toggleMenu = () => {
     if (!isOpen && closeOtherDropdowns) {
@@ -64,7 +66,8 @@ export default function MenuToggle({
     // },
     { 
       name: "Logout", 
-      icon: <LogOut className={`w-4 h-4 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} /> 
+      icon: <LogOut className={`w-4 h-4 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`} />,
+      onClick: logout
     },
   ];
 
