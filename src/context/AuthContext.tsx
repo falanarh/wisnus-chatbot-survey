@@ -74,8 +74,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(loginData);
       setAuthenticated(true);
       
-      // Redirect ke halaman survey 
-      window.location.href = '/survey';
+      // Redirect ke halaman home 
+      window.location.href = '/';
     } catch (err: unknown) {
       if (err instanceof Error) {
         const errorMessage = err.message || 'Terjadi kesalahan saat pendaftaran';
@@ -102,8 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(loginData);
       setAuthenticated(true);
       
-      // Redirect ke halaman survey 
-      window.location.href = '/survey';
+      // Redirect ke halaman home 
+      window.location.href = '/';
     } catch (err: unknown) {
       if (err instanceof Error) {
         const errorMessage = err.message || 'Gagal login';
