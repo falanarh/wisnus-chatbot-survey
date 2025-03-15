@@ -53,11 +53,13 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
       // Logout user
       localStorage.removeItem(authConfig.tokenKey);
       document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+
+      console.log(response);
       
       // Redirect to login page
-      window.location.href = '/auth';
+      // window.location.href = '/auth';
       
-      throw new Error('Sesi anda telah berakhir. Silakan login kembali.');
+      // throw new Error(response.statusText);
     }
     
     // Parse response
@@ -71,6 +73,10 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
     return data;
   } catch (error) {
     console.error('API Request Error:', error);
-    throw error;
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    } else {
+      throw new Error('Terjadi kesalahan pada server');
+    }
   }
 }
