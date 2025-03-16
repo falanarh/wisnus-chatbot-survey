@@ -341,7 +341,7 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
                                             animate="visible"
                                             whileHover="hover"
                                             whileTap="tap"
-                                            onClick={() => router.push('/auth?tab=register')}
+                                            onClick={() => window.location.href = '/auth?tab=register'}
                                             className="flex-1 py-2.5 px-3 flex items-center justify-center gap-2 bg-white dark:bg-gray-700 text-blue-600 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-lg shadow transition-shadow hover:shadow-md"
                                         >
                                             <UserPlus size={16} />
@@ -355,7 +355,7 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
                                             animate="visible"
                                             whileHover="hover"
                                             whileTap="tap"
-                                            onClick={() => router.push('/auth?tab=login')}
+                                            onClick={() => window.location.href = '/auth?tab=login'}
                                             className="flex-1 py-2.5 px-3 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-shadow"
                                         >
                                             <LogIn size={16} />

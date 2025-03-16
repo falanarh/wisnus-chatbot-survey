@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Book, FileText, Play, CheckCircle } from "lucide-react";
+import { Book, FileText, CheckCircle, MessageCircleQuestion, ListChecks } from "lucide-react";
 import { Merriweather_Sans } from "next/font/google";
 import Image from "next/image";
 
@@ -19,19 +19,19 @@ const GuidesSection = () => {
 
   const guideItems = [
     {
-      icon: <FileText className="w-6 h-6" />,
-      title: "Persiapan",
-      description: "Yang perlu dipersiapkan sebelum mengisi survei"
-    },
-    {
-      icon: <Play className="w-6 h-6" />,
-      title: "Cara Mengisi",
-      description: "Panduan langkah demi langkah pengisian survei digital"
-    },
-    {
       icon: <CheckCircle className="w-6 h-6" />,
+      title: "Persiapan",
+      description: "Katakan bahwa Anda siap untuk mengisi survei. Survei akan dimulai setelah Anda menyatakan siap untuk mengikuti survei."
+    },
+    {
+      icon: <MessageCircleQuestion className="w-6 h-6" />,
+      title: "Bertanya/Menjawab",
+      description: "Ada dua mode dalam kuesioner, Tanya Jawab untuk bertanya terkait survei secara umum dan Survei untuk mengisi jawaban pertanyaan."
+    },
+    {
+      icon: <ListChecks className="w-6 h-6" />,
       title: "Penyelesaian",
-      description: "Memastikan semua pertanyaan terisi dengan benar"
+      description: "Anda dapat bertanya terkait pertanyaan tertentu secara langsung dan pastikan Anda menjawab semua pertanyaan dengan baik."
     }
   ];
 

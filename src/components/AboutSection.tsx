@@ -99,6 +99,7 @@ const AboutSection = () => {
                     </motion.div>
 
                     {/* Updated image container with responsive adjustments */}
+                    {/* Updated image container with responsive adjustments */}
                     <motion.div
                         initial="hidden"
                         whileInView="visible"
@@ -106,13 +107,13 @@ const AboutSection = () => {
                         variants={fadeIn}
                         className="md:w-1/2 flex items-center justify-center sm:px-6 md:px-0 mt-8 md:mt-0"
                     >
-                        <div className="relative bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/40 dark:to-indigo-900/40 rounded-2xl shadow-lg w-full sm:max-w-sm">
+                        <div className="relative bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/40 dark:to-indigo-900/40 rounded-2xl shadow-lg w-full h-full sm:max-w-sm">
                             <Image
-                                src="/bps_building.jpg"
+                                src="/bps_ri.jpg"
                                 alt="Kantor BPS"
                                 width={400}
                                 height={300}
-                                className="rounded-xl w-full h-auto object-cover"
+                                className="rounded-xl w-full h-full object-cover"
                             />
                             <div className="absolute -bottom-2 -right-2 sm:-bottom-4 sm:-right-4 bg-white dark:bg-gray-800 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg shadow-md border border-gray-100 dark:border-gray-700">
                                 <div className="flex items-center gap-1.5 sm:gap-2">
