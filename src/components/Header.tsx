@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@/components/ThemeProvider';
 import { usePathname } from 'next/navigation';
-import { Home, Book, Info, LogIn, X, UserPlus } from 'lucide-react';
+import { Home, Book, Info, LogIn, X, UserPlus, LogOut } from 'lucide-react';
 import { Merriweather_Sans } from "next/font/google";
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
@@ -33,7 +33,7 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
     const router = useRouter();
     const menuRef = useRef<HTMLDivElement>(null);
     const isHomePage = pathname === '/';
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, logout } = useAuth();
 
     useEffect(() => {
         const handleResize = () => {
@@ -87,6 +87,11 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
         } else {
             router.push(`/#${section}`);
         }
+    };
+
+    const handleLogout = () => {
+        logout();
+        setIsOpen(false);
     };
 
     const menuItems = [
@@ -222,7 +227,9 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
                     />
                     
                     {isAuthenticated ? (
-                        <UserAvatar />
+                        <div className="flex items-center space-x-3">
+                            <UserAvatar />
+                        </div>
                     ) : (
                         <>
                             <motion.button
@@ -309,8 +316,22 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
 
                             <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95">
                                 {isAuthenticated ? (
-                                    <div className="flex justify-center mb-3">
-                                        <UserAvatar />
+                                    <div className="space-y-3">
+                                        <div className="flex justify-center">
+                                            <UserAvatar />
+                                        </div>
+                                        <motion.button
+                                            variants={buttonVariants}
+                                            initial="hidden"
+                                            animate="visible"
+                                            whileHover="hover"
+                                            whileTap="tap"
+                                            onClick={handleLogout}
+                                            className="w-full py-2.5 px-3 flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800/30 rounded-lg shadow transition-shadow hover:shadow-md"
+                                        >
+                                            <LogOut size={16} />
+                                            <span className="font-medium">Keluar</span>
+                                        </motion.button>
                                     </div>
                                 ) : (
                                     <div className="flex gap-3 mb-3">
