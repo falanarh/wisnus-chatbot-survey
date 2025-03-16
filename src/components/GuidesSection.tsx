@@ -87,7 +87,7 @@ const GuidesSection = () => {
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
                 {item.title}
               </h3>
-              <p className="text-gray-600 dark:text-gray-300 text-sm">
+              <p className="text-justify text-gray-600 dark:text-gray-300 text-sm">
                 {item.description}
               </p>
             </motion.div>
@@ -116,7 +116,7 @@ const GuidesSection = () => {
               <h3 className={`${merriweatherSans.className} text-xl font-bold text-blue-800 dark:text-blue-300 mb-3`}>
                 Unduh Panduan Lengkap
               </h3>
-              <p className="text-gray-700 dark:text-gray-300 text-sm mb-4">
+              <p className="text-justify text-gray-700 dark:text-gray-300 text-sm mb-4">
                 Untuk informasi lebih detail, Anda dapat mengunduh panduan lengkap survei digital
                 wisatawan nusantara dalam format PDF.
               </p>

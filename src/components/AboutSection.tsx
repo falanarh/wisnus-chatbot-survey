@@ -69,7 +69,7 @@ const AboutSection = () => {
                                         <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">
                                             Visi
                                         </h3>
-                                        <p className="text-gray-600 dark:text-gray-300 text-sm">
+                                        <p className="text-justify text-gray-600 dark:text-gray-300 text-sm">
                                             Penyedia Data Statistik Berkualitas untuk Indonesia Maju
                                         </p>
                                     </div>
@@ -88,7 +88,7 @@ const AboutSection = () => {
                                         <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">
                                             Misi
                                         </h3>
-                                        <p className="text-gray-600 dark:text-gray-300 text-sm">
+                                        <p className="text-justify text-gray-600 dark:text-gray-300 text-sm">
                                             Menyediakan statistik berkualitas yang berstandar nasional
                                             dan internasional melalui proses yang transparan dan akuntabel.
                                         </p>
@@ -137,18 +137,18 @@ const AboutSection = () => {
                     </h3>
 
                     <div className="space-y-4">
-                        <p className="text-gray-700 dark:text-gray-300 mb-6">
+                        <p className="text-[14px] sm:text-[16px] text-justify text-gray-700 dark:text-gray-300 mb-6">
                             Survei Digital Wisatawan Nusantara merupakan kegiatan rutin Badan Pusat Statistik (BPS)
                             untuk mengumpulkan data penduduk Indonesia yang melakukan perjalanan wisata di wilayah Indonesia.
                             Data ini sangat dibutuhkan dalam penyusunan rencana dan kebijakan di bidang pariwisata.
                         </p>
 
-                        <p className="text-gray-700 dark:text-gray-300 mb-6">
+                        <p className="text-[14px] sm:text-[16px] text-justify text-gray-700 dark:text-gray-300 mb-6">
                             Data yang dikumpulkan meliputi karakteristik perjalanan seperti maksud/tujuan, akomodasi yang digunakan,
                             lama bepergian, dan rata-rata pengeluaran selama perjalanan, serta karakteristik demografi wisatawan nusantara.
                         </p>
 
-                        <p className="text-gray-700 dark:text-gray-300">
+                        <p className="text-[14px] sm:text-[16px] text-justify text-gray-700 dark:text-gray-300">
                             Aktivitas pariwisata di Indonesia telah menjadi sektor andalan yang mampu menggerakkan sektor-sektor ekonomi lain.
                             Meski tidak mendatangkan devisa seperti wisatawan mancanegara, perjalanan wisatawan nusantara berperan penting
                             dalam menghidupkan sektor angkutan, perhotelan, industri kreatif, dan ekonomi lokal di berbagai daerah.

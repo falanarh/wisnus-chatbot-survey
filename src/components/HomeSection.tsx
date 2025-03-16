@@ -256,7 +256,7 @@ const HomeSection: React.FC<HomeSectionProps> = ({ onGuideClick, onAboutClick })
               </div>
               <h3 className="font-medium text-sm dark:text-white">{feature.title}</h3>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{feature.desc}</p>
+            <p className="text-xs text-justify text-gray-500 dark:text-gray-400">{feature.desc}</p>
           </motion.div>
         ))}
       </motion.div>

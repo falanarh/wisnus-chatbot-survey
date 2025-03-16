@@ -3,14 +3,14 @@
 import Image from 'next/image';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { useTheme } from '@/components/ThemeProvider';
 import { usePathname } from 'next/navigation';
 import { Home, Book, Info, LogIn, X, UserPlus } from 'lucide-react';
 import { Merriweather_Sans } from "next/font/google";
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext'; // Tambahkan import useAuth
-import UserAvatar from './UserAvatar'; // Tambahkan import UserAvatar
+import { useAuth } from '@/context/AuthContext';
+import UserAvatar from './UserAvatar';
+import { ThemeToggle } from './ThemeToggle';
 
 const merriweatherSans = Merriweather_Sans({
   variable: "--font-merriweather-sans",
@@ -33,11 +33,11 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
     const router = useRouter();
     const menuRef = useRef<HTMLDivElement>(null);
     const isHomePage = pathname === '/';
-    const { isAuthenticated } = useAuth(); // Tambahkan hook useAuth
+    const { isAuthenticated } = useAuth();
 
     useEffect(() => {
         const handleResize = () => {
-            setIsDesktop(window.innerWidth >= 768); // 768px adalah breakpoint untuk md
+            setIsDesktop(window.innerWidth >= 768);
             if (window.innerWidth >= 768) {
                 setIsOpen(false);
             }
@@ -49,7 +49,7 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
             }
         };
 
-        handleResize(); // Set initial state
+        handleResize();
         window.addEventListener('resize', handleResize);
         document.addEventListener('mousedown', handleClickOutside);
 
@@ -59,7 +59,6 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
         };
     }, []);
 
-    // Handle body scroll lock when menu is open
     useEffect(() => {
         if (isOpen && !isDesktop) {
             document.body.style.overflow = 'hidden';
@@ -74,23 +73,19 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
 
     const toggleMenu = () => {
         setIsOpen(!isOpen);
-        // Close theme menu when opening navigation menu
         setThemeMenuOpen(false);
     };
 
-    // Function to close other dropdowns when opening theme menu
     const closeOtherDropdowns = () => {
         setIsOpen(false);
     };
 
-    // Function to handle navigation - either use scrollToSection or link to external page
     const handleNavigation = (section: string) => {
         if (isHomePage && scrollToSection) {
             scrollToSection(section);
-            setIsOpen(false); // Close mobile menu after clicking
+            setIsOpen(false);
         } else {
-            // For other pages, we'll use URLs with hash fragments
-            window.location.href = `/#${section}`;
+            router.push(`/#${section}`);
         }
     };
 
@@ -100,7 +95,6 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
         { name: 'Tentang', icon: <Info size={18} />, section: 'about' },
     ];
 
-    // Animations
     const menuBackdropVariants = {
         hidden: { opacity: 0 },
         visible: {
@@ -190,16 +184,13 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
                 <h1 className={`${merriweatherSans.className} text-[14px] sm:text-lg font-bold text-white`}>Badan Pusat Statistik</h1>
             </div>
 
-            {/* Mobile Controls in a Flex Container */}
             <div className="md:hidden flex items-center gap-2" ref={menuRef}>
-                {/* Theme Toggle for Mobile - Always visible */}
                 <ThemeToggle
                     isOpen={themeMenuOpen}
                     setIsOpen={setThemeMenuOpen}
                     closeOtherDropdowns={closeOtherDropdowns}
                 />
 
-                {/* Hamburger Menu Button */}
                 <button
                     className="text-white relative w-10 h-10 flex items-center justify-center rounded-full bg-white/80 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm backdrop-blur"
                     onClick={toggleMenu}
@@ -211,7 +202,6 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
                 </button>
             </div>
 
-            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-6">
                 <nav className="flex space-x-6 text-white text-[14px]">
                     {menuItems.map((item, index) => (
@@ -231,12 +221,10 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
                         closeOtherDropdowns={closeOtherDropdowns}
                     />
                     
-                    {/* Tampilkan UserAvatar jika login, jika tidak tampilkan tombol Login/Register */}
                     {isAuthenticated ? (
                         <UserAvatar />
                     ) : (
                         <>
-                            {/* Register Button */}
                             <motion.button
                                 className="ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 items-center justify-center px-4 py-2 border border-white/30 rounded-full text-sm font-medium text-white bg-white/20 hover:bg-white/30 backdrop-blur-sm focus:outline-none hidden sm:flex"
                                 whileHover={{ scale: 1.05 }}
@@ -246,7 +234,6 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
                                 <UserPlus size={16} className="mr-1.5" />
                                 <span>Register</span>
                             </motion.button>
-                            {/* Login Button */}
                             <motion.button
                                 className="ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 items-center justify-center px-4 py-2 border-0 rounded-full text-sm font-medium text-white bg-gradient-to-l from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 shadow-lg hover:from-indigo-600 hover:to-purple-700 dark:hover:from-indigo-700 dark:hover:to-purple-800 focus:outline-none flex"
                                 whileHover={{ scale: 1.05 }}
@@ -261,11 +248,9 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
                 </div>
             </div>
 
-            {/* Mobile Navigation Menu */}
             <AnimatePresence>
                 {isOpen && !isDesktop && (
                     <>
-                        {/* Backdrop */}
                         <motion.div
                             className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-40"
                             initial="hidden"
@@ -275,7 +260,6 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
                             onClick={() => setIsOpen(false)}
                         />
 
-                        {/* Menu Panel */}
                         <motion.div
                             className="fixed top-0 left-0 h-full w-full md:w-[380px] bg-gradient-to-br from-white to-white/95 dark:from-gray-900 dark:to-gray-800/95 backdrop-blur-md shadow-xl z-50 flex flex-col"
                             initial="hidden"
@@ -283,7 +267,6 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
                             exit="exit"
                             variants={menuPanelVariants}
                         >
-                            {/* Header Section */}
                             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95">
                                 <div className="flex items-center gap-2">
                                     <Image
@@ -302,7 +285,6 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
                                 </button>
                             </div>
 
-                            {/* Menu Items */}
                             <nav className="flex-1 p-5 bg-white dark:bg-gray-900">
                                 <div className="mb-3 text-sm font-medium text-gray-400 dark:text-gray-500 px-2">MENU UTAMA</div>
                                 <ul className="space-y-2">
@@ -325,37 +307,33 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
                                 </ul>
                             </nav>
 
-                            {/* Call to Action */}
                             <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95">
-                                {/* Mobile Auth Buttons or UserAvatar */}
                                 {isAuthenticated ? (
                                     <div className="flex justify-center mb-3">
                                         <UserAvatar />
                                     </div>
                                 ) : (
                                     <div className="flex gap-3 mb-3">
-                                        {/* Register Button for Mobile */}
                                         <motion.button
                                             variants={buttonVariants}
                                             initial="hidden"
                                             animate="visible"
                                             whileHover="hover"
                                             whileTap="tap"
-                                            onClick={() => window.location.href = '/auth?tab=register'}
+                                            onClick={() => router.push('/auth?tab=register')}
                                             className="flex-1 py-2.5 px-3 flex items-center justify-center gap-2 bg-white dark:bg-gray-700 text-blue-600 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-lg shadow transition-shadow hover:shadow-md"
                                         >
                                             <UserPlus size={16} />
                                             <span className="font-medium">Register</span>
                                         </motion.button>
 
-                                        {/* Login Button for Mobile */}
                                         <motion.button
                                             variants={buttonVariants}
                                             initial="hidden"
                                             animate="visible"
                                             whileHover="hover"
                                             whileTap="tap"
-                                            onClick={() => window.location.href = '/auth?tab=login'}
+                                            onClick={() => router.push('/auth?tab=login')}
                                             className="flex-1 py-2.5 px-3 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-shadow"
                                         >
                                             <LogIn size={16} />
