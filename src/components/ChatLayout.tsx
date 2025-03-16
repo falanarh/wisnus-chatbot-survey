@@ -228,7 +228,7 @@ const ChatLayout = () => {
                 : 'bg-gradient-to-r from-blue-400/80 to-indigo-400/80'} 
                 backdrop-blur-md text-white p-4 shadow-md`}>
                 <div className="max-w-6xl mx-auto flex items-start justify-between">
-                    <div className="flex items-center gap-2 w-full sm:w-[300px]">
+                    <div onClick={() => window.location.href = '/'} className="flex items-center gap-2 w-full sm:w-[300px] cursor-pointer">
                         <Image
                             src={isDarkMode ? "/bps_dark.png" : "/bps_logo.png"}
                             alt="Badan Pusat Statistik"

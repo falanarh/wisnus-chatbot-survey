@@ -106,7 +106,7 @@ export default function ModernAuthPage({ initialTab = "login" }: AuthPageProps) 
       </div>
 
       {/* Top Navigation */}
-      <div className="w-full py-4 px-4 md:px-36 flex justify-between items-center relative z-10">
+      <div className="w-full py-4 px-4 sm:px-6 md:px-24 lg:36 xl:px-48 flex justify-between items-center relative z-10">
         <Link href="/" className="group flex items-center gap-2">
           <div className="relative overflow-hidden rounded-full p-0.5">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 opacity-70 group-hover:opacity-100 transition-opacity duration-300"></div>

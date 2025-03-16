@@ -137,20 +137,21 @@ const AboutSection = () => {
                     </h3>
 
                     <div className="space-y-4">
-                        <p className="text-gray-700 dark:text-gray-300 text-sm">
-                            Survei Wisatawan Nusantara adalah survei nasional yang dilakukan oleh Badan Pusat Statistik
-                            untuk mengumpulkan data mengenai perjalanan wisata dalam negeri yang dilakukan oleh penduduk Indonesia.
+                        <p className="text-gray-700 dark:text-gray-300 mb-6">
+                            Survei Digital Wisatawan Nusantara merupakan kegiatan rutin Badan Pusat Statistik (BPS)
+                            untuk mengumpulkan data penduduk Indonesia yang melakukan perjalanan wisata di wilayah Indonesia.
+                            Data ini sangat dibutuhkan dalam penyusunan rencana dan kebijakan di bidang pariwisata.
                         </p>
 
-                        <p className="text-gray-700 dark:text-gray-300 text-sm">
-                            Data yang dikumpulkan antara lain mencakup karakteristik wisatawan, pola perjalanan,
-                            pengeluaran selama berwisata, serta persepsi terhadap destinasi wisata yang dikunjungi.
+                        <p className="text-gray-700 dark:text-gray-300 mb-6">
+                            Data yang dikumpulkan meliputi karakteristik perjalanan seperti maksud/tujuan, akomodasi yang digunakan,
+                            lama bepergian, dan rata-rata pengeluaran selama perjalanan, serta karakteristik demografi wisatawan nusantara.
                         </p>
 
-                        <p className="text-gray-700 dark:text-gray-300 text-sm">
-                            Hasil survei ini digunakan sebagai dasar perencanaan kebijakan dan pengembangan
-                            sektor pariwisata di Indonesia serta membantu pemerintah mengevaluasi efektivitas
-                            program-program pengembangan pariwisata.
+                        <p className="text-gray-700 dark:text-gray-300">
+                            Aktivitas pariwisata di Indonesia telah menjadi sektor andalan yang mampu menggerakkan sektor-sektor ekonomi lain.
+                            Meski tidak mendatangkan devisa seperti wisatawan mancanegara, perjalanan wisatawan nusantara berperan penting
+                            dalam menghidupkan sektor angkutan, perhotelan, industri kreatif, dan ekonomi lokal di berbagai daerah.
                         </p>
                     </div>
 

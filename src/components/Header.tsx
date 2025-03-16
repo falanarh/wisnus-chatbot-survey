@@ -175,7 +175,7 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
     };
 
     return (
-        <header className={`py-3 px-4 sm:px-6 md:px-10 lg:px-20 flex justify-between items-center ${fontClass} fixed top-0 w-full z-50 backdrop-blur-md shadow-sm dark:shadow-md dark:shadow-black/10 border-b
+        <header className={`py-3 px-4 sm:px-6 md:px-24 lg:36 xl:px-48 flex justify-between items-center ${fontClass} fixed top-0 w-full z-50 backdrop-blur-md shadow-sm dark:shadow-md dark:shadow-black/10 border-b
             bg-gradient-to-r from-blue-400/80 to-indigo-400/80 text-white
             dark:bg-gradient-to-r dark:from-blue-900/80 dark:to-purple-900/80
             dark:border-gray-800`}>
