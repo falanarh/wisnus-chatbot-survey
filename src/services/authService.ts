@@ -172,3 +172,35 @@ export function getUserData(): LoginResponseData | null {
   const userData = localStorage.getItem('user_data');
   return userData ? JSON.parse(userData) : null;
 }
+
+/**
+ * Updates a specific property in the user_data localStorage item
+ * @param propertyName - Name of the property to update
+ * @param newValue - New value for the property
+ * @returns Success status
+ */
+export function updateUserDataProperty(propertyName: string, newValue: string | number | boolean | null): boolean {
+  try {
+    // Get current user data from localStorage
+    const userDataString = localStorage.getItem('user_data');
+    
+    if (!userDataString) {
+      console.error("No user data found in localStorage");
+      return false;
+    }
+    
+    // Parse the JSON string to an object
+    const userData = JSON.parse(userDataString);
+    
+    // Update the specific property
+    userData[propertyName] = newValue;
+    
+    // Save the updated object back to localStorage
+    localStorage.setItem('user_data', JSON.stringify(userData));
+    
+    return true;
+  } catch (error) {
+    console.error("Error updating user data property:", error);
+    return false;
+  }
+}

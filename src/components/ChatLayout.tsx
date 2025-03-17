@@ -1,5 +1,3 @@
-// src/components/ChatLayout.tsx
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -12,6 +10,9 @@ import { useTheme } from "@/components/ThemeProvider";
 import { useChatPersistence } from "@/utils/chatPersistence";
 import MenuToggle from "./MenuToggle";
 import { ThemeToggle } from "./ThemeToggle";
+import { analyzeIntent, queryRAG, startSurvey, submitSurveyResponse } from "@/services/surveyService";
+import { getAuthToken, getUserData, updateUserDataProperty } from "@/services/authService";
+import { generateUnorderedList } from "@/utils/otherUtils";
 
 const merriweatherSans = Merriweather_Sans({
     variable: "--font-merriweather-sans",
@@ -22,7 +23,7 @@ const merriweatherSans = Merriweather_Sans({
 const ChatLayout = () => {
     // Gunakan custom hook untuk persistensi chat
     const { messages, addMessage, updateLastMessage, clearChat } = useChatPersistence();
-    
+
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [botIsTyping, setBotIsTyping] = useState(false);
@@ -33,11 +34,11 @@ const ChatLayout = () => {
     const [mode, setMode] = useState<'survey' | 'qa'>('survey');
     const { theme } = useTheme();
     const isDarkMode = theme === 'dark';
-    
+
     // State untuk kontrol scroll
     const [userHasScrolled, setUserHasScrolled] = useState(false);
     const [showScrollButton, setShowScrollButton] = useState(false);
-    
+
     // Referensi untuk menandai bahwa user yang melakukan scroll, bukan auto-scroll
     const isUserScrollingRef = useRef(false);
 
@@ -73,22 +74,22 @@ const ChatLayout = () => {
         const handleScroll = () => {
             // Tandai bahwa user sedang scroll
             isUserScrollingRef.current = true;
-            
+
             // Set user telah scroll
             setUserHasScrolled(true);
-            
+
             // Hitung posisi scroll
             const { scrollTop, scrollHeight, clientHeight } = chatContainer;
             const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-            
+
             // Jika user scroll ke dekat bawah (kurang dari 20px), reset userHasScrolled
             if (distanceFromBottom < 20) {
                 setUserHasScrolled(false);
             }
-            
+
             // Tampilkan tombol scroll jika tidak di dekat bawah
             setShowScrollButton(distanceFromBottom > 100);
-            
+
             // Reset flag setelah user selesai scroll
             setTimeout(() => {
                 isUserScrollingRef.current = false;
@@ -96,7 +97,7 @@ const ChatLayout = () => {
         };
 
         chatContainer.addEventListener("scroll", handleScroll);
-        
+
         return () => {
             chatContainer.removeEventListener("scroll", handleScroll);
         };
@@ -124,7 +125,7 @@ const ChatLayout = () => {
         setBotIsTyping(false);
     };
 
-    const handleSend = () => {
+    const handleSend = async () => {
         // Jangan izinkan pengiriman pesan jika input kosong atau bot sedang mengetik
         if (!input.trim() || loading || botIsTyping) return;
 
@@ -141,41 +142,111 @@ const ChatLayout = () => {
         // Saat user mengirim pesan baru, reset state scroll
         setUserHasScrolled(false);
 
-        setTimeout(() => {
+        try {
+            // Tambahkan pesan loading dari bot
             addMessage({ text: "", user: false, loading: true });
 
-            // Use mode-specific responses
-            const response = mode === 'survey'
-                ? `Survei: Balasan untuk: ${userMessage}`
-                : `Q&A: Jawaban untuk: ${userMessage}`;
-
-            const tokens = response.split(" ");
-            let currentText = "";
-
-            setTimeout(() => {
-                if (!tokenGenerationRef.current.stopped) {
-                    tokens.forEach((token, index) => {
-                        const timeout = setTimeout(() => {
-                            // Skip if generation has been stopped
-                            if (tokenGenerationRef.current.stopped) return;
-
-                            currentText += (index === 0 ? "" : " ") + token;
-                            updateLastMessage(currentText, false);
-
-                            // Setelah token terakhir, izinkan pengguna mengirim pesan lagi
-                            if (index === tokens.length - 1) {
-                                setBotIsTyping(false);
-                            }
-                        }, index * 100);
-
-                        // Store timeout reference for potential cancellation
-                        tokenGenerationRef.current.timeouts.push(timeout);
-                    });
+            if (mode === 'survey') {
+                const userData = getUserData();
+                if (!userData?.activeSurveySessionId) {
+                    throw new Error("Active survey session ID not found in user data");
                 }
-            }, 1000);
+                const token = getAuthToken();
+                if (!token) {
+                    throw new Error("Token not found");
+                }
+                // Cek apakah user sedang dalam sesi survei
+                if (!userData.activeSurveySessionId) {
+                    // Analisis intent pengguna
+                    const intentAnalysis = await analyzeIntent(token, userMessage);
+                    if (!intentAnalysis.success || !intentAnalysis.data) {
+                        throw new Error("Failed to analyze intent");
+                    }
+                    // Cek apakah pengguna ingin memulai survei
+                    if (intentAnalysis.data.wants_to_start) {
+                        const surveyStartResponse = await startSurvey(token);
+                        if (!surveyStartResponse.success) {
+                            throw new Error("Failed to start survey");
+                        }
+                        updateUserDataProperty('activeSurveySessionId', surveyStartResponse.session_id);
+                        if (surveyStartResponse.next_question) {
+                            simulateTyping(surveyStartResponse.next_question.text);
+                        } else {
+                            simulateTyping("Pertanyaan berikutnya tidak tersedia.");
+                        }
 
+                    } else {
+                        const text = "Tidak masalah jika Anda belum siap untuk memulai survei. Silakan kirim pesan kapan saja jika Anda ingin memulai.";
+                        simulateTyping(text);
+                    }
+                } else {
+                    const surveyResponse = await submitSurveyResponse(token, userData.activeSurveySessionId, userMessage);
+                    if (surveyResponse.success) {
+                        let text = "";
+                        if (surveyResponse.info === "survey_completed" && surveyResponse.additional_info) {
+                            text = surveyResponse.additional_info;
+                        } else if (surveyResponse.info === "expected_answer" && surveyResponse.next_question) {
+                            if (surveyResponse.next_question.code === "KR004") {
+                                text = `${surveyResponse.next_question.text}\n\nPilih salah satu opsi di bawah ini: ${generateUnorderedList(surveyResponse.next_question.options || [], "◆")}`;
+                            } else {
+                                text = surveyResponse.next_question.text;
+                            }
+                        } else if (surveyResponse.info === "unexpected_answer_or_other" && surveyResponse.currentQuestion && surveyResponse.clarification_reason && surveyResponse.follow_up_question) {
+                            if (surveyResponse.currentQuestion.code === "KR004") {
+                                text = `${surveyResponse.clarification_reason} ${surveyResponse.follow_up_question}\n\nPilih salah satu opsi di bawah ini: ${generateUnorderedList(surveyResponse.currentQuestion.options || [], "◆")}`;
+                            } else {
+                                text = `${surveyResponse.clarification_reason} ${surveyResponse.follow_up_question}`;
+                            }
+                        } else if (surveyResponse.info === "question" && surveyResponse.currentQuestion && surveyResponse.answer) {
+                            if (surveyResponse.currentQuestion.code === "KR004") {
+                                text = `${surveyResponse.answer} \n\nPertanyaan saat ini: ${surveyResponse.currentQuestion.text}\n\nPilih salah satu opsi di bawah ini: ${generateUnorderedList(surveyResponse.currentQuestion.options || [], "◆")}`;
+                            } else {
+                                text = `${surveyResponse.answer} \n\nPertanyaan saat ini: ${surveyResponse.currentQuestion.text}`;
+                            }
+                        } else if (surveyResponse.info === "error" && surveyResponse.additional_info) {
+                            text = surveyResponse.additional_info;
+                        }
+                        simulateTyping(text);
+                    } else {
+                        simulateTyping("Terjadi kesalahan saat mengirim jawaban survei Anda.");
+                    }
+                }
+            } else {
+                const ragResponse = await queryRAG(userMessage);
+                simulateTyping(ragResponse.answer);
+            }
+        } catch (error) {
+            console.error("Error processing message:", error);
+            // Tanggapi dengan pesan error jika terjadi kesalahan
+            updateLastMessage("Terjadi kesalahan saat memproses pesan Anda. Silakan coba lagi.", false);
+            setBotIsTyping(false);
+        } finally {
             setLoading(false);
-        }, 500);
+        }
+    };
+
+    // Fungsi untuk mensimulasikan pengetikan respons
+    const simulateTyping = (response: string) => {
+        const tokens = response.split(" ");
+        let currentText = "";
+
+        tokens.forEach((token, index) => {
+            const timeout = setTimeout(() => {
+                // Skip if generation has been stopped
+                if (tokenGenerationRef.current.stopped) return;
+
+                currentText += (index === 0 ? "" : " ") + token;
+                updateLastMessage(currentText, false);
+
+                // Setelah token terakhir, izinkan pengguna mengirim pesan lagi
+                if (index === tokens.length - 1) {
+                    setBotIsTyping(false);
+                }
+            }, index * 100);
+
+            // Store timeout reference for potential cancellation
+            tokenGenerationRef.current.timeouts.push(timeout);
+        });
     };
 
     // Function to close all dropdowns
@@ -277,7 +348,7 @@ const ChatLayout = () => {
             <div className="flex-1 overflow-hidden relative justify-center">
                 <div
                     ref={chatContainerRef}
-                    className={`w-full mx-auto overflow-y-auto ${messages.length === 0 ? 'h-[87vh]' : 'h-[calc(100vh-180px)]'} flex justify-center`}
+                    className={`w-full mx-auto overflow-y-auto ${messages.length === 0 ? 'h-[87vh]' : 'h-[calc(100vh-210px)]'} flex justify-center`}
                 >
                     {messages.length === 0 && (
                         <div className="flex flex-col items-center justify-center text-center space-y-2 px-3 mb-[180px]">
@@ -307,7 +378,7 @@ const ChatLayout = () => {
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0 }}
                                         transition={{ duration: 0.3 }}
-                                        className={`flex items-start gap-3 mt-2 mb-4 ${msg.user ? "justify-end" : "justify-start"}`}
+                                        className={`flex items-start gap-3 my-4 ${msg.user ? "justify-end" : "justify-start"}`}
                                     >
                                         {!msg.user && (
                                             <div className={`flex-shrink-0 
@@ -334,7 +405,7 @@ const ChatLayout = () => {
                                                     <Loader2 className={`w-4 h-4 animate-spin ${isDarkMode ? 'text-gray-300' : 'text-gray-400'}`} />
                                                 </div>
                                             ) : (
-                                                <p className="break-words whitespace-pre-wrap">{msg.text}</p>
+                                                <p className="break-words whitespace-pre-wrap text-justify">{msg.text}</p>
                                             )}
                                         </div>
 
@@ -354,7 +425,7 @@ const ChatLayout = () => {
                         </AnimatePresence>
                     )}
                 </div>
-                
+
                 {/* Tombol scroll ke bawah */}
                 <AnimatePresence>
                     {showScrollButton && (
