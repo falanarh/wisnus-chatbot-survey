@@ -16,6 +16,13 @@ export interface LoginResponseData {
   token: string;
 }
 
+export interface UserData {
+  _id: string;
+  name: string;
+  email: string;
+  activeSurveySessionId?: string;
+}
+
 // Tipe untuk data registrasi
 export interface RegisterUserData {
   name: string;

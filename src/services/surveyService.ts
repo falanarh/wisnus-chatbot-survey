@@ -18,7 +18,7 @@ export interface IntentAnalysisResponse {
 }
 
 // Interface for a survey question
-interface Question {
+export interface Question {
   code: string;
   text: string;
   type: "text" | "select" | "date";
