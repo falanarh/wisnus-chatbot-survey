@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 export interface ChatMessage {
   text: string;
   user: boolean;
+  mode: 'survey' | 'qa';
   loading?: boolean;
 }
 

@@ -13,6 +13,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { analyzeIntent, queryRAG, Question, startSurvey, submitSurveyResponse, SurveyResponseResult } from "@/services/surveyService";
 import { getAuthToken, getUserData, updateUserDataProperty, UserData } from "@/services/authService";
 import { generateUnorderedList } from "@/utils/otherUtils";
+import ModeBadge from "./ModeBadge";
 
 const merriweatherSans = Merriweather_Sans({
     variable: "--font-merriweather-sans",
@@ -128,133 +129,132 @@ const ChatLayout = () => {
     const handleSend = async () => {
         // Guard clause - early return if conditions aren't met
         if (!input.trim() || loading || botIsTyping) return;
-      
+
         const userMessage = input.trim();
         setInput("");
-        addMessage({ text: userMessage, user: true });
-        
+        addMessage({ text: userMessage, user: true, mode: mode });
+
         // Set initial states
         setLoading(true);
         setBotIsTyping(true);
         setUserHasScrolled(false);
-        
+
         // Reset token generation state
         tokenGenerationRef.current = {
-          stopped: false,
-          timeouts: []
+            stopped: false,
+            timeouts: []
         };
-      
+
         // Add loading message placeholder
-        addMessage({ text: "", user: false, loading: true });
-      
+        addMessage({ text: "", user: false, loading: true, mode: mode });
+
         try {
-          const token = getAuthToken();
-          const userData = getUserData();
-          
-          if (!token) throw new Error("Authentication token not found");
-          if (!userData) throw new Error("User data not found");
-          
-          if (mode === 'survey') {
-            await handleSurveyMode(token, userData, userMessage);
-          } else {
-            const ragResponse = await queryRAG(userMessage);
-            simulateTyping(ragResponse.answer);
-          }
+            const token = getAuthToken();
+            const userData = getUserData();
+
+            if (!token) throw new Error("Authentication token not found");
+            if (!userData) throw new Error("User data not found");
+
+            if (mode === 'survey') {
+                await handleSurveyMode(token, userData, userMessage);
+            } else {
+                const ragResponse = await queryRAG(userMessage);
+                simulateTyping(ragResponse.answer);
+            }
         } catch (error) {
-          console.error("Error processing message:", error);
-          updateLastMessage("Terjadi kesalahan saat memproses pesan Anda. Silakan coba lagi.", false);
-          setBotIsTyping(false);
+            console.error("Error processing message:", error);
+            updateLastMessage("Terjadi kesalahan saat memproses pesan Anda. Silakan coba lagi.", false);
+            setBotIsTyping(false);
         } finally {
-          setLoading(false);
+            setLoading(false);
         }
-      };
-      
-      // Helper function to handle survey mode logic
-      const handleSurveyMode = async (token: string, userData: UserData, userMessage: string) => {
+    };
+
+    // Helper function to handle survey mode logic
+    const handleSurveyMode = async (token: string, userData: UserData, userMessage: string) => {
         const sessionId = userData?.activeSurveySessionId;
-        
+
         // User has no active survey session
         if (!sessionId) {
-          const intentResponse = await analyzeIntent(token, userMessage);
-          
-          if (intentResponse.success && intentResponse.data?.wants_to_start) {
-            await startNewSurvey(token);
-          } else {
-            simulateTyping("Tidak masalah jika Anda belum siap untuk memulai survei. Silakan kirim pesan kapan saja jika Anda ingin memulai.");
-          }
-          return;
+            const intentResponse = await analyzeIntent(token, userMessage);
+
+            if (intentResponse.success && intentResponse.data?.wants_to_start) {
+                await startNewSurvey(token);
+            } else {
+                simulateTyping("Tidak masalah jika Anda belum siap untuk memulai survei. Silakan kirim pesan kapan saja jika Anda ingin memulai.");
+            }
+            return;
         }
-        
+
         // User has active survey session
         const response = await submitSurveyResponse(token, sessionId, userMessage);
         if (!response.success) {
-          simulateTyping("Terjadi kesalahan saat mengirim jawaban survei Anda.");
-          return;
+            simulateTyping("Terjadi kesalahan saat mengirim jawaban survei Anda.");
+            return;
         }
-        
+
         const botResponse = formatSurveyResponse(response);
         simulateTyping(botResponse);
-      };
-      
-      // Helper function to start a new survey
-      const startNewSurvey = async (token: string) => {
+    };
+
+    // Helper function to start a new survey
+    const startNewSurvey = async (token: string) => {
         const response = await startSurvey(token);
-        
+
         if (!response.success) {
-          throw new Error("Failed to start survey");
+            throw new Error("Failed to start survey");
         }
-        
+
         updateUserDataProperty('activeSurveySessionId', response.session_id);
-        
+
         if (response.next_question) {
-          simulateTyping(response.next_question.text);
+            simulateTyping(response.next_question.text);
         } else {
-          simulateTyping("Pertanyaan berikutnya tidak tersedia.");
+            simulateTyping("Pertanyaan berikutnya tidak tersedia.");
         }
-      };
-      
-      // Helper function to format survey response based on info type
-      const formatSurveyResponse = (response: SurveyResponseResult): string => {
-        const { info, additional_info, next_question, currentQuestion, 
-                clarification_reason, follow_up_question, answer } = response;
-        
+    };
+
+    // Helper function to format survey response based on info type
+    const formatSurveyResponse = (response: SurveyResponseResult): string => {
+        const { info, additional_info, next_question, currentQuestion,
+            clarification_reason, follow_up_question, answer } = response;
+
         switch (info) {
-          case "survey_completed":
-            return additional_info || "Survei telah selesai.";
-            
-          case "expected_answer":
-            if (!next_question) return "Pertanyaan berikutnya tidak tersedia.";
-            return formatQuestion(next_question);
-            
-          case "unexpected_answer_or_other":
-            if (!currentQuestion || !clarification_reason || !follow_up_question) {
-              return "Mohon berikan jawaban yang sesuai dengan pertanyaan.";
-            }
-            return `${clarification_reason} ${follow_up_question}\n\n${
-              currentQuestion.code === "KR004" 
-                ? `Pilih salah satu opsi di bawah ini: ${generateUnorderedList(currentQuestion.options || [], "◆")}`
-                : ""
-            }`;
-            
-          case "question":
-            if (!currentQuestion || !answer) return "Silakan jawab pertanyaan saat ini.";
-            return `${answer} \n\nPertanyaan saat ini: ${formatQuestion(currentQuestion)}`;
-            
-          case "error":
-            return additional_info || "Terjadi kesalahan dalam memproses jawaban Anda.";
-            
-          default:
-            return "Silakan lanjutkan menjawab pertanyaan survei.";
+            case "survey_completed":
+                return additional_info || "Survei telah selesai.";
+
+            case "expected_answer":
+                if (!next_question) return "Pertanyaan berikutnya tidak tersedia.";
+                return formatQuestion(next_question);
+
+            case "unexpected_answer_or_other":
+                if (!currentQuestion || !clarification_reason || !follow_up_question) {
+                    return "Mohon berikan jawaban yang sesuai dengan pertanyaan.";
+                }
+                return `${clarification_reason} ${follow_up_question}\n\n${currentQuestion.code === "KR004"
+                        ? `Pilih salah satu opsi di bawah ini: ${generateUnorderedList(currentQuestion.options || [], "◆")}`
+                        : ""
+                    }`;
+
+            case "question":
+                if (!currentQuestion || !answer) return "Silakan jawab pertanyaan saat ini.";
+                return `${answer} \n\nPertanyaan saat ini: ${formatQuestion(currentQuestion)}`;
+
+            case "error":
+                return additional_info || "Terjadi kesalahan dalam memproses jawaban Anda.";
+
+            default:
+                return "Silakan lanjutkan menjawab pertanyaan survei.";
         }
-      };
-      
-      // Helper to format questions with options if needed
-      const formatQuestion = (question: Question): string => {
+    };
+
+    // Helper to format questions with options if needed
+    const formatQuestion = (question: Question): string => {
         if (question.code === "KR004" && question.options?.length) {
-          return `${question.text}\n\nPilih salah satu opsi di bawah ini: ${generateUnorderedList(question.options, "◆")}`;
+            return `${question.text}\n\nPilih salah satu opsi di bawah ini: ${generateUnorderedList(question.options, "◆")}`;
         }
         return question.text;
-      };
+    };
 
     // Fungsi untuk mensimulasikan pengetikan respons
     const simulateTyping = (response: string) => {
@@ -436,7 +436,10 @@ const ChatLayout = () => {
                                                     <Loader2 className={`w-4 h-4 animate-spin ${isDarkMode ? 'text-gray-300' : 'text-gray-400'}`} />
                                                 </div>
                                             ) : (
+                                            <>
+                                                {!msg.user && (<ModeBadge mode={msg.mode} />)}
                                                 <p className="break-words whitespace-pre-wrap text-justify">{msg.text}</p>
+                                            </>
                                             )}
                                         </div>
 
