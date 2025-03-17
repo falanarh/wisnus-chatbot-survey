@@ -10,8 +10,8 @@ import { useTheme } from "@/components/ThemeProvider";
 import { useChatPersistence } from "@/utils/chatPersistence";
 import MenuToggle from "./MenuToggle";
 import { ThemeToggle } from "./ThemeToggle";
-import { analyzeIntent, queryRAG, startSurvey, submitSurveyResponse } from "@/services/surveyService";
-import { getAuthToken, getUserData, updateUserDataProperty } from "@/services/authService";
+import { analyzeIntent, queryRAG, Question, startSurvey, submitSurveyResponse, SurveyResponseResult } from "@/services/surveyService";
+import { getAuthToken, getUserData, updateUserDataProperty, UserData } from "@/services/authService";
 import { generateUnorderedList } from "@/utils/otherUtils";
 
 const merriweatherSans = Merriweather_Sans({
@@ -126,104 +126,135 @@ const ChatLayout = () => {
     };
 
     const handleSend = async () => {
-        // Jangan izinkan pengiriman pesan jika input kosong atau bot sedang mengetik
+        // Guard clause - early return if conditions aren't met
         if (!input.trim() || loading || botIsTyping) return;
-
+      
         const userMessage = input.trim();
         setInput("");
         addMessage({ text: userMessage, user: true });
+        
+        // Set initial states
         setLoading(true);
         setBotIsTyping(true);
-
-        // Reset stopped state for new message
-        tokenGenerationRef.current.stopped = false;
-        tokenGenerationRef.current.timeouts = [];
-
-        // Saat user mengirim pesan baru, reset state scroll
         setUserHasScrolled(false);
-
+        
+        // Reset token generation state
+        tokenGenerationRef.current = {
+          stopped: false,
+          timeouts: []
+        };
+      
+        // Add loading message placeholder
+        addMessage({ text: "", user: false, loading: true });
+      
         try {
-            // Tambahkan pesan loading dari bot
-            addMessage({ text: "", user: false, loading: true });
-
-            if (mode === 'survey') {
-                const userData = getUserData();
-                if (!userData?.activeSurveySessionId) {
-                    throw new Error("Active survey session ID not found in user data");
-                }
-                const token = getAuthToken();
-                if (!token) {
-                    throw new Error("Token not found");
-                }
-                // Cek apakah user sedang dalam sesi survei
-                if (!userData.activeSurveySessionId) {
-                    // Analisis intent pengguna
-                    const intentAnalysis = await analyzeIntent(token, userMessage);
-                    if (!intentAnalysis.success || !intentAnalysis.data) {
-                        throw new Error("Failed to analyze intent");
-                    }
-                    // Cek apakah pengguna ingin memulai survei
-                    if (intentAnalysis.data.wants_to_start) {
-                        const surveyStartResponse = await startSurvey(token);
-                        if (!surveyStartResponse.success) {
-                            throw new Error("Failed to start survey");
-                        }
-                        updateUserDataProperty('activeSurveySessionId', surveyStartResponse.session_id);
-                        if (surveyStartResponse.next_question) {
-                            simulateTyping(surveyStartResponse.next_question.text);
-                        } else {
-                            simulateTyping("Pertanyaan berikutnya tidak tersedia.");
-                        }
-
-                    } else {
-                        const text = "Tidak masalah jika Anda belum siap untuk memulai survei. Silakan kirim pesan kapan saja jika Anda ingin memulai.";
-                        simulateTyping(text);
-                    }
-                } else {
-                    const surveyResponse = await submitSurveyResponse(token, userData.activeSurveySessionId, userMessage);
-                    if (surveyResponse.success) {
-                        let text = "";
-                        if (surveyResponse.info === "survey_completed" && surveyResponse.additional_info) {
-                            text = surveyResponse.additional_info;
-                        } else if (surveyResponse.info === "expected_answer" && surveyResponse.next_question) {
-                            if (surveyResponse.next_question.code === "KR004") {
-                                text = `${surveyResponse.next_question.text}\n\nPilih salah satu opsi di bawah ini: ${generateUnorderedList(surveyResponse.next_question.options || [], "◆")}`;
-                            } else {
-                                text = surveyResponse.next_question.text;
-                            }
-                        } else if (surveyResponse.info === "unexpected_answer_or_other" && surveyResponse.currentQuestion && surveyResponse.clarification_reason && surveyResponse.follow_up_question) {
-                            if (surveyResponse.currentQuestion.code === "KR004") {
-                                text = `${surveyResponse.clarification_reason} ${surveyResponse.follow_up_question}\n\nPilih salah satu opsi di bawah ini: ${generateUnorderedList(surveyResponse.currentQuestion.options || [], "◆")}`;
-                            } else {
-                                text = `${surveyResponse.clarification_reason} ${surveyResponse.follow_up_question}`;
-                            }
-                        } else if (surveyResponse.info === "question" && surveyResponse.currentQuestion && surveyResponse.answer) {
-                            if (surveyResponse.currentQuestion.code === "KR004") {
-                                text = `${surveyResponse.answer} \n\nPertanyaan saat ini: ${surveyResponse.currentQuestion.text}\n\nPilih salah satu opsi di bawah ini: ${generateUnorderedList(surveyResponse.currentQuestion.options || [], "◆")}`;
-                            } else {
-                                text = `${surveyResponse.answer} \n\nPertanyaan saat ini: ${surveyResponse.currentQuestion.text}`;
-                            }
-                        } else if (surveyResponse.info === "error" && surveyResponse.additional_info) {
-                            text = surveyResponse.additional_info;
-                        }
-                        simulateTyping(text);
-                    } else {
-                        simulateTyping("Terjadi kesalahan saat mengirim jawaban survei Anda.");
-                    }
-                }
-            } else {
-                const ragResponse = await queryRAG(userMessage);
-                simulateTyping(ragResponse.answer);
-            }
+          const token = getAuthToken();
+          const userData = getUserData();
+          
+          if (!token) throw new Error("Authentication token not found");
+          if (!userData) throw new Error("User data not found");
+          
+          if (mode === 'survey') {
+            await handleSurveyMode(token, userData, userMessage);
+          } else {
+            const ragResponse = await queryRAG(userMessage);
+            simulateTyping(ragResponse.answer);
+          }
         } catch (error) {
-            console.error("Error processing message:", error);
-            // Tanggapi dengan pesan error jika terjadi kesalahan
-            updateLastMessage("Terjadi kesalahan saat memproses pesan Anda. Silakan coba lagi.", false);
-            setBotIsTyping(false);
+          console.error("Error processing message:", error);
+          updateLastMessage("Terjadi kesalahan saat memproses pesan Anda. Silakan coba lagi.", false);
+          setBotIsTyping(false);
         } finally {
-            setLoading(false);
+          setLoading(false);
         }
-    };
+      };
+      
+      // Helper function to handle survey mode logic
+      const handleSurveyMode = async (token: string, userData: UserData, userMessage: string) => {
+        const sessionId = userData?.activeSurveySessionId;
+        
+        // User has no active survey session
+        if (!sessionId) {
+          const intentResponse = await analyzeIntent(token, userMessage);
+          
+          if (intentResponse.success && intentResponse.data?.wants_to_start) {
+            await startNewSurvey(token);
+          } else {
+            simulateTyping("Tidak masalah jika Anda belum siap untuk memulai survei. Silakan kirim pesan kapan saja jika Anda ingin memulai.");
+          }
+          return;
+        }
+        
+        // User has active survey session
+        const response = await submitSurveyResponse(token, sessionId, userMessage);
+        if (!response.success) {
+          simulateTyping("Terjadi kesalahan saat mengirim jawaban survei Anda.");
+          return;
+        }
+        
+        const botResponse = formatSurveyResponse(response);
+        simulateTyping(botResponse);
+      };
+      
+      // Helper function to start a new survey
+      const startNewSurvey = async (token: string) => {
+        const response = await startSurvey(token);
+        
+        if (!response.success) {
+          throw new Error("Failed to start survey");
+        }
+        
+        updateUserDataProperty('activeSurveySessionId', response.session_id);
+        
+        if (response.next_question) {
+          simulateTyping(response.next_question.text);
+        } else {
+          simulateTyping("Pertanyaan berikutnya tidak tersedia.");
+        }
+      };
+      
+      // Helper function to format survey response based on info type
+      const formatSurveyResponse = (response: SurveyResponseResult): string => {
+        const { info, additional_info, next_question, currentQuestion, 
+                clarification_reason, follow_up_question, answer } = response;
+        
+        switch (info) {
+          case "survey_completed":
+            return additional_info || "Survei telah selesai.";
+            
+          case "expected_answer":
+            if (!next_question) return "Pertanyaan berikutnya tidak tersedia.";
+            return formatQuestion(next_question);
+            
+          case "unexpected_answer_or_other":
+            if (!currentQuestion || !clarification_reason || !follow_up_question) {
+              return "Mohon berikan jawaban yang sesuai dengan pertanyaan.";
+            }
+            return `${clarification_reason} ${follow_up_question}\n\n${
+              currentQuestion.code === "KR004" 
+                ? `Pilih salah satu opsi di bawah ini: ${generateUnorderedList(currentQuestion.options || [], "◆")}`
+                : ""
+            }`;
+            
+          case "question":
+            if (!currentQuestion || !answer) return "Silakan jawab pertanyaan saat ini.";
+            return `${answer} \n\nPertanyaan saat ini: ${formatQuestion(currentQuestion)}`;
+            
+          case "error":
+            return additional_info || "Terjadi kesalahan dalam memproses jawaban Anda.";
+            
+          default:
+            return "Silakan lanjutkan menjawab pertanyaan survei.";
+        }
+      };
+      
+      // Helper to format questions with options if needed
+      const formatQuestion = (question: Question): string => {
+        if (question.code === "KR004" && question.options?.length) {
+          return `${question.text}\n\nPilih salah satu opsi di bawah ini: ${generateUnorderedList(question.options, "◆")}`;
+        }
+        return question.text;
+      };
 
     // Fungsi untuk mensimulasikan pengetikan respons
     const simulateTyping = (response: string) => {
