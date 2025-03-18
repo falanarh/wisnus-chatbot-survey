@@ -1,18 +1,20 @@
 "use client";
 
 import React from "react";
-import ChatLayout from "@/components/ChatLayout";
+// import ChatLayout from "@/components/ChatLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import SurveyChatbot from "@/components/SurveyChatbot";
 
 // Catatan: Tidak perlu export metadata di sini karena ini adalah 'use client' component
 // Pindahkan metadata ke route.tsx atau layout.tsx jika diperlukan
 
-const SurveyChatbot: React.FC = () => {
+const SurveyChatbotPage: React.FC = () => {
   return (
     <ProtectedRoute>
-      <ChatLayout />
+      {/* <ChatLayout /> */}
+      <SurveyChatbot />
     </ProtectedRoute>
   );
 };
 
-export default SurveyChatbot;
+export default SurveyChatbotPage;
