@@ -421,7 +421,7 @@ const ChatLayout = () => {
                                         )}
 
                                         <div
-                                            className={`max-w-[75%] p-4 rounded-2xl shadow-lg text-sm break-words whitespace-pre-wrap overflow-hidden backdrop-blur-sm
+                                            className={`max-w-[75%] p-3 md:p-4 rounded-2xl shadow-lg text-sm break-words whitespace-pre-wrap overflow-hidden backdrop-blur-sm
                                         ${msg.user
                                                     ? isDarkMode
                                                         ? "bg-indigo-600/50 border border-indigo-500/40 text-white rounded-tr-none"
