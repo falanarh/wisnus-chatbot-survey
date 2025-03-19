@@ -1,20 +1,18 @@
 import { useAuth } from "@/context/AuthContext";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, LogOut, Trash2, User, Home } from "lucide-react";
+import { X, LogOut, User, Home } from "lucide-react";
 import Link from "next/link";
 
 interface ChatSidebarProps {
   isOpen: boolean;
   onClose: () => void;
   isDarkMode: boolean;
-  onClearChat: () => void;
 }
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({
   isOpen,
   onClose,
   isDarkMode,
-  onClearChat
 }) => {
   const { user, logout } = useAuth();
 
@@ -90,16 +88,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             <Home size={18} />
             <span>Halaman Utama</span>
           </Link>
-          
-          <button
-            onClick={onClearChat}
-            className={`w-full flex items-center gap-3 p-3 rounded-lg ${isDarkMode 
-              ? 'text-red-400 hover:bg-red-900/20' 
-              : 'text-red-600 hover:bg-red-50'}`}
-          >
-            <Trash2 size={18} />
-            <span>Hapus Percakapan</span>
-          </button>
         </div>
 
         {/* Bottom actions */}

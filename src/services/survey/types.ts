@@ -78,6 +78,7 @@ export interface SurveyStartResponse {
  * Survey response data
  */
 export interface SurveyResponseData {
+  info: string;
   next_question?: Question;
   currentQuestion?: Question;
   clarification_reason?: string;
@@ -89,17 +90,8 @@ export interface SurveyResponseData {
 /**
  * Interface for survey response result
  */
-export interface SurveyResponseResult {
+export interface SurveyResponseResult extends SurveyResponseData {
   success: boolean;
-  info: string;
-  next_question?: Question;
-  currentQuestion?: Question;
-  clarification_reason?: string;
-  follow_up_question?: string;
-  answer?: string;
-  additional_info?: string;
-  message?: string;
-  error?: string;
 }
 
 /**
@@ -155,3 +147,14 @@ export interface SurveySessionStatus {
  * Survey status response
  */
 export type SurveyStatusResponse = ApiResponse<SurveySessionStatus>;
+
+/**
+ * Survey message interface
+ */
+export interface SurveyMessage {
+  _id: string;
+  session_id: string;
+  user_message: string;
+  system_response: SurveyResponseData;
+  timestamp: string;
+}

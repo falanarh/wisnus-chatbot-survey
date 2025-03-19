@@ -75,3 +75,23 @@ body {
 .dark * {
   scrollbar-color: var(--scrollbar-thumb-dark) var(--scrollbar-bg-dark);
 }
+
+/* Add these to your globals.css */
+
+.bg-grid-light {
+  background-image: linear-gradient(to right, #e0e0e0 1px, transparent 1px),
+                   linear-gradient(to bottom, #e0e0e0 1px, transparent 1px);
+}
+
+.bg-grid-dark {
+  background-image: linear-gradient(to right, rgba(75, 85, 99, 0.3) 1px, transparent 1px),
+                   linear-gradient(to bottom, rgba(75, 85, 99, 0.3) 1px, transparent 1px);
+}
+
+.bg-dots-light {
+  background-image: radial-gradient(#333 1px, transparent 1px);
+}
+
+.bg-dots-dark {
+  background-image: radial-gradient(rgba(156, 163, 175, 0.5) 1px, transparent 1px);
+}

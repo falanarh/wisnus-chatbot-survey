@@ -6,7 +6,7 @@ import { CheckCircle, ArrowRight, Award } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { calculateDurationInMinutes, formatDate, formatDuration } from '@/utils/dateUtils';
-import { SurveySessionStatus } from '@/services/surveyService';
+import { SurveySessionStatus } from '@/services/survey';
 
 interface SurveyCompletionPageProps {
     sessionData?: SurveySessionStatus;

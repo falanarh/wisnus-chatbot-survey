@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Bot, Loader2, User } from "lucide-react";
-import { ChatMessage } from "@/hooks/useChatPersistence";
+import { ChatMessage } from "@/hooks/useSurveyMessages";
 import ModeBadge from "./ModeBadge";
 
 

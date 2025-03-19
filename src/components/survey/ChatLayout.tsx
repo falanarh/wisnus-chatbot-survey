@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useChatPersistence } from "@/hooks/useChatPersistence";
+import { ChatMessage } from "@/hooks/useSurveyMessages";
 import { useTheme } from "@/components/other/ThemeProvider";
 import { generateUnorderedList } from "@/utils/otherUtils";
 import ChatSidebar from "./ChatSidebar";
@@ -15,11 +15,18 @@ import { analyzeIntent } from "@/services/survey/intentAnalysis";
 import { startSurvey, submitResponse } from "@/services/survey/surveyManagement";
 import { Question, SurveyResponseResult } from "@/services/survey/types";
 
-const ChatLayout: React.FC = () => {
-    // Custom hook for persistent chat
-    const { messages, addMessage, updateLastMessage, clearChat } = useChatPersistence();
+interface ChatLayoutProps {
+    messages: ChatMessage[];
+    addMessage: (message: ChatMessage) => void;
+    updateLastMessage: (text: string, user: boolean) => void;
+}
 
-    // State
+const ChatLayout: React.FC<ChatLayoutProps> = ({
+    messages,
+    addMessage,
+    updateLastMessage
+}) => {
+       // State
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [botIsTyping, setBotIsTyping] = useState(false);
@@ -150,7 +157,7 @@ const ChatLayout: React.FC = () => {
             if (!userData) throw new Error("User data not found");
 
             if (mode === 'survey') {
-                await handleSurveyMode(token, userData, userMessage);
+                await handleSurveyMode(userData, userMessage);
             } else {
                 const ragResponse = await queryRAG(userMessage);
                 simulateTyping(ragResponse.answer);
@@ -165,7 +172,7 @@ const ChatLayout: React.FC = () => {
     };
 
     // Handle survey mode logic
-    const handleSurveyMode = async (token: string, userData: UserData, userMessage: string) => {
+    const handleSurveyMode = async (userData: UserData, userMessage: string) => {
         const sessionId = userData?.activeSurveySessionId;
 
         // No active survey session
@@ -298,7 +305,6 @@ const ChatLayout: React.FC = () => {
                 isOpen={sidebarOpen} 
                 onClose={() => setSidebarOpen(false)} 
                 isDarkMode={isDarkMode}
-                onClearChat={clearChat}
             />
 
             {/* Header */}
