@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { LogOut, User, ClipboardList } from "lucide-react";
 
-export default function UserAvatar() {
+const UserAvatar: React.FC = () => {
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -102,3 +102,5 @@ export default function UserAvatar() {
     </div>
   );
 }
+
+export default UserAvatar;

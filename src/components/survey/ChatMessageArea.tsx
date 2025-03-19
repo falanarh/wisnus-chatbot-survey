@@ -1,6 +1,6 @@
 import { RefObject } from "react";
 import { AnimatePresence } from "framer-motion";
-import { ChatMessage } from "@/utils/chatPersistence";
+import { ChatMessage } from "@/hooks/useChatPersistence";
 import EmptyStateMessage from "./EmptyStateMessage";
 import ChatMessageItem from "./ChatMessageItem";
 

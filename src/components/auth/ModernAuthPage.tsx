@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useTheme } from "@/components/ThemeProvider";
+import { useTheme } from "@/components/other/ThemeProvider";
 import { Merriweather_Sans } from "next/font/google";
 import ModernAuthTab from "./ModernAuthTab";
 import { LogIn, UserPlus, ArrowLeft } from "lucide-react";
@@ -12,7 +12,7 @@ import ModernFormTransition from "./ModernFormTransition";
 import ModernLoginForm from "./ModernLoginForm";
 import ModernRegisterForm from "./ModernRegisterForm";
 import { useSearchParams } from "next/navigation";
-import ThemeToggle from "./ThemeToggle";
+import ThemeToggle from "../other/ThemeToggle";
 
 const merriweatherSans = Merriweather_Sans({
   variable: "--font-merriweather-sans",

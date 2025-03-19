@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion } from "framer-motion";
 import Image from 'next/image';
 import Link from 'next/link';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/other/ThemeProvider';
 import { 
   Mail, 
   Phone, 

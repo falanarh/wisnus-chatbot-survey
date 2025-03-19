@@ -3,14 +3,14 @@
 import Image from 'next/image';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTheme } from '@/components/ThemeProvider';
+import { useTheme } from '@/components/other/ThemeProvider';
 import { usePathname } from 'next/navigation';
 import { Home, Book, Info, LogIn, X, UserPlus, LogOut } from 'lucide-react';
 import { Merriweather_Sans } from "next/font/google";
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import UserAvatar from '../UserAvatar';
-import ThemeToggle from '../ThemeToggle';
+import UserAvatar from './UserAvatar';
+import ThemeToggle from '../other/ThemeToggle';
 
 const merriweatherSans = Merriweather_Sans({
   variable: "--font-merriweather-sans",

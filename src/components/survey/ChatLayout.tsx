@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useChatPersistence } from "@/utils/chatPersistence";
-import { useTheme } from "@/components/ThemeProvider";
+import { useChatPersistence } from "@/hooks/useChatPersistence";
+import { useTheme } from "@/components/other/ThemeProvider";
 import { UserData, getAuthToken, getUserData, updateUserDataProperty } from "@/services/authService";
 import { analyzeIntent, queryRAG, startSurvey, submitSurveyResponse, SurveyResponseResult, Question } from "@/services/surveyService";
 import { generateUnorderedList } from "@/utils/otherUtils";

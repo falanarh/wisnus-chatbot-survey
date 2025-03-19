@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Menu } from "lucide-react";
 import { Merriweather_Sans } from "next/font/google";
-import ThemeToggle from "../ThemeToggle";
+import ThemeToggle from "../other/ThemeToggle";
 
 const merriweatherSans = Merriweather_Sans({
   variable: "--font-merriweather-sans",

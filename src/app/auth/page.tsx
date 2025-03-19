@@ -1,4 +1,4 @@
-import ModernAuthPage from '@/components/ModernAuthPage';
+import ModernAuthPage from '@/components/auth/ModernAuthPage';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {

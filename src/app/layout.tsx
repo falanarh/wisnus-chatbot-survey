@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Mulish } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeProvider } from "@/components/other/ThemeProvider";
 import { AuthProvider } from "@/context/AuthContext";
 
 const mulish = Mulish({
