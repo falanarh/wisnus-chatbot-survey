@@ -3,14 +3,17 @@
 import { useState, useRef, useEffect } from "react";
 import { useChatPersistence } from "@/hooks/useChatPersistence";
 import { useTheme } from "@/components/other/ThemeProvider";
-import { UserData, getAuthToken, getUserData, updateUserDataProperty } from "@/services/authService";
-import { analyzeIntent, queryRAG, startSurvey, submitSurveyResponse, SurveyResponseResult, Question } from "@/services/surveyService";
 import { generateUnorderedList } from "@/utils/otherUtils";
 import ChatSidebar from "./ChatSidebar";
 import ChatHeader from "./ChatHeader";
 import ChatScrollButton from "./ChatScrollButton";
 import ChatInputArea from "./ChatInputArea";
 import ChatMessageArea from "./ChatMessageArea";
+import { queryRAG } from "@/services/survey/ragService";
+import { getToken, getUserData, updateUserProperty, UserData } from "@/services/auth";
+import { analyzeIntent } from "@/services/survey/intentAnalysis";
+import { startSurvey, submitResponse } from "@/services/survey/surveyManagement";
+import { Question, SurveyResponseResult } from "@/services/survey/types";
 
 const ChatLayout: React.FC = () => {
     // Custom hook for persistent chat
@@ -140,7 +143,7 @@ const ChatLayout: React.FC = () => {
         addMessage({ text: "", user: false, loading: true, mode: mode });
 
         try {
-            const token = getAuthToken();
+            const token = getToken();
             const userData = getUserData();
 
             if (!token) throw new Error("Authentication token not found");
@@ -167,10 +170,10 @@ const ChatLayout: React.FC = () => {
 
         // No active survey session
         if (!sessionId) {
-            const intentResponse = await analyzeIntent(token, userMessage);
+            const intentResponse = await analyzeIntent(userMessage);
 
             if (intentResponse.success && intentResponse.data?.wants_to_start) {
-                await startNewSurvey(token);
+                await startNewSurvey();
             } else {
                 simulateTyping("Tidak masalah jika Anda belum siap untuk memulai survei. Silakan kirim pesan kapan saja jika Anda ingin memulai.");
             }
@@ -178,7 +181,7 @@ const ChatLayout: React.FC = () => {
         }
 
         // User has active survey session
-        const response = await submitSurveyResponse(token, sessionId, userMessage);
+        const response = await submitResponse(sessionId, userMessage);
         if (!response.success) {
             simulateTyping("Terjadi kesalahan saat mengirim jawaban survei Anda.");
             return;
@@ -189,14 +192,14 @@ const ChatLayout: React.FC = () => {
     };
 
     // Start a new survey
-    const startNewSurvey = async (token: string) => {
-        const response = await startSurvey(token);
+    const startNewSurvey = async () => {
+        const response = await startSurvey();
 
         if (!response.success) {
             throw new Error("Failed to start survey");
         }
 
-        updateUserDataProperty('activeSurveySessionId', response.session_id);
+        updateUserProperty('activeSurveySessionId', response.session_id);
 
         if (response.next_question) {
             simulateTyping(response.next_question.text);

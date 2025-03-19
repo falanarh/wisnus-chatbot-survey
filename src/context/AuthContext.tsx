@@ -2,14 +2,16 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { 
-  registerUser, 
-  loginUser, 
-  logoutUser, 
-  isAuthenticated,
+  register as registerUser, 
+  login as loginUser, 
+  logout as logoutUser, 
+  isAuthenticated as checkIsAuthenticated,
   getUserData,
-  LoginResponseData
-} from '@/services/authService';
-import { authenticateWithGoogle } from '@/services/googleAuthService';
+  authenticateWithGoogle,
+  LoginResponseData,
+  RegisterRequestData,
+  LoginRequestData
+} from '@/services/auth';
 
 interface AuthContextType {
   user: LoginResponseData | null;
@@ -31,19 +33,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
 
-  // Memeriksa apakah pengguna sudah login saat aplikasi dimuat
+  // Check authentication when app loads
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const isAuth = isAuthenticated();
+        const isAuth = checkIsAuthenticated();
         setAuthenticated(isAuth);
         
         if (isAuth) {
           const userData = getUserData();
           if (userData) {
-            setUser(userData);
+            setUser(userData as LoginResponseData);
           } else {
-            // Jika gagal mendapatkan user data, logout
+            // If user data not found, log out
             logoutUser();
             setAuthenticated(false);
           }
@@ -60,68 +62,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth();
   }, []);
 
-  // Fungsi untuk membersihkan error
+  // Clear error messages
   const clearError = () => {
     setError(null);
   };
 
-  // Fungsi untuk mendaftarkan pengguna baru
+  // Register new user
   const register = async (name: string, email: string, password: string) => {
     try {
       setLoading(true);
       setError(null);
       
-      const loginData = await registerUser({ name, email, password });
+      const userData: RegisterRequestData = { name, email, password };
+      const loginData = await registerUser(userData);
       
       setUser(loginData);
       setAuthenticated(true);
       
-      // Redirect ke halaman home 
+      // Redirect to home page
       window.location.href = '/';
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        const errorMessage = err.message || 'Terjadi kesalahan saat pendaftaran';
-        setError(errorMessage);
-        throw new Error(errorMessage);
-      } else {
-        const errorMessage = 'Terjadi kesalahan saat pendaftaran';
-        setError(errorMessage);
-        throw new Error(errorMessage);
-      }
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : 'Terjadi kesalahan saat pendaftaran';
+      
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  // Fungsi untuk login pengguna
+  // Login existing user
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
       setError(null);
       
-      const loginData = await loginUser({ email, password });
+      const credentials: LoginRequestData = { email, password };
+      const loginData = await loginUser(credentials);
       
       setUser(loginData);
       setAuthenticated(true);
       
-      // Redirect ke halaman home 
+      // Redirect to home page
       window.location.href = '/';
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        const errorMessage = err.message || 'Gagal login';
-        setError(errorMessage);
-        throw new Error(errorMessage);
-      } else {
-        const errorMessage = 'Gagal login';
-        setError(errorMessage);
-        throw new Error(errorMessage);
-      }
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : 'Gagal login';
+      
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  // Fungsi untuk autentikasi dengan Google
+  // Google authentication
   const googleAuth = async (idToken: string) => {
     try {
       setLoading(true);
@@ -132,30 +130,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(loginData);
       setAuthenticated(true);
       
-      // Redirect ke halaman home 
+      // Redirect to home page
       window.location.href = '/';
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        const errorMessage = err.message || 'Google authentication failed';
-        setError(errorMessage);
-        throw new Error(errorMessage);
-      } else {
-        const errorMessage = 'Google authentication failed';
-        setError(errorMessage);
-        throw new Error(errorMessage);
-      }
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : 'Google authentication failed';
+      
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  // Fungsi untuk logout pengguna
+  // Logout user
   const logout = () => {
     logoutUser();
     setUser(null);
     setAuthenticated(false);
     
-    // Redirect ke halaman login
+    // Redirect to login page
     window.location.href = '/auth?tab=login';
   };
 
@@ -174,11 +169,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// Hook untuk menggunakan context
+// Hook for accessing auth context
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth harus digunakan dalam AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }

@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { getAuthToken, getUserData } from '@/services/authService';
-import { getSurveyStatus, SurveySessionStatus } from '@/services/surveyService';
+import { SurveySessionStatus } from '@/services/survey/types';
+import { getUserData } from '@/services/auth';
+import { getSurveyStatus } from '@/services/survey/surveyStatus';
 
 interface SurveyStatus {
   isLoading: boolean;
@@ -37,12 +38,7 @@ export function useSurveyStatus(forceRefresh = false) {
           throw new Error('Tidak ada ID sesi');
         }
         
-        const token = getAuthToken();
-        if (!token) {
-          throw new Error('Tidak ada token autentikasi');
-        }
-        
-        const surveySession = await getSurveyStatus(token, userData.activeSurveySessionId, signal);
+        const surveySession = await getSurveyStatus(userData.activeSurveySessionId, signal);
         
         setStatus({
           isLoading: false,
