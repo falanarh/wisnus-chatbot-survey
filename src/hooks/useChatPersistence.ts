@@ -1,4 +1,4 @@
-// src/utils/chatPersistence.ts
+// src/hooks/chatPersistence.ts
 import { useState, useEffect } from "react";
 
 // Tipe untuk pesan chat
