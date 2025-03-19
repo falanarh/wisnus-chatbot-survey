@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import ChatLayout from "@/components/ChatLayout";
-import SurveyCompletionPage from "@/components/SurveyCompletionPage";
+import SurveyCompletionPage from "@/components/survey/SurveyCompletionPage";
 import { useSurveyStatus } from "@/hooks/useSurveyStatus";
+import ChatLayout from "./ChatLayout";
 
 // Reusable background component
 const StyledBackground = ({ children }: { children: React.ReactNode }) => (

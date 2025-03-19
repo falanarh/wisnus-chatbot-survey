@@ -13,7 +13,7 @@ interface ThemeToggleProps {
   closeOtherDropdowns?: () => void;
 }
 
-export function ThemeToggle({ isOpen, setIsOpen, closeOtherDropdowns }: ThemeToggleProps) {
+const ThemeToggle: React.FC<ThemeToggleProps> = ({ isOpen, setIsOpen, closeOtherDropdowns }) => {
   const { theme, setTheme } = useTheme();
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -97,3 +97,5 @@ export function ThemeToggle({ isOpen, setIsOpen, closeOtherDropdowns }: ThemeTog
     </div>
   );
 }
+
+export default ThemeToggle;

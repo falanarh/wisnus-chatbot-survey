@@ -26,14 +26,14 @@ const initialState: ThemeContextValue = {
 
 export const ThemeContext = createContext<ThemeContextValue>(initialState);
 
-export function ThemeProvider({
+const ThemeProvider: React.FC<ThemeProviderProps> = ({
   children,
-  defaultTheme = "system",
+  defaultTheme = "system",  
   storageKey = "theme",
   attribute = "data-theme",
   enableSystem = true,
   disableTransitionOnChange = false,
-}: ThemeProviderProps) {
+}) => {
   const [theme, setTheme] = useState<Theme>(defaultTheme);
 
   useEffect(() => {
@@ -130,3 +130,5 @@ export const useTheme = () => {
     throw new Error("useTheme must be used within a ThemeProvider");
   return context;
 };
+
+export default ThemeProvider;

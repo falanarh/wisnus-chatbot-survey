@@ -18,7 +18,7 @@ import {
   Heart
 } from 'lucide-react';
 
-const Footer = () => {
+const Footer: React.FC = () => {
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
   const [showScrollButton, setShowScrollButton] = useState(false);

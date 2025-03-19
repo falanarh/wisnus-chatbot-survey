@@ -11,7 +11,7 @@ const merriweatherSans = Merriweather_Sans({
     weight: ["400", "700"],
 });
 
-const AboutSection = () => {
+const AboutSection: React.FC = () => {
     const fadeIn = {
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }

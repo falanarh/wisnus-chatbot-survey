@@ -2,7 +2,7 @@ interface ModeBadgeProps {
     mode: 'survey' | 'qa';
 }
 
-const ModeBadge = ({ mode }: ModeBadgeProps) => {
+const ModeBadge: React.FC<ModeBadgeProps> = ({ mode }) => {
     return (
         <span
             className={`

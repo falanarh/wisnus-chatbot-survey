@@ -6,13 +6,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "@/components/ThemeProvider";
 import { Merriweather_Sans } from "next/font/google";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import ModernAuthTab from "./ModernAuthTab";
 import { LogIn, UserPlus, ArrowLeft } from "lucide-react";
 import ModernFormTransition from "./ModernFormTransition";
 import ModernLoginForm from "./ModernLoginForm";
 import ModernRegisterForm from "./ModernRegisterForm";
 import { useSearchParams } from "next/navigation";
+import ThemeToggle from "./ThemeToggle";
 
 const merriweatherSans = Merriweather_Sans({
   variable: "--font-merriweather-sans",
@@ -24,7 +24,7 @@ interface AuthPageProps {
   initialTab?: "login" | "register";
 }
 
-export default function ModernAuthPage({ initialTab = "login" }: AuthPageProps) {
+const ModernAuthPage: React.FC<AuthPageProps> = ({ initialTab = "login" }) => {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<"login" | "register">(initialTab);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
@@ -280,3 +280,5 @@ export default function ModernAuthPage({ initialTab = "login" }: AuthPageProps) 
     </div>
   );
 }
+
+export default ModernAuthPage;

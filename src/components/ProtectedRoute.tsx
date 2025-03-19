@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
 
@@ -31,3 +31,5 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   // Jika sudah terautentikasi, tampilkan konten halaman
   return isAuthenticated ? <>{children}</> : null;
 }
+
+export default ProtectedRoute;

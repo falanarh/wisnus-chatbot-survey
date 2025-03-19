@@ -9,8 +9,8 @@ import { Home, Book, Info, LogIn, X, UserPlus, LogOut } from 'lucide-react';
 import { Merriweather_Sans } from "next/font/google";
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import UserAvatar from './UserAvatar';
-import { ThemeToggle } from './ThemeToggle';
+import UserAvatar from '../UserAvatar';
+import ThemeToggle from '../ThemeToggle';
 
 const merriweatherSans = Merriweather_Sans({
   variable: "--font-merriweather-sans",
@@ -23,7 +23,7 @@ interface HeaderProps {
     scrollToSection?: (section: string) => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollToSection }) => {
+const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollToSection }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isDesktop, setIsDesktop] = useState(false);
     const [themeMenuOpen, setThemeMenuOpen] = useState(false);
@@ -379,3 +379,5 @@ export const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollT
         </header>
     );
 };
+
+export default Header;
