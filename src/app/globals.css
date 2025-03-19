@@ -11,11 +11,29 @@
   --scrollbar-bg-dark: #1a1a1a;
   --scrollbar-thumb-dark: rgba(200, 200, 200, 0.4);
   --scrollbar-thumb-hover-dark: rgba(200, 200, 200, 0.6);
+  /* Grid pattern variables */
+  --grid-pattern: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.1) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
 }
 
 .dark {
   --background: 222.2 84% 4.9%;
   --foreground: 210 40% 98%;
+  /* Dark mode grid pattern */
+  --grid-pattern: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0.1) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  --dots-pattern: radial-gradient(
+    rgba(255, 255, 255, 0.15) 1px,
+    transparent 1px
+  );
 }
 
 .no-theme-transition * {

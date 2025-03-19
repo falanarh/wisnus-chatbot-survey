@@ -29,18 +29,21 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           {/* Base Background Color */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 dark:from-gray-900 dark:via-purple-900 dark:to-blue-900" />
 
-          {/* Grid Background - No inline styles for colors */}
+          {/* Grid Background */}
           <div
-            className="absolute inset-0 opacity-30 dark:opacity-10 bg-grid-light dark:bg-grid-dark"
+            className="absolute inset-0 opacity-30 dark:opacity-10"
             style={{
+              backgroundImage: `linear-gradient(to right, #e0e0e0 1px, transparent 1px),
+                                        linear-gradient(to bottom, #e0e0e0 1px, transparent 1px)`,
               backgroundSize: '30px 30px'
             }}
           />
 
-          {/* Subtle Dots Pattern - Use classes instead of inline styles */}
+          {/* Subtle Dots Pattern */}
           <div
-            className="absolute inset-0 opacity-10 dark:opacity-5 bg-dots-light dark:bg-dots-dark"
+            className="absolute inset-0 opacity-10 dark:opacity-5"
             style={{
+              backgroundImage: `radial-gradient(#333 1px, transparent 1px)`,
               backgroundSize: '20px 20px'
             }}
           />
