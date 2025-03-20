@@ -1,3 +1,5 @@
+//src/components/survey/evaluation/LikertScale.tsx
+
 import React from "react";
 import { motion } from "framer-motion";
 

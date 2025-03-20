@@ -1,4 +1,5 @@
 // src/components/survey/evaluation/QuestionCard.tsx
+
 import React, { ReactNode } from "react";
 import { motion } from "framer-motion";
 import LikertScale from "./LikertScale";

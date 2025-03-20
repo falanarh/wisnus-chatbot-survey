@@ -1,3 +1,5 @@
+//src/components/survey/evaluation/CompletionScreen.tsx 
+
 import React from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";

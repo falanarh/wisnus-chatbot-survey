@@ -1,3 +1,5 @@
+//src/components/survey/evaluation/constants.tsx
+
 import { ThumbsUp, Award, Star, Brain, Shield } from "lucide-react";
 import { EvaluationQuestion } from "./QuestionCard";
 

@@ -1,4 +1,5 @@
 // src/components/survey/evaluation/ProgressBar.tsx
+
 import React from "react";
 
 interface ProgressBarProps {
