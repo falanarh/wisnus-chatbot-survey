@@ -97,16 +97,16 @@ const SurveyChatbot: React.FC = () => {
   // Show completion page if survey is completed
   if (sessionData?.status === 'COMPLETED') {
     return (
-      <StyledBackground>
-        <SurveyCompletionPage sessionData={sessionData} />
-      </StyledBackground>
+        <StyledBackground>
+          <SurveyCompletionPage sessionData={sessionData} />
+        </StyledBackground>
     );
   } else if (sessionData?.status === 'IN_PROGRESS') {
     // Otherwise show the chat interface for active survey
     return (
-      <StyledBackground>
-        <ChatLayout messages={messages} addMessage={addMessage} updateLastMessage={updateLastMessage} />
-      </StyledBackground>
+        <StyledBackground>
+          <ChatLayout messages={messages} addMessage={addMessage} updateLastMessage={updateLastMessage} />
+        </StyledBackground>
     );
   }
 

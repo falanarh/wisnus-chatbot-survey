@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import ProtectedRoute from "@/components/other/ProtectedRoute";
 import SurveyChatbot from "@/components/survey/SurveyChatbot";
+import ProtectedRoute from "@/components/other/ProtectedRoute";
 
 
 const SurveyChatbotPage: React.FC = () => {

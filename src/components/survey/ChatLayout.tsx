@@ -26,18 +26,18 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     addMessage,
     updateLastMessage
 }) => {
-       // State
+    // State
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [botIsTyping, setBotIsTyping] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [themeMenuOpen, setThemeMenuOpen] = useState(false);
     const [mode, setMode] = useState<'survey' | 'qa'>('survey');
-    
+
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const chatContainerRef = useRef<HTMLDivElement>(null);
-    
+
     // Theme
     const { theme } = useTheme();
     const isDarkMode = theme === 'dark';
@@ -45,7 +45,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     // Scroll state
     const [userHasScrolled, setUserHasScrolled] = useState(false);
     const [showScrollButton, setShowScrollButton] = useState(false);
-    
+
     // User scroll reference
     const isUserScrollingRef = useRef(false);
 
@@ -124,7 +124,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         if (lastMessage && !lastMessage.user) {
             updateLastMessage(lastMessage.text + " [berhenti mengetik]", false);
         }
-        
+
         setBotIsTyping(false);
     };
 
@@ -233,8 +233,8 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                     return "Mohon berikan jawaban yang sesuai dengan pertanyaan.";
                 }
                 return `${clarification_reason} ${follow_up_question}\n\n${currentQuestion.code === "KR004"
-                        ? `Pilih salah satu opsi di bawah ini: ${generateUnorderedList(currentQuestion.options || [], "◆")}`
-                        : ""
+                    ? `Pilih salah satu opsi di bawah ini: ${generateUnorderedList(currentQuestion.options || [], "◆")}`
+                    : ""
                     }`;
 
             case "question":
@@ -301,14 +301,14 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             </div>
 
             {/* Sidebar */}
-            <ChatSidebar 
-                isOpen={sidebarOpen} 
-                onClose={() => setSidebarOpen(false)} 
+            <ChatSidebar
+                isOpen={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
                 isDarkMode={isDarkMode}
             />
 
             {/* Header */}
-            <ChatHeader 
+            <ChatHeader
                 isDarkMode={isDarkMode}
                 mode={mode}
                 onSidebarToggle={() => setSidebarOpen(!sidebarOpen)}
@@ -328,14 +328,14 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             />
 
             {/* Scroll to Bottom Button */}
-            <ChatScrollButton 
+            <ChatScrollButton
                 show={showScrollButton}
                 isDarkMode={isDarkMode}
                 onClick={handleScrollToBottom}
             />
 
             {/* Input Area */}
-            <ChatInputArea 
+            <ChatInputArea
                 input={input}
                 setInput={setInput}
                 isDarkMode={isDarkMode}
