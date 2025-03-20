@@ -4,12 +4,15 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Loader from './Loader';
+import { useTheme } from './ThemeProvider';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
 
@@ -27,11 +30,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         {/* Background Layer */}
         <div className="fixed top-0 left-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
           {/* Base Background Color */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 dark:from-gray-900 dark:via-purple-900 dark:to-blue-900" />
+          <div className={`absolute inset-0 bg-gradient-to-br ${isDarkMode ? 'from-gray-900 via-purple-900 to-blue-900' : ' from-blue-50 via-indigo-50 to-purple-100'}`} />
 
           {/* Grid Background */}
           <div
-            className="absolute inset-0 opacity-30 dark:opacity-10"
+            className={`absolute inset-0 ${isDarkMode ? 'opacity-10' : 'opacity-30'}`}
             style={{
               backgroundImage: `linear-gradient(to right, #e0e0e0 1px, transparent 1px),
                                         linear-gradient(to bottom, #e0e0e0 1px, transparent 1px)`,
@@ -41,7 +44,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
           {/* Subtle Dots Pattern */}
           <div
-            className="absolute inset-0 opacity-10 dark:opacity-5"
+            className={`absolute inset-0 ${isDarkMode ? 'opacity-5' : 'opacity-10'}`}
             style={{
               backgroundImage: `radial-gradient(#333 1px, transparent 1px)`,
               backgroundSize: '20px 20px'
