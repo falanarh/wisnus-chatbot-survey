@@ -52,7 +52,7 @@ const NavigationButtons: React.FC<NavigationButtonsProps> = ({
         {isSubmitting ? (
           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
         ) : null}
-        {isLastQuestion ? "Kirim Evaluasi" : "Selanjutnya"}
+        {isLastQuestion ? "Kirim" : "Selanjutnya"}
         {!isLastQuestion && <ChevronRight size={20} className="ml-1" />}
       </motion.button>
     </div>

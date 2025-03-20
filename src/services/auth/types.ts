@@ -25,6 +25,7 @@ export interface UserData {
   name: string;
   email: string;
   activeSurveySessionId?: string;
+  activeEvaluationSessionId?: string;
 }
 
 /**

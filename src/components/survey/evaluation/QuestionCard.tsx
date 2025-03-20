@@ -1,21 +1,10 @@
 // src/components/survey/evaluation/QuestionCard.tsx
 
-import React, { ReactNode } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import LikertScale from "./LikertScale";
 import NavigationButtons from "./NavigationButtons";
-
-export interface EvaluationQuestion {
-  id: string;
-  text: string;
-  scaleType: "agreement" | "effort";
-  min: number;
-  max: number;
-  minLabel: string;
-  maxLabel: string;
-  icon: ReactNode;
-  description: string;
-}
+import { EvaluationQuestion } from "@/services/survey/evaluation";
 
 interface QuestionCardProps {
   question: EvaluationQuestion;

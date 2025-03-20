@@ -1,7 +1,7 @@
 //src/components/survey/evaluation/constants.tsx
 
+import { EvaluationQuestion } from "@/services/survey/evaluation";
 import { ThumbsUp, Award, Star, Brain, Shield } from "lucide-react";
-import { EvaluationQuestion } from "./QuestionCard";
 
 
 export const evaluationQuestions: EvaluationQuestion[] = [
