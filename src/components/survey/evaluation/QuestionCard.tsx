@@ -5,17 +5,17 @@ import LikertScale from "./LikertScale";
 import NavigationButtons from "./NavigationButtons";
 
 export interface EvaluationQuestion {
-    id: string;
-    text: string;
-    scaleType: "agreement" | "effort";
-    min: number;
-    max: number;
-    minLabel: string;
-    maxLabel: string;
-    icon: ReactNode;
-    description: string;
-  }
-  
+  id: string;
+  text: string;
+  scaleType: "agreement" | "effort";
+  min: number;
+  max: number;
+  minLabel: string;
+  maxLabel: string;
+  icon: ReactNode;
+  description: string;
+}
+
 interface QuestionCardProps {
   question: EvaluationQuestion;
   selectedValue: number | undefined;

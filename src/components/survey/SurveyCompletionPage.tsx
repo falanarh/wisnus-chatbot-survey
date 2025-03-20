@@ -1,18 +1,19 @@
-// src/components/SurveyCompletionPage.tsx
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, ArrowRight, Award } from 'lucide-react';
-import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { calculateDurationInMinutes, formatDate, formatDuration } from '@/utils/dateUtils';
 import { SurveySessionStatus } from '@/services/survey';
+import AutoNavigatePopup from './AutoNavigatePopup';
 
 interface SurveyCompletionPageProps {
     sessionData?: SurveySessionStatus;
 }
 
 const SurveyCompletionPage: React.FC<SurveyCompletionPageProps> = ({ sessionData }) => {
+    const router = useRouter();
+    const [showPopup, setShowPopup] = useState(false);
 
     // Format the completion date if available
     const completionDate = sessionData ? formatDate(new Date(sessionData.updated_at)) : "N/A";
@@ -23,6 +24,23 @@ const SurveyCompletionPage: React.FC<SurveyCompletionPageProps> = ({ sessionData
 
     // Get survey duration if available
     const surveyDurationStr = typeof surveyDuration === 'number' ? formatDuration(surveyDuration) : "N/A";
+
+    // Show popup after a short delay to let the user see the completion screen first
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setShowPopup(true);
+        }, 2000);
+        
+        return () => clearTimeout(timer);
+    }, []);
+
+    const handleStay = () => {
+        setShowPopup(false);
+    };
+
+    const handleNavigate = () => {
+        router.push('/survey/evaluation');
+    };
 
     return (
         <div className="min-h-screen relative">
@@ -138,16 +156,6 @@ const SurveyCompletionPage: React.FC<SurveyCompletionPageProps> = ({ sessionData
                                 <div className="font-semibold text-green-600 dark:text-green-400">Selesai</div>
                             </div>
                         </div>
-                        {/* <div className="grid grid-cols-2 gap-4 w-full mt-4 text-sm">
-                            <div className="border-r border-gray-200 dark:border-gray-700">
-                                <div className="text-gray-500 dark:text-gray-400">Waktu Penyelesaian</div>
-                                <div className="font-semibold text-gray-800 dark:text-white">{surveyDurationStr}</div>
-                            </div>
-                            <div>
-                                <div className="text-gray-500 dark:text-gray-400">Status</div>
-                                <div className="font-semibold text-green-600 dark:text-green-400">Selesai</div>
-                            </div>
-                        </div> */}
                     </div>
                 </motion.div>
 
@@ -158,18 +166,27 @@ const SurveyCompletionPage: React.FC<SurveyCompletionPageProps> = ({ sessionData
                     transition={{ delay: 1, duration: 0.5 }}
                     className="flex flex-col gap-4 mt-4 w-full max-w-md"
                 >
-                    <Link
-                        href="/"
+                    <button
+                        onClick={() => router.push('/survey/evaluation')}
                         className="flex items-center justify-center gap-2 py-3 px-5 rounded-xl
                                 bg-gradient-to-r from-blue-500 dark:from-blue-800 to-indigo-600 dark:to-indigo-800 text-white
                                 hover:from-blue-600 hover:to-indigo-700 transition-all
-                                font-medium shadow-md hover:shadow-lg"
+                                font-medium shadow-md hover:shadow-lg w-full"
                     >
-                        <span>Kembali ke Beranda</span>
+                        <span>Masuk Halaman Evaluasi</span>
                         <ArrowRight size={16} />
-                    </Link>
+                    </button>
                 </motion.div>
             </div>
+            
+            {/* Auto-navigate Popup */}
+            {showPopup && (
+                <AutoNavigatePopup 
+                    countdownSeconds={5}
+                    onStay={handleStay}
+                    onNavigate={handleNavigate}
+                />
+            )}
         </div>
     );
 };

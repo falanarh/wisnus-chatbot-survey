@@ -5,7 +5,7 @@ import { EvaluationQuestion } from "./QuestionCard";
 export const evaluationQuestions: EvaluationQuestion[] = [
   {
     id: "ease_of_use",
-    text: "Apakah mudah untuk menjawab pertanyaan dalam kuesioner percakapan?",
+    text: "Apakah Anda merasa mudah menjawab pertanyaan dalam kuesioner ini?",
     scaleType: "agreement",
     min: 1,
     max: 7,
@@ -16,7 +16,7 @@ export const evaluationQuestions: EvaluationQuestion[] = [
   },
   {
     id: "participation_ease",
-    text: "Kuesioner percakapan akan sangat memudahkan partisipasi saya dalam survei.",
+    text: "Apakah kuesioner ini membantu Anda berpartisipasi dalam survei dengan lebih mudah?",
     scaleType: "agreement",
     min: 1,
     max: 7,
@@ -27,7 +27,7 @@ export const evaluationQuestions: EvaluationQuestion[] = [
   },
   {
     id: "enjoyment",
-    text: "Apakah menyenangkan bagi saya untuk mengisi pertanyaan dalam kuesioner percakapan?",
+    text: "Apakah Anda merasa nyaman dan menikmati saat mengisi kuesioner ini?",
     scaleType: "agreement",
     min: 1,
     max: 7,
@@ -38,7 +38,7 @@ export const evaluationQuestions: EvaluationQuestion[] = [
   },
   {
     id: "data_security",
-    text: "Informasi pribadi saya dikelola dengan aman dalam kuesioner percakapan ini.",
+    text: "Apakah informasi pribadi Anda dikelola dengan aman dalam kuesioner ini?",
     scaleType: "agreement",
     min: 1,
     max: 7,
@@ -49,7 +49,7 @@ export const evaluationQuestions: EvaluationQuestion[] = [
   },
   {
     id: "privacy_safety",
-    text: "Apakah kuesioner percakapan ini aman untuk informasi pribadi saya?",
+    text: "Apakah menurut Anda kuesioner ini cukup aman untuk melindungi informasi pribadi Anda?",
     scaleType: "agreement",
     min: 1,
     max: 7,
@@ -60,7 +60,7 @@ export const evaluationQuestions: EvaluationQuestion[] = [
   },
   {
     id: "mental_effort",
-    text: "Seberapa banyak usaha mental yang Anda alokasikan untuk menyelesaikan kuesioner percakapan ini?",
+    text: "Seberapa besar usaha yang Anda butuhkan untuk menyelesaikan kuesioner ini?",
     scaleType: "effort",
     min: 1,
     max: 9,
