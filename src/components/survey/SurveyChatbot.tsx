@@ -105,7 +105,12 @@ const SurveyChatbot: React.FC = () => {
     // Otherwise show the chat interface for active survey
     return (
       <StyledBackground>
-        <ChatLayout messages={messages} addMessage={addMessage} updateLastMessage={updateLastMessage} />
+        <ChatLayout 
+          messages={messages} 
+          addMessage={addMessage} 
+          updateLastMessage={updateLastMessage} 
+          sessionId={sessionData?.session_id}
+        />
       </StyledBackground>
     );
   }

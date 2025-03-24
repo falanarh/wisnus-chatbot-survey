@@ -1,11 +1,6 @@
 // src/services/survey/surveyMessages.ts
 import { surveyApiRequest } from "./surveyApiClient";
-import { ApiResponse, SurveyResponseData } from "./types";
-
-/**
- * Survey messages response
- */
-export type SurveyMessagesResponse = ApiResponse<SurveyMessage[]>;
+import { SurveyMessagesResult } from "./types";
 
 /**
  * Retrieves all messages exchanged during a specific survey session
@@ -17,21 +12,20 @@ export type SurveyMessagesResponse = ApiResponse<SurveyMessage[]>;
 export async function getSurveyMessages(
   sessionId: string,
   signal?: AbortSignal
-): Promise<SurveyMessagesResponse> {
+): Promise<SurveyMessagesResult> {
   try {
-    const response = await surveyApiRequest<SurveyMessage[]>(
+    const response = await surveyApiRequest(
       `/api/survey/messages/${sessionId}`,
       { method: "GET" },
       signal
-    );
+    ) as SurveyMessagesResult;
 
     return response;
   } catch (error) {
     console.error("Error retrieving survey messages:", error);
     return {
       success: false,
-      message: "Failed to retrieve survey messages",
-      error: error instanceof Error ? error.message : "Unknown error",
+      message: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }

@@ -78,20 +78,34 @@ export interface SurveyStartResponse {
  * Survey response data
  */
 export interface SurveyResponseData {
-  info: string;
-  next_question?: Question;
-  currentQuestion?: Question;
-  clarification_reason?: string;
-  follow_up_question?: string;
-  answer?: string;
-  additional_info?: string;
+  info?: string; // Response type indicator
+  next_question?: Question; // Next question to ask
+  currentQuestion?: Question; // Current question being answered
+  clarification_reason?: string; // Why a response was unexpected
+  follow_up_question?: string; // Follow-up question for clarification
+  answer?: string; // Answer to a user's question
+  additional_info?: string; // Additional information to display
+  session_id?: string; // Session ID for the survey
+  system_message?: string; // System message (e.g., for not_ready_for_survey)
+  intent_analysis?: IntentAnalysisResult; // Intent analysis results
 }
 
-/**
- * Interface for survey response result
- */
+// Interface for survey response result
 export interface SurveyResponseResult extends SurveyResponseData {
   success: boolean;
+  message?: string;
+  error?: string;
+}
+
+// Add new message types to match API documentation
+export enum SurveyResponseType {
+  SURVEY_STARTED = "survey_started",
+  NOT_READY_FOR_SURVEY = "not_ready_for_survey",
+  EXPECTED_ANSWER = "expected_answer",
+  UNEXPECTED_ANSWER = "unexpected_answer_or_other",
+  QUESTION = "question",
+  SURVEY_COMPLETED = "survey_completed",
+  ERROR = "error",
 }
 
 /**
@@ -157,4 +171,14 @@ export interface SurveyMessage {
   user_message: string;
   system_response: SurveyResponseData;
   timestamp: string;
+}
+
+/**
+ * Survey messages result
+ */
+
+export interface SurveyMessagesResult {
+  success: boolean;
+  data?: SurveyMessage[];
+  message?: string;
 }

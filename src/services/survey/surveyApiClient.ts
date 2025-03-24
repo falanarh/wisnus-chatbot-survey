@@ -1,6 +1,6 @@
 // src/services/survey/surveyApiClient.ts
 import { getToken } from "../auth/tokenStorage";
-import { ApiResponse } from "./types";
+import { SurveyMessagesResult, SurveyResponseResult } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 const RAG_API_URL = process.env.NEXT_PUBLIC_RAG_API_URL || "";
@@ -8,11 +8,11 @@ const RAG_API_URL = process.env.NEXT_PUBLIC_RAG_API_URL || "";
 /**
  * Makes authenticated requests to survey API endpoints
  */
-export async function surveyApiRequest<T>(
+export async function surveyApiRequest(
   endpoint: string,
   options: RequestInit = {},
   signal?: AbortSignal
-): Promise<ApiResponse<T>> {
+): Promise<SurveyResponseResult | SurveyMessagesResult> {
   try {
     const token = getToken();
     if (!token) {

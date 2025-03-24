@@ -1,15 +1,17 @@
-// src/hooks/useSurveyMessages.ts
+// src/hooks/useSurveyMessages.ts - Update to match the new API
 import { useState, useEffect, useCallback } from "react";
 import { getSurveyMessages, Question, SurveyMessage } from "@/services/survey";
 import { getUserData } from "@/services/auth";
 import { generateUnorderedList } from "@/utils/otherUtils";
 
-// Tipe untuk pesan chat
+// Chat message type (keeping the same interface but adding support for new fields)
 export interface ChatMessage {
   text: string;
   user: boolean;
   mode: "survey" | "qa";
   loading?: boolean;
+  responseType?: string;  // Store the info type from API
+  questionCode?: string;  // Store question code when available
 }
 
 export function useSurveyMessages() {
@@ -28,7 +30,7 @@ export function useSurveyMessages() {
     setIsLoaded(true);
   }, []);
 
-  // Function to convert API messages to chat messages
+  // Convert API messages to chat messages - updated for new response format
   const convertApiMessagesToChatMessages = useCallback(
     (apiMessages: SurveyMessage[]): ChatMessage[] => {
       const chatMessages: ChatMessage[] = [];
@@ -56,6 +58,7 @@ export function useSurveyMessages() {
 
         // Add system response based on its structure
         const response = apiMessage.system_response;
+
         const {
           info,
           additional_info,
@@ -64,10 +67,12 @@ export function useSurveyMessages() {
           clarification_reason,
           follow_up_question,
           answer,
+          system_message
         } = response;
 
         let responseText = "";
         let mode: "survey" | "qa" = "survey";
+        const questionCode = next_question?.code || currentQuestion?.code;
 
         // Determine the appropriate text based on info type
         if (info) {
@@ -114,6 +119,17 @@ export function useSurveyMessages() {
               }
               break;
 
+            case "survey_started":
+              responseText = additional_info || "Survei telah dimulai.";
+              if (next_question) {
+                responseText += `\n\n${formatQuestion(next_question)}`;
+              }
+              break;
+
+            case "not_ready_for_survey":
+              responseText = system_message || "Sepertinya Anda belum siap untuk memulai survei. Silakan kirim pesan kapan saja jika Anda ingin memulai.";
+              break;
+
             case "error":
               responseText =
                 additional_info ||
@@ -137,6 +153,8 @@ export function useSurveyMessages() {
           text: responseText,
           user: false,
           mode: mode,
+          responseType: info,
+          questionCode
         });
       });
 
@@ -145,7 +163,7 @@ export function useSurveyMessages() {
     []
   );
 
-  // Load chat history from API
+  // Load chat history - unchanged
   useEffect(() => {
     if (!sessionId || !isLoaded) return;
 
@@ -182,12 +200,11 @@ export function useSurveyMessages() {
     loadChatHistory();
   }, [sessionId, isLoaded, convertApiMessagesToChatMessages]);
 
-  // Add new message to local state (will be sent to API by parent component)
+  // Message management functions remain unchanged to maintain UI compatibility
   const addMessage = (message: ChatMessage) => {
     setMessages((prev) => [...prev, message]);
   };
 
-  // Update the last message (for loading states)
   const updateLastMessage = (text: string, isUser: boolean) => {
     setMessages((prev) => {
       const newMessages = [...prev];
@@ -206,7 +223,6 @@ export function useSurveyMessages() {
     });
   };
 
-  // Refresh messages from the API
   const refreshMessages = async () => {
     if (!sessionId) return;
 
@@ -235,7 +251,6 @@ export function useSurveyMessages() {
     }
   };
 
-  // Set the active session ID
   const setActiveChatSession = (id: string) => {
     setSessionId(id);
   };
