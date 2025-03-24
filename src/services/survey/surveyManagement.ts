@@ -1,6 +1,5 @@
 // src/services/survey/surveyManagement.ts
 import { surveyApiRequest } from "./surveyApiClient";
-import { updateUserProperty } from "../auth/userStorage";
 import { SurveyStartResponse, SurveyResponseResult } from "./types";
 
 /**
@@ -15,12 +14,17 @@ export async function startSurvey(): Promise<SurveyStartResponse> {
       { method: "POST" }
     );
 
-    if (response.success && response.data && response.data.session_id) {
-      // Update active session ID in user data
-      updateUserProperty("activeSurveySessionId", response.data.session_id);
+    // If response is not successful or data is undefined, return a default error response
+    if (!response.success || !response.data) {
+      return {
+        success: false,
+        message: response.message || "Failed to start survey",
+        additional_info: "No survey data returned",
+        session_id: "",
+      };
     }
 
-    return response.data!;
+    return response.data;
   } catch (error) {
     console.error("Error starting survey:", error);
     return {
@@ -55,14 +59,19 @@ export async function submitResponse(
       }
     );
 
-    return response.data!;
+    if (!response.success || !response.data) {
+      return {
+        success: false,
+        info: response.message || "Failed to submit response",
+      };
+    }
+
+    return response.data;
   } catch (error) {
     console.error("Error submitting survey response:", error);
     return {
       success: false,
-      info: "",
-      message: "Failed to submit survey response",
-      error: error instanceof Error ? error.message : "Unknown error",
+      info: "Failed to submit response",
     };
   }
 }

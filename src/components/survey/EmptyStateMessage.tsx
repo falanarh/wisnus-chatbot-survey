@@ -20,7 +20,7 @@ const EmptyStateMessage: React.FC<EmptyStateMessageProps> = ({ isDarkMode, mode 
           : 'Selamat datang di Layanan Tanya Jawab Survei Wisnus'}
       </p>
       <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-        Silakan kirim pesan untuk memulai percakapan
+        Silakan kirim pesan bahwa Anda siap untuk memulai survei
       </p>
     </div>
   );

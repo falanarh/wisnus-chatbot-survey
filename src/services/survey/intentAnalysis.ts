@@ -1,6 +1,6 @@
 // src/services/survey/intentAnalysis.ts
 import { surveyApiRequest } from "./surveyApiClient";
-import { IntentAnalysisResponse } from "./types";
+import { IntentAnalysisResponse, IntentAnalysisResult } from "./types";
 
 /**
  * Analyzes user message to determine if they want to start a survey
@@ -12,18 +12,14 @@ export async function analyzeIntent(
   message: string
 ): Promise<IntentAnalysisResponse> {
   try {
-    const response = await surveyApiRequest<IntentAnalysisResponse>(
+    const response = await surveyApiRequest<IntentAnalysisResult>(
       "/api/survey/analyze-intent",
       {
         method: "POST",
         body: JSON.stringify({ message }),
       }
     );
-
-    if (response.data === undefined) {
-      throw new Error("No intent analysis data returned from survey API");
-    }
-    return response.data;
+    return response;
   } catch (error) {
     console.error("Error analyzing intent:", error);
     return {
