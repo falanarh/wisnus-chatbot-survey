@@ -10,22 +10,24 @@ export interface ChatMessage {
   user: boolean;
   mode: "survey" | "qa";
   loading?: boolean;
-  responseType?: string;  // Store the info type from API
-  questionCode?: string;  // Store question code when available
+  responseType?: string;
+  questionCode?: string;
+  timestamp?: string; // Add timestamp field
+  read?: boolean; // Add read status for double check marks
 }
 
 export function useSurveyMessages() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Load active session ID when component mounts
   useEffect(() => {
     const userData = getUserData();
-    if (userData?.activeSurveySessionId) {
-      setSessionId(userData.activeSurveySessionId);
+    if (userData?._id) {
+      setUserId(userData._id);
     }
     setIsLoaded(true);
   }, []);
@@ -49,11 +51,24 @@ export function useSurveyMessages() {
       };
 
       apiMessages.forEach((apiMessage) => {
+        // Format the timestamp from API or create a new one
+        const timestamp = apiMessage.timestamp
+          ? new Date(apiMessage.timestamp).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+
         // Add user message
         chatMessages.push({
           text: apiMessage.user_message,
           user: true,
           mode: "survey",
+          timestamp,
+          read: true, // User messages are always read
         });
 
         // Add system response based on its structure
@@ -67,7 +82,7 @@ export function useSurveyMessages() {
           clarification_reason,
           follow_up_question,
           answer,
-          system_message
+          system_message,
         } = response;
 
         let responseText = "";
@@ -127,7 +142,9 @@ export function useSurveyMessages() {
               break;
 
             case "not_ready_for_survey":
-              responseText = system_message || "Sepertinya Anda belum siap untuk memulai survei. Silakan kirim pesan kapan saja jika Anda ingin memulai.";
+              responseText =
+                system_message ||
+                "Sepertinya Anda belum siap untuk memulai survei. Silakan kirim pesan kapan saja jika Anda ingin memulai.";
               break;
 
             case "error":
@@ -154,7 +171,9 @@ export function useSurveyMessages() {
           user: false,
           mode: mode,
           responseType: info,
-          questionCode
+          questionCode,
+          timestamp,
+          read: false, // System messages start as unread
         });
       });
 
@@ -165,22 +184,25 @@ export function useSurveyMessages() {
 
   // Load chat history - unchanged
   useEffect(() => {
-    if (!sessionId || !isLoaded) return;
+    if (!isLoaded) return;
 
     async function loadChatHistory() {
       setIsLoading(true);
       setError(null);
 
       try {
-        if (!sessionId)
-          throw new Error("No session ID provided for fetching messages");
-        
-        const response = await getSurveyMessages(sessionId);
+        if (!userId)
+          throw new Error("User ID not available to load chat history");
+
+        const response = await getSurveyMessages(userId);
 
         if (response.success && response.data) {
           const convertedMessages = convertApiMessagesToChatMessages(
             response.data
           );
+
+          console.log("Converted messages:", convertedMessages);
+
           setMessages(convertedMessages);
         } else {
           setError(response.message || "Failed to load chat history");
@@ -198,11 +220,23 @@ export function useSurveyMessages() {
     }
 
     loadChatHistory();
-  }, [sessionId, isLoaded, convertApiMessagesToChatMessages]);
+  }, [userId, isLoaded, convertApiMessagesToChatMessages]);
 
   // Message management functions remain unchanged to maintain UI compatibility
   const addMessage = (message: ChatMessage) => {
-    setMessages((prev) => [...prev, message]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        ...message,
+        timestamp:
+          message.timestamp ||
+          new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        read: message.user ? true : message.read, // Mark user messages as read by default
+      },
+    ]);
   };
 
   const updateLastMessage = (text: string, isUser: boolean) => {
@@ -224,13 +258,13 @@ export function useSurveyMessages() {
   };
 
   const refreshMessages = async () => {
-    if (!sessionId) return;
+    if (!userId) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await getSurveyMessages(sessionId);
+      const response = await getSurveyMessages(userId);
 
       if (response.success && response.data) {
         const convertedMessages = convertApiMessagesToChatMessages(
@@ -252,7 +286,7 @@ export function useSurveyMessages() {
   };
 
   const setActiveChatSession = (id: string) => {
-    setSessionId(id);
+    setUserId(id);
   };
 
   return {
@@ -264,6 +298,6 @@ export function useSurveyMessages() {
     isLoaded,
     isLoading,
     error,
-    sessionId,
+    userId,
   };
 }

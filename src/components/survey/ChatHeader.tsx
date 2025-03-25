@@ -35,7 +35,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         <div className="flex items-center gap-2 w-full sm:w-[400px]">
           <button
             onClick={onSidebarToggle}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="md:p-2 rounded-lg hover:bg-white/10 transition-colors"
             aria-label="Toggle sidebar"
           >
             <Menu className="w-6 h-6 text-white" />
