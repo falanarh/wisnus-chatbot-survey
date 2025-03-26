@@ -170,6 +170,7 @@ export interface SurveyMessage {
   session_id: string;
   user_message: string;
   system_response: SurveyResponseData;
+  mode: "survey" | "qa";
   timestamp: string;
 }
 
@@ -181,4 +182,11 @@ export interface SurveyMessagesResult {
   success: boolean;
   data?: SurveyMessage[];
   message?: string;
+}
+
+export interface SurveyMessageRequest {
+  session_id?: string;
+  user_message: string;
+  system_response: SurveyResponseData;
+  mode: "survey" | "qa";
 }

@@ -22,7 +22,7 @@ const ChatScrollButton: React.FC<ChatScrollButtonProps> = ({
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={onClick}
-          className={`fixed bottom-40 right-8 z-40 p-4 rounded-full shadow-lg
+          className={`fixed bottom-40 right-8 z-40 p-2 rounded-full shadow-lg
             ${isDarkMode
               ? 'bg-blue-600 hover:bg-blue-500 text-white border border-blue-500/40'
               : 'bg-blue-500 hover:bg-blue-400 text-white border border-blue-400/40'} 

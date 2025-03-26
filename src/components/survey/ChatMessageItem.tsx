@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
-import { Loader2, CheckCheck } from "lucide-react";
+import { CheckCheck } from "lucide-react";
 import { ChatMessage } from "@/hooks/useSurveyMessages";
 import ModeBadge from "./ModeBadge";
 import { useEffect, useState } from "react";
 import { WiMoonWaningCrescent4 } from "react-icons/wi";
+import MessageLoader from "./MessageLoader";
 
 interface ChatMessageItemProps {
   message: ChatMessage;
@@ -60,7 +61,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ message, isDarkMode }
             backgroundColor: bubbleColor,
             color: textColor,
           }}
-          className={`p-4 text-sm break-words whitespace-pre-wrap shadow-sm
+          className={`px-4 py-3 text-sm break-words whitespace-pre-wrap shadow-sm
             ${message.user
               ? "rounded-t-2xl rounded-bl-2xl rounded-br-lg"
               : "rounded-t-2xl rounded-br-2xl rounded-bl-lg"
@@ -68,22 +69,38 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ message, isDarkMode }
         >
           {message.loading ? (
             <div className="flex items-center justify-center py-1">
-              <Loader2 className="w-4 h-4 animate-spin text-white" />
+              <MessageLoader />
             </div>
           ) : (
             <>
-              {!message.user && message.mode === 'qa' && (
+              {!message.user && (
                 <div className="mb-1">
                   <ModeBadge mode={message.mode} />
                 </div>
               )}
               <p className="break-words whitespace-pre-wrap">{message.text}</p>
+              {message.questionObject?.code === "KR004" && (
+                <>
+                  <p className="break-words whitespace-pre-wrap dark:text-white my-1">Pilih salah satu opsi di bawah ini:</p>
+                  <ul className="space-y-1 my-2">
+                    {message.questionObject.options?.map((option, index) => (
+                      <li
+                        key={index}
+                        className="flex items-start group rounded-lg p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200"
+                      >
+                        <span className="inline-flex w-2 h-2 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-500 mr-3 mt-[6px] flex-shrink-0 shadow-sm"></span>
+                        <span className="dark:text-white">{option}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </>
           )}
           <div className={`absolute -bottom-0 -right-[35px] ${message.user ? "block" : "hidden"}`}>
             <div className="relative w-[50px] h-[25px] overflow-hidden">
               <WiMoonWaningCrescent4
-                color={ isDarkMode ? `#1D76F2` : `#1A8AEF`}
+                color={isDarkMode ? `#1D76F2` : `#1A8AEF`}
                 className="absolute -rotate-[13deg]"
                 size={50}
                 style={{ top: "-19px" }} // Position icon higher to show bottom half
@@ -93,7 +110,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ message, isDarkMode }
           <div className={`absolute -bottom-0 -left-[35px] ${message.user ? "hidden" : "block"}`}>
             <div className="relative w-[50px] h-[25px] overflow-hidden">
               <WiMoonWaningCrescent4
-                color={ isDarkMode ? `#383838` : `#FFFFFF`}
+                color={isDarkMode ? `#383838` : `#FFFFFF`}
                 className="absolute rotate-[15deg] scale-x-[-1]"
                 size={50}
                 style={{ top: "-19px" }} // Position icon higher to show bottom half

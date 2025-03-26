@@ -93,7 +93,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
         {/* Status indicator */}
         {botIsTyping && (
           <div className="text-center mt-1">
-            <p className={`text-xs ${isDarkMode ? 'text-blue-300' : 'text-blue-600'} animate-pulse`}>
+            <p className={`text-xs ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`}>
               Chatbot sedang mengetik...
             </p>
           </div>

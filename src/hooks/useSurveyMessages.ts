@@ -12,6 +12,7 @@ export interface ChatMessage {
   loading?: boolean;
   responseType?: string;
   questionCode?: string;
+  questionObject?: Question;
   timestamp?: string; // Add timestamp field
   read?: boolean; // Add read status for double check marks
 }
@@ -39,14 +40,17 @@ export function useSurveyMessages() {
 
       // Helper function to format a question
       const formatQuestion = (question: Question): string => {
-        if (question.code === "KR004" && question.options?.length) {
-          return `${
-            question.text
-          }\n\nPilih salah satu opsi di bawah ini: ${generateUnorderedList(
-            question.options,
-            "◆"
-          )}`;
-        }
+        // if (question.code === "KR004" && question.options?.length) {
+        //   return `${
+        //     question.text
+        //   }\n\nPilih salah satu opsi di bawah ini:\n`;
+        //   // return `${
+        //   //   question.text
+        //   // }\n\nPilih salah satu opsi di bawah ini: ${generateUnorderedList(
+        //   //   question.options,
+        //   //   "◆"
+        //   // )}`;
+        // }
         return question.text;
       };
 
@@ -66,7 +70,7 @@ export function useSurveyMessages() {
         chatMessages.push({
           text: apiMessage.user_message,
           user: true,
-          mode: "survey",
+          mode: apiMessage.mode,
           timestamp,
           read: true, // User messages are always read
         });
@@ -87,6 +91,7 @@ export function useSurveyMessages() {
 
         let responseText = "";
         let mode: "survey" | "qa" = "survey";
+        let questionObject: Question | undefined = undefined;
         const questionCode = next_question?.code || currentQuestion?.code;
 
         // Determine the appropriate text based on info type
@@ -101,6 +106,7 @@ export function useSurveyMessages() {
                 responseText = "Pertanyaan berikutnya tidak tersedia.";
               } else {
                 responseText = formatQuestion(next_question);
+                questionObject = next_question;
               }
               break;
 
@@ -113,14 +119,16 @@ export function useSurveyMessages() {
                 responseText =
                   "Mohon berikan jawaban yang sesuai dengan pertanyaan.";
               } else {
-                responseText = `${clarification_reason} ${follow_up_question} ${
-                  currentQuestion.code === "KR004"
-                    ? `\n\nPilih salah satu opsi di bawah ini: ${generateUnorderedList(
-                        currentQuestion.options || [],
-                        "◆"
-                      )}`
-                    : ""
-                }`;
+                responseText = `${clarification_reason} ${follow_up_question}`;
+                // responseText = `${clarification_reason} ${follow_up_question} ${
+                //   currentQuestion.code === "KR004"
+                //     ? `\n\nPilih salah satu opsi di bawah ini: ${generateUnorderedList(
+                //         currentQuestion.options || [],
+                //         "◆"
+                //       )}`
+                //     : ""
+                // }`;
+                questionObject = currentQuestion;
               }
               break;
 
@@ -131,6 +139,7 @@ export function useSurveyMessages() {
                 responseText = `${answer} \n\nPertanyaan saat ini: ${formatQuestion(
                   currentQuestion
                 )}`;
+                questionObject = currentQuestion;
               }
               break;
 
@@ -172,6 +181,7 @@ export function useSurveyMessages() {
           mode: mode,
           responseType: info,
           questionCode,
+          questionObject: questionObject,
           timestamp,
           read: false, // System messages start as unread
         });

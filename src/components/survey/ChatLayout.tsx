@@ -12,7 +12,8 @@ import ChatMessageArea from "./ChatMessageArea";
 import { queryRAG } from "@/services/survey/ragService";
 import { getToken, getUserData, updateUserProperty, UserData } from "@/services/auth";
 import { submitResponse } from "@/services/survey/surveyManagement";
-import { SurveyResponseResult, SurveyResponseType, Question } from "@/services/survey/types";
+import { SurveyResponseResult, SurveyResponseType, Question, SurveyMessageRequest } from "@/services/survey/types";
+import { addSurveyMessage } from "@/services/survey/surveyMessages";
 
 interface ChatLayoutProps {
     messages: ChatMessage[];
@@ -168,8 +169,9 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             if (mode === 'survey') {
                 await handleSurveyMode(userData, userMessage);
             } else {
-                const ragResponse = await queryRAG(userMessage);
-                simulateTyping(ragResponse.answer);
+                // const ragResponse = await queryRAG(userMessage);
+                // simulateTyping(ragResponse.answer);
+                await handleQaMode(userMessage);
             }
         } catch (error) {
             console.error("Error processing message:", error);
@@ -180,27 +182,42 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         }
     };
 
+    const handleQaMode = async (userMessage: string) => {
+        try {
+            const ragResponse = await queryRAG(userMessage);
+            const surveyMessage: SurveyMessageRequest = {
+                user_message: userMessage,
+                system_response: { answer: ragResponse.answer },
+                mode: 'qa'
+            };
+            await addSurveyMessage(surveyMessage);
+            simulateTyping(ragResponse.answer);
+        } catch (error) {
+            console.error("Error processing message:", error);
+            updateLastMessage("Terjadi kesalahan saat memproses pesan Anda. Silakan coba lagi.", false);
+            setBotIsTyping(false);
+        }
+    };
+
     // Handle survey mode logic
     const handleSurveyMode = async (userData: UserData, userMessage: string) => {
         // Use sessionId from state or from userData
         const currentSessionId = sessionId || userData?.activeSurveySessionId || "";
-        
+
         try {
             // Kirim permintaan ke API unified /api/survey/respond
             const response = await submitResponse(currentSessionId, userMessage);
 
-            console.log("Survey response:", response);
-            
             // Jika berhasil dan ada session_id baru, perbarui
             if (response.session_id && response.session_id !== currentSessionId) {
                 setSessionId(response.session_id);
                 updateUserProperty('activeSurveySessionId', response.session_id);
             }
-            
+
             // Format respons untuk ditampilkan ke user
             const botResponse = formatSurveyResponse(response);
             simulateTyping(botResponse);
-            
+
         } catch (error) {
             console.error("Error dalam mode survei:", error);
             simulateTyping("Terjadi kesalahan saat memproses pesan Anda. Silakan coba lagi.");
@@ -209,15 +226,15 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
 
     // Format survey response
     const formatSurveyResponse = (response: SurveyResponseResult): string => {
-        const { 
-            info, 
-            additional_info, 
-            next_question, 
+        const {
+            info,
+            additional_info,
+            next_question,
             currentQuestion,
-            clarification_reason, 
-            follow_up_question, 
+            clarification_reason,
+            follow_up_question,
             answer,
-            system_message 
+            system_message
         } = response;
 
         // Format respons berdasarkan tipe info
@@ -233,11 +250,10 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 if (!currentQuestion || !clarification_reason || !follow_up_question) {
                     return "Mohon berikan jawaban yang sesuai dengan pertanyaan.";
                 }
-                return `${clarification_reason} ${follow_up_question}\n\n${
-                    currentQuestion.code === "KR004" && currentQuestion.options
+                return `${clarification_reason} ${follow_up_question}\n\n${currentQuestion.code === "KR004" && currentQuestion.options
                     ? `Pilih salah satu opsi di bawah ini: ${generateUnorderedList(currentQuestion.options, "◆")}`
                     : ""
-                }`;
+                    }`;
 
             case SurveyResponseType.QUESTION:
                 if (!currentQuestion || !answer) return "Silakan jawab pertanyaan saat ini.";
