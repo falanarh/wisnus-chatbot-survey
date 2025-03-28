@@ -1,9 +1,7 @@
-//components/ThemeToggle.tsx
-
 "use client";
 
 import { useTheme } from "@/components/other/ThemeProvider";
-import { Sun, Moon, Monitor } from "lucide-react";
+import { Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef } from "react";
 
@@ -24,7 +22,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ isOpen, setIsOpen, closeOther
     setIsOpen(!isOpen);
   };
 
-  const selectTheme = (selectedTheme: "light" | "dark" | "system") => {
+  const selectTheme = (selectedTheme: "light" | "dark") => {
     setTheme(selectedTheme);
     setIsOpen(false);
   };
@@ -54,9 +52,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ isOpen, setIsOpen, closeOther
                    shadow-sm backdrop-blur`}
         aria-label="Ubah Tema"
       >
-        {theme === "light" && <Sun className="w-5 h-5 text-amber-500" />}
-        {theme === "dark" && <Moon className="w-5 h-5 text-blue-400" />}
-        {theme === "system" && <Monitor className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
+        {theme === "light" ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-blue-400" />}
       </motion.button>
 
       <AnimatePresence>
@@ -82,14 +78,6 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ isOpen, setIsOpen, closeOther
               <Moon className="w-4 h-4 text-blue-400" />
               <span>Gelap</span>
               {theme === "dark" && <span className="ml-auto">✓</span>}
-            </button>
-            <button
-              onClick={() => selectTheme("system")}
-              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <Monitor className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span>Sistem</span>
-              {theme === "system" && <span className="ml-auto">✓</span>}
             </button>
           </motion.div>
         )}

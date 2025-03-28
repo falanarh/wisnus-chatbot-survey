@@ -236,7 +236,7 @@ const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollToSectio
                                 className="ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 items-center justify-center px-4 py-2 border border-white/30 rounded-full text-sm font-medium text-white bg-white/20 hover:bg-white/30 backdrop-blur-sm focus:outline-none hidden sm:flex"
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={() => router.push('/auth?tab=register')}
+                                onClick={() => window.location.href = '/auth?tab=register'}
                             >
                                 <UserPlus size={16} className="mr-1.5" />
                                 <span>Register</span>
@@ -245,7 +245,7 @@ const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollToSectio
                                 className="ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 items-center justify-center px-4 py-2 border-0 rounded-full text-sm font-medium text-white bg-gradient-to-l from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 shadow-lg hover:from-indigo-600 hover:to-purple-700 dark:hover:from-indigo-700 dark:hover:to-purple-800 focus:outline-none flex"
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={() => router.push('/auth?tab=login')}
+                                onClick={() => window.location.href = '/auth?tab=login'}
                             >
                                 <LogIn size={16} className="mr-1.5" />
                                 <span>Login</span>

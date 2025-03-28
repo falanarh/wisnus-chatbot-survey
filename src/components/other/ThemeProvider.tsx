@@ -5,12 +5,11 @@ import { createContext, useContext, useEffect, useState } from "react";
 interface ThemeProviderProps {
   children: React.ReactNode;
   defaultTheme?: string;
-  enableSystem?: boolean;
   disableTransitionOnChange?: boolean;
   attribute?: string;
 }
 
-type Theme = "light" | "dark" | "system";
+type Theme = "light" | "dark";
 
 interface ThemeContextType {
   theme: Theme;
@@ -18,7 +17,7 @@ interface ThemeContextType {
 }
 
 const initialState: ThemeContextType = {
-  theme: "system",
+  theme: "dark", // Changed default to dark
   setTheme: () => null,
 };
 
@@ -26,7 +25,7 @@ const ThemeContext = createContext<ThemeContextType>(initialState);
 
 export function ThemeProvider({
   children,
-  defaultTheme = "system",
+  defaultTheme = "dark", // Changed default to dark
   disableTransitionOnChange = false,
   attribute = "class",
 }: ThemeProviderProps) {
@@ -36,7 +35,7 @@ export function ThemeProvider({
   // Handle theme change
   const applyTheme = (theme: Theme) => {
     const root = window.document.documentElement;
-    const isDark = theme === "dark" || (theme === "system" && prefersDarkMode());
+    const isDark = theme === "dark";
 
     // Remove transition class
     if (disableTransitionOnChange) {
@@ -54,19 +53,12 @@ export function ThemeProvider({
       root.setAttribute(attribute, isDark ? "dark" : "light");
     }
 
-    // Set resolved theme for hooks
-    // (resolvedTheme state removed)
     // Re-enable transitions
     if (disableTransitionOnChange) {
       window.setTimeout(() => {
         root.classList.remove("no-theme-transition");
       }, 0);
     }
-  };
-
-  // Check for dark mode preference
-  const prefersDarkMode = () => {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
   };
 
   // Update theme
@@ -76,31 +68,25 @@ export function ThemeProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme, mounted]);
 
-  // Set up system theme listener
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    
-    const handleChange = () => {
-      if (theme === "system") {
-        applyTheme("system");
-      }
-    };
-
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme]);
-
   // Initialize
   useEffect(() => {
+    // Apply dark theme immediately to avoid flash of light theme
+    if (!mounted) {
+      document.documentElement.classList.add("dark");
+    }
+    
     setMounted(true);
     
     // Read from localStorage or use default
     const savedTheme = localStorage.getItem("theme") as Theme | null;
-    if (savedTheme) {
+    if (savedTheme && (savedTheme === "light" || savedTheme === "dark")) {
       setTheme(savedTheme);
+    } else {
+      // Explicitly set dark as default if nothing in localStorage
+      setTheme("dark");
+      localStorage.setItem("theme", "dark");
     }
-  }, []);
+  }, [mounted]);
 
   // Handle theme setting with local storage persistence
   const handleSetTheme = (newTheme: Theme) => {
