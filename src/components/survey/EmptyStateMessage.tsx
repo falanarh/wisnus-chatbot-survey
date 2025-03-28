@@ -7,7 +7,7 @@ interface EmptyStateMessageProps {
 
 const EmptyStateMessage: React.FC<EmptyStateMessageProps> = ({ isDarkMode, mode }) => {
   return (
-    <div className="flex flex-col items-center justify-center text-center space-y-2 px-3 mb-[180px]">
+    <div className="flex flex-col items-center justify-center text-center space-y-2 px-3 mb-[180px] z-10">
       <div className={`${isDarkMode
           ? 'bg-blue-900/30'
           : 'bg-blue-50/50'} 

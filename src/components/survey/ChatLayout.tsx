@@ -321,6 +321,12 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 ? 'bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900'
                 : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100'}`}>
 
+            {/* Background pattern with theme-aware colors */}
+            <div
+                className="absolute inset-0 z-0 bg-pattern"
+                aria-hidden="true"
+            />
+
             {/* Background Pattern */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-40 -right-40 w-80 h-80 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>

@@ -24,7 +24,7 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   return (
     <div
       ref={chatContainerRef}
-      className={`w-full mx-auto overflow-y-auto ${messages.length === 0 ? 'h-[87vh]' : 'h-[calc(100vh-210px)]'} flex justify-center`}
+      className={`w-full mx-auto overflow-y-auto ${messages.length === 0 ? 'h-[87vh]' : 'h-[calc(100vh-210px)]'} flex justify-center z-10`}
       onClick={closeAllDropdowns}
     >
       {messages.length === 0 ? (
