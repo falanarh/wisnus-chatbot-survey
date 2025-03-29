@@ -17,6 +17,8 @@ interface ChatMessageAreaProps {
   visibleOptions: Record<string, string[]>; // Options yang terlihat untuk setiap ID pesan
   animatingMessageId: string | null; // ID pesan yang sedang dianimasikan
   currentQuestion?: Question;
+  // Add animatingText prop
+  animatingText: Record<string, string>;
 }
 
 const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
@@ -28,6 +30,7 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   closeAllDropdowns,
   visibleOptions,
   animatingMessageId,
+  animatingText
 }) => {
   return (
     <div
@@ -46,10 +49,19 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                 ? visibleOptions[msg.id] 
                 : msg.options || [];
 
-              // Buat salinan pesan dengan opsi yang terlihat
+              // Cek apakah pesan ini sedang dianimasikan tokennya
+              const isTokenAnimating = Boolean(msg.id) && animatingText[msg.id] !== undefined;
+              
+              // Gunakan teks animasi jika ada, atau teks asli jika tidak
+              const displayText = isTokenAnimating 
+                ? animatingText[msg.id] 
+                : msg.text;
+
+              // Buat salinan pesan dengan opsi yang terlihat dan teks yang sedang dianimasikan
               const messageWithVisibleOptions = {
                 ...msg,
-                options: messageOptions
+                options: messageOptions,
+                text: displayText
               };
 
               return (
@@ -57,12 +69,14 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                   {index === 0 && (
                     <div className="h-5" key={`spacer-top-${index}`}></div>
                   )}
-                  {msg.text && (
+                  {/* Tampilkan pesan meskipun textnya kosong jika sedang animasi token */}
+                  {(msg.text || isTokenAnimating || msg.loading) && (
                     <ChatMessageItem
                       message={messageWithVisibleOptions}
                       isDarkMode={isDarkMode}
                       index={index}
                       isAnimating={msg.id === animatingMessageId}
+                      isTokenAnimating={isTokenAnimating}
                     />
                   )}
                   {index === messages.length - 1 && (

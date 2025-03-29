@@ -1,3 +1,5 @@
+// src/components/survey/ChatLayout.tsx  
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -44,6 +46,10 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     // State untuk animasi opsi
     const [animatingMessageId, setAnimatingMessageId] = useState<string | null>(null);
     const [visibleOptions, setVisibleOptions] = useState<Record<string, string[]>>({});
+
+    // State for token animation
+    const [animatingText, setAnimatingText] = useState<Record<string, string>>({});
+    const [completedText, setCompletedText] = useState<Record<string, string>>({});
 
     // Mode confirmation popup state
     const [showModePopup, setShowModePopup] = useState(false);
@@ -119,7 +125,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         if (!userHasScrolled && !isUserScrollingRef.current) {
             scrollToBottom();
         }
-    }, [messages, userHasScrolled, visibleOptions]);
+    }, [messages, userHasScrolled, visibleOptions, animatingText]);
 
     // Handle scroll detection
     useEffect(() => {
@@ -168,107 +174,91 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         tokenGenerationRef.current.timeouts.forEach(timeout => clearTimeout(timeout));
         tokenGenerationRef.current.stopped = true;
 
-        // Update last message
-        const lastMessage = messages[messages.length - 1];
-        if (lastMessage && !lastMessage.user) {
-            updateLastMessage(lastMessage.text + " [berhenti mengetik]", false);
-        }
+        // Update animating messages to completed state
+        Object.keys(animatingText).forEach(id => {
+            if (completedText[id]) {
+                updateLastMessage(completedText[id] + " [berhenti mengetik]", false);
+            }
+        });
 
+        // Reset animation states
+        setAnimatingText({});
         setBotIsTyping(false);
     };
 
-    // Fungsi untuk beralih dari mode QA ke mode survei
-    const handleSwitchToSurvey = async () => {
-        setMode('survey');
-        setShowModePopup(false);
+    // New function for token-by-token animation
+    const animateTokenByToken = (messageId: string, fullText: string, onComplete?: () => void) => {
+        if (tokenGenerationRef.current.stopped) return;
+        
+        // Store the complete text for reference if animation is stopped
+        setCompletedText(prev => ({
+            ...prev,
+            [messageId]: fullText
+        }));
 
-        // Membersihkan timer mode QA
-        if (qaTimerRef.current) {
-            clearTimeout(qaTimerRef.current);
-            qaTimerRef.current = null;
-        }
+        // Set initial empty animation text
+        setAnimatingText(prev => ({
+            ...prev,
+            [messageId]: ""
+        }));
 
-        try {
-            // Mendapatkan pertanyaan saat ini dari API
-            const response = await getCurrentQuestion();
+        // Set bot is typing state
+        setBotIsTyping(true);
 
-            let pesanTeks = "Mode berubah ke survei. Mari lanjutkan survei Anda.";
+        // Calculate a dynamic typing speed based on text length
+        // Shorter texts appear faster, longer texts maintain a reasonable overall duration
+        const baseDelay = Math.max(20, Math.min(50, 1500 / fullText.length));
+        
+        // Add each character one by one with a slight delay
+        for (let i = 0; i < fullText.length; i++) {
+            const timeout = setTimeout(() => {
+                if (tokenGenerationRef.current.stopped) return;
+                
+                const currentText = fullText.substring(0, i + 1);
+                setAnimatingText(prev => ({
+                    ...prev,
+                    [messageId]: currentText
+                }));
 
-            if (response.success && response.data) {
-                const { status, current_question, message } = response.data;
-
-                if (status === "COMPLETED") {
-                    pesanTeks += message || " Survei telah selesai. Terima kasih atas partisipasi Anda.";
-                    addMessage({
-                        id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-                        text: pesanTeks,
-                        user: false,
-                        mode: 'survey',
-                        options: []
-                    });
-                } else if (current_question) {
-                    pesanTeks += `\n\nPertanyaan saat ini: ${current_question.text}`;
-
-                    // Simpan ke state terlebih dahulu
-                    setCurrentQuestion(current_question);
-
-                    // Kirim ke database
-                    const surveyMessage: SurveyMessageRequest = {
-                        user_message: null,
-                        system_response: {
-                            info: "switched_to_survey",
-                            currentQuestion: current_question,
-                            additional_info: "Anda telah beralih ke mode survei."
-                        },
-                        mode: 'survey',
-                    };
-                    await addSurveyMessage(surveyMessage);
-
-                    // Buat messageId unik
-                    const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-
-                    // Tambahkan pesan ke UI
-                    addMessage({
-                        id: messageId,
-                        text: pesanTeks,
-                        user: false,
-                        mode: 'survey',
-                        questionObject: current_question,
-                        questionCode: current_question.code,
-                        options: [] // Mulai dengan opsi kosong
-                    });
-
-                    // Animasi opsi jika pertanyaan memiliki opsi
-                    if (current_question.options?.length) {
-                        animateOptions(messageId, current_question.options);
-                    }
-                } else {
-                    addMessage({
-                        id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-                        text: pesanTeks + " Mari lanjutkan survei Anda.",
-                        user: false,
-                        mode: 'survey',
-                        options: []
-                    });
+                // When animation completes
+                if (i === fullText.length - 1) {
+                    setBotIsTyping(false);
+                    // Remove from animating state after a small delay
+                    setTimeout(() => {
+                        // IMPORTANT: Update the actual message with the final text before removing it from animatingText
+                        updateMessageText(messageId, fullText);
+                        
+                        setAnimatingText(prev => {
+                            const newState = { ...prev };
+                            delete newState[messageId];
+                            return newState;
+                        });
+                        
+                        if (onComplete) onComplete();
+                    }, 100);
                 }
+            }, i * baseDelay);
+
+            tokenGenerationRef.current.timeouts.push(timeout);
+        }
+    };
+
+    // New helper function to update a specific message's text by ID
+    const updateMessageText = (messageId: string, text: string) => {
+        // Find the message in the existing messages array and update it
+        const index = messages.findIndex(msg => msg.id === messageId);
+        if (index !== -1) {
+            // We use the updateLastMessage if it's the last message (most common case)
+            if (index === messages.length - 1 && !messages[index].user) {
+                updateLastMessage(text, false);
             } else {
-                addMessage({
-                    id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-                    text: pesanTeks + " Mari lanjutkan survei Anda.",
-                    user: false,
-                    mode: 'survey',
-                    options: []
-                });
+                // Otherwise, we need a more sophisticated approach
+                // This could involve updating the parent component's state
+                // For now, we'll update using the same updateLastMessage function
+                // but in a real implementation, you might want to add a more flexible
+                // updateMessage(id, text) function to your props
+                updateLastMessage(text, false);
             }
-        } catch (error) {
-            console.error("Kesalahan saat mendapatkan pertanyaan saat ini:", error);
-            addMessage({
-                id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-                text: "Mode berubah ke survei. Mari lanjutkan survei Anda.",
-                user: false,
-                mode: 'survey',
-                options: []
-            });
         }
     };
 
@@ -305,6 +295,133 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         });
     };
 
+    // Fungsi untuk beralih dari mode QA ke mode survei
+    const handleSwitchToSurvey = async () => {
+        setMode('survey');
+        setShowModePopup(false);
+
+        // Membersihkan timer mode QA
+        if (qaTimerRef.current) {
+            clearTimeout(qaTimerRef.current);
+            qaTimerRef.current = null;
+        }
+
+        try {
+            // Mendapatkan pertanyaan saat ini dari API
+            const response = await getCurrentQuestion();
+
+            let pesanTeks = "Mode berubah ke survei. Mari lanjutkan survei Anda.";
+
+            if (response.success && response.data) {
+                const { status, current_question, message } = response.data;
+
+                if (status === "COMPLETED") {
+                    pesanTeks += message || " Survei telah selesai. Terima kasih atas partisipasi Anda.";
+                    
+                    // Buat ID pesan baru
+                    const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+                    
+                    // Tambahkan pesan kosong terlebih dahulu
+                    addMessage({
+                        id: messageId,
+                        text: "",
+                        user: false,
+                        mode: 'survey',
+                        options: []
+                    });
+                    
+                    // Mulai animasi token
+                    animateTokenByToken(messageId, pesanTeks);
+                } else if (current_question) {
+                    pesanTeks += `\n\nPertanyaan saat ini:\n\n${current_question.text}`;
+
+                    // Simpan ke state terlebih dahulu
+                    setCurrentQuestion(current_question);
+
+                    // Kirim ke database
+                    const surveyMessage: SurveyMessageRequest = {
+                        user_message: null,
+                        system_response: {
+                            info: "switched_to_survey",
+                            currentQuestion: current_question,
+                            additional_info: "Anda telah beralih ke mode survei."
+                        },
+                        mode: 'survey',
+                    };
+                    await addSurveyMessage(surveyMessage);
+
+                    // Buat messageId unik
+                    const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+                    // Tambahkan pesan kosong terlebih dahulu
+                    addMessage({
+                        id: messageId,
+                        text: pesanTeks, // CHANGE: Add initial text to prevent disappearing
+                        user: false,
+                        mode: 'survey',
+                        questionObject: current_question,
+                        questionCode: current_question.code,
+                        options: [] // Mulai dengan opsi kosong
+                    });
+
+                    // Animasi token dan kemudian opsi
+                    animateTokenByToken(messageId, pesanTeks, () => {
+                        if (current_question.options?.length) {
+                            animateOptions(messageId, current_question.options);
+                        }
+                    });
+                } else {
+                    // Buat ID pesan baru
+                    const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+                    
+                    // Tambahkan pesan kosong terlebih dahulu
+                    addMessage({
+                        id: messageId,
+                        text: pesanTeks, // CHANGE: Add initial text to prevent disappearing
+                        user: false,
+                        mode: 'survey',
+                        options: []
+                    });
+                    
+                    // Mulai animasi token
+                    animateTokenByToken(messageId, pesanTeks + " Mari lanjutkan survei Anda.");
+                }
+            } else {
+                // Buat ID pesan baru
+                const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+                
+                // Tambahkan pesan kosong terlebih dahulu
+                addMessage({
+                    id: messageId,
+                    text: pesanTeks, // CHANGE: Add initial text to prevent disappearing
+                    user: false,
+                    mode: 'survey',
+                    options: []
+                });
+                
+                // Mulai animasi token
+                animateTokenByToken(messageId, pesanTeks + " Mari lanjutkan survei Anda.");
+            }
+        } catch (error) {
+            console.error("Kesalahan saat mendapatkan pertanyaan saat ini:", error);
+            
+            // Buat ID pesan baru
+            const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+            
+            // Tambahkan pesan kosong terlebih dahulu
+            addMessage({
+                id: messageId,
+                text: "Mode berubah ke survei. Mari lanjutkan survei Anda.", // CHANGE: Add initial text
+                user: false,
+                mode: 'survey',
+                options: []
+            });
+            
+            // Mulai animasi token
+            animateTokenByToken(messageId, "Mode berubah ke survei. Mari lanjutkan survei Anda.");
+        }
+    };
+
     // Handle mengirim pesan
     const handleSend = async () => {
         if (!input.trim() || loading || botIsTyping) return;
@@ -335,7 +452,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         const loadingMsgId = `loading_msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
         addMessage({
             id: loadingMsgId,
-            text: "",
+            text: "", // Start with empty text
             user: false,
             loading: true,
             mode: mode,
@@ -352,7 +469,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             if (mode === 'survey') {
                 await handleSurveyMode(userData, userMessage, loadingMsgId);
             } else {
-                await handleQaMode(userMessage);
+                await handleQaMode(userMessage, loadingMsgId);
 
                 // Reset QA mode timer pada setiap interaksi
                 if (qaTimerRef.current) {
@@ -372,7 +489,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     };
 
     // Handle mode QA
-    const handleQaMode = async (userMessage: string) => {
+    const handleQaMode = async (userMessage: string, loadingMsgId: string) => {
         try {
             const ragResponse = await queryRAG(userMessage);
             const surveyMessage: SurveyMessageRequest = {
@@ -381,10 +498,14 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 mode: 'qa'
             };
             await addSurveyMessage(surveyMessage);
-
-            // Update pesan loading dengan hasil respons
+    
+            // Important: Update the message immediately to stop showing the loader
+            // and show the actual text content
             updateLastMessage(ragResponse.answer, false);
-            setBotIsTyping(false);
+    
+            // Then animate the response token by token
+            animateTokenByToken(loadingMsgId, ragResponse.answer);
+            
         } catch (error) {
             console.error("Error processing message:", error);
             updateLastMessage("Terjadi kesalahan saat memproses pesan Anda. Silakan coba lagi.", false);
@@ -396,72 +517,67 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     const handleSurveyMode = async (userData: UserData, userMessage: string, loadingMsgId: string) => {
         // Gunakan sessionId dari state atau dari userData
         const currentSessionId = sessionId || userData?.activeSurveySessionId || "";
-
+    
         try {
             // Kirim permintaan ke API unified /api/survey/respond
             const response = await submitResponse(currentSessionId, userMessage);
-
+    
             // Jika berhasil dan ada session_id baru, perbarui
             if (response.session_id && response.session_id !== currentSessionId) {
                 setSessionId(response.session_id);
                 updateUserProperty('activeSurveySessionId', response.session_id);
             }
-
+    
             // Format respons untuk ditampilkan ke user
             const botResponse = formatSurveyResponse(response);
-
+    
             // Update current question state jika ada
             if (botResponse.questionObject) {
                 setCurrentQuestion(botResponse.questionObject);
             }
-
+    
+            // Important: Update the loading message right away to show content
+            // This stops the loader from showing and displays the actual message
+            updateLastMessage(botResponse.text, false);
+    
             // Perlakuan khusus untuk pertanyaan KR004
             if (botResponse.questionObject?.code === "KR004" && botResponse.questionObject?.options?.length) {
                 console.log("Terdeteksi pertanyaan KR004 - menampilkan dengan opsi lengkap");
-
+    
                 // Buat ID pesan baru
                 const newMessageId = `kr004_msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-
-                // Tambahkan pesan baru dengan opsi kosong awalnya
+    
+                // Tambahkan pesan baru dengan teks awal
                 addMessage({
                     id: newMessageId,
-                    text: botResponse.text,
+                    text: botResponse.text, // Add text immediately to prevent disappearing
                     user: false,
                     mode: 'survey',
                     questionObject: botResponse.questionObject,
                     questionCode: botResponse.questionObject.code,
-                    options: [] // Mulai dengan opsi kosong, akan diisi melalui animasi
+                    options: botResponse.questionObject.options // Add all options right away
                 });
-
-                // Tampilkan semua opsi langsung
-                setVisibleOptions(prev => ({
-                    ...prev,
-                    [newMessageId]: botResponse.questionObject?.options || []
-                }));
-
-                // Set message ini sebagai yang sedang dianimasi (untuk efek visual)
-                setAnimatingMessageId(newMessageId);
-
-                // Setelah sedikit delay, hentikan animasi
-                setTimeout(() => {
+    
+                // We still animate the text for a nice effect
+                animateTokenByToken(newMessageId, botResponse.text, () => {
+                    // We're adding options synchronously below, so no need for 
+                    // additional animations here. This improves UX by showing options
+                    // immediately
                     setAnimatingMessageId(null);
-                }, 500);
+                });
             } else {
-                // Untuk pertanyaan lain, gunakan cara biasa
-                updateLastMessage(botResponse.text, false);
-
-                // Tambahkan ID pesan saat ini ke objek botResponse
-                const currentMessageId = loadingMsgId;
-                botResponse.id = currentMessageId;
-
-                // Animasi opsi jika ini adalah pertanyaan dengan opsi
-                if (botResponse.questionObject?.options?.length) {
-                    animateOptions(currentMessageId, botResponse.questionObject.options);
-                }
+                // For other questions, animate token by token but ensure text is displayed
+                animateTokenByToken(loadingMsgId, botResponse.text, () => {
+                    // If there are options, show them immediately 
+                    if (botResponse.questionObject?.options?.length) {
+                        setVisibleOptions(prev => ({
+                            ...prev,
+                            [loadingMsgId]: botResponse.questionObject?.options || []
+                        }));
+                    }
+                });
             }
-
-            setBotIsTyping(false);
-
+    
         } catch (error) {
             console.error("Error dalam mode survei:", error);
             updateLastMessage("Terjadi kesalahan saat memproses pesan Anda. Silakan coba lagi.", false);
@@ -531,6 +647,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 visibleOptions={visibleOptions}
                 animatingMessageId={animatingMessageId}
                 currentQuestion={currentQuestion}
+                animatingText={animatingText}
             />
 
             {/* Scroll to Bottom Button */}

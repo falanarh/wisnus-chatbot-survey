@@ -1,3 +1,5 @@
+//src/components/survey/SurveyChatbot.tsx
+
 "use client";
 
 import React from "react";

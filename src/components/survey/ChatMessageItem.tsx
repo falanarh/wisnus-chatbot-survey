@@ -13,16 +13,21 @@ interface ChatMessageItemProps {
   isDarkMode: boolean;
   index: number;
   isAnimating?: boolean; // Flag untuk menunjukkan apakah pesan ini sedang dianimasikan
+  isTokenAnimating?: boolean; // Flag untuk menunjukkan apakah pesan ini sedang dianimasikan token by token
 }
 
 const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   message,
   isDarkMode,
   isAnimating,
+  isTokenAnimating = false,
 }) => {
   const [timestamp, setTimestamp] = useState<string>(
     message.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   );
+
+  // Cursor blinking effect for token animation
+  const [showCursor, setShowCursor] = useState<boolean>(true);
 
   // Set timestamp on first render if not already present
   useEffect(() => {
@@ -30,6 +35,18 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
       setTimestamp(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     }
   }, [message.timestamp]);
+
+  // Blinking cursor effect when token animation is active
+  useEffect(() => {
+    if (isTokenAnimating) {
+      const interval = setInterval(() => {
+        setShowCursor(prev => !prev);
+      }, 500);
+      return () => clearInterval(interval);
+    } else {
+      setShowCursor(false);
+    }
+  }, [isTokenAnimating]);
 
   // Determine bubble colors
   const bubbleColor = message.user
@@ -90,7 +107,13 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                   <ModeBadge mode={message.mode} />
                 </div>
               )}
-              <p className="break-words whitespace-pre-wrap">{message.text}</p>
+              <p className="break-words whitespace-pre-wrap">
+                {message.text}
+                {/* Show blinking cursor during token animation */}
+                {isTokenAnimating && showCursor && (
+                  <span className="inline-block w-2 h-4 bg-current animate-pulse ml-0.5"></span>
+                )}
+              </p>
 
               {/* Display options if they should be shown */}
               {shouldShowOptions && message.questionCode === "KR004" && (
@@ -116,16 +139,6 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                     ))}
                   </ul>
                 </>
-              )}
-
-              {/* Debugging info */}
-              {!message.user && message.mode === 'survey' && message.questionObject && (
-                <div className="mt-1 text-xs opacity-50">
-                  {message.questionObject.code === "KR004" ?
-                    <span>Pertanyaan KR004 {message.options ? `(${message.options.length} opsi)` : "(tanpa opsi)"}</span> :
-                    <span>Pertanyaan {message.questionObject.code}</span>
-                  }
-                </div>
               )}
             </>
           )}
