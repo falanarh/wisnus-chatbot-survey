@@ -44,8 +44,6 @@ export function useSurveyMessages() {
             response.data
           );
 
-          console.log("Converted messages:", convertedMessages);
-
           setMessages(convertedMessages);
         } else {
           setError(response.message || "Failed to load chat history");
@@ -66,18 +64,24 @@ export function useSurveyMessages() {
   }, [userId, isLoaded]);
 
   // Message management functions
-  const addMessage = (message: ChatMessage) => {
+  const addMessage = (messageInput: Partial<ChatMessage> & { text: string; user: boolean; mode: "survey" | "qa" }) => {
     setMessages((prev) => [
       ...prev,
       {
-        ...message,
-        timestamp:
-          message.timestamp ||
-          new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        read: message.user ? true : message.read,
+        id: messageInput.id || `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        text: messageInput.text,
+        user: messageInput.user,
+        mode: messageInput.mode,
+        responseType: messageInput.responseType,
+        questionCode: messageInput.questionCode,
+        questionObject: messageInput.questionObject,
+        timestamp: messageInput.timestamp || new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        read: messageInput.user ? true : messageInput.read,
+        loading: messageInput.loading,
+        options: messageInput.options || []
       },
     ]);
   };

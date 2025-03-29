@@ -14,8 +14,7 @@ interface ChatMessageAreaProps {
   messagesEndRef: RefObject<HTMLDivElement | null>;
   chatContainerRef: RefObject<HTMLDivElement | null>;
   closeAllDropdowns: () => void;
-  optionsAnimating?: boolean;
-  visibleOptions?: string[];
+  activeAnimationMessageId: string | null; // ID pesan yang sedang dianimasikan
   currentQuestion?: Question;
 }
 
@@ -26,14 +25,9 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   messagesEndRef,
   chatContainerRef,
   closeAllDropdowns,
-  optionsAnimating,
-  visibleOptions,
+  activeAnimationMessageId,
   currentQuestion,
 }) => {
-  // Periksa apakah pertanyaan saat ini sudah ditampilkan dalam pesan
-  const isCurrentQuestionDisplayed = currentQuestion ? 
-    messages.some(m => m.questionObject?.code === currentQuestion.code) : false;
-
   return (
     <div
       ref={chatContainerRef}
@@ -55,9 +49,7 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                     message={msg}
                     isDarkMode={isDarkMode}
                     index={index}
-                    optionsAnimating={optionsAnimating}
-                    visibleOptions={visibleOptions}
-                    currentQuestion={currentQuestion}
+                    isAnimating={msg.id === activeAnimationMessageId}
                   />
                 )}
                 {index === messages.length - 1 && (
@@ -65,25 +57,6 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                 )}
               </div>
             ))}
-            
-            {/* Tampilkan opsi pertanyaan saat ini jika belum ditampilkan dalam pesan */}
-            {!isCurrentQuestionDisplayed && currentQuestion?.options && currentQuestion.options.length > 0 && mode === 'survey' && (
-              <div key="current-question-options" className="mb-6">
-                <ChatMessageItem
-                  message={{
-                    text: `Pertanyaan saat ini: ${currentQuestion.text}\n\nPilih salah satu opsi berikut:`,
-                    user: false,
-                    mode: 'survey',
-                    questionObject: currentQuestion
-                  }}
-                  isDarkMode={isDarkMode}
-                  index={messages.length}
-                  optionsAnimating={false}
-                  visibleOptions={currentQuestion.options}
-                  currentQuestion={currentQuestion}
-                />
-              </div>
-            )}
             
             {/* Target for scrolling */}
             <div ref={messagesEndRef} className="h-1" />

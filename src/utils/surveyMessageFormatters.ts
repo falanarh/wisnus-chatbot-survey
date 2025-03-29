@@ -2,6 +2,7 @@ import { Question, SurveyMessage, SurveyResponseData } from "@/services/survey";
 
 // Shared ChatMessage interface that both components will use
 export interface ChatMessage {
+  id: string; // Tambahkan ID unik untuk setiap pesan
   text: string;
   user: boolean;
   mode: "survey" | "qa";
@@ -11,6 +12,7 @@ export interface ChatMessage {
   questionObject?: Question;
   timestamp?: string;
   read?: boolean;
+  options?: string[]; // Opsi yang ditampilkan untuk pesan ini
 }
 
 /**
@@ -117,6 +119,7 @@ export function formatSurveyResponse(
   });
 
   return {
+    id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`, // Generate ID unik
     text: responseText,
     user: false,
     mode: mode,
@@ -124,7 +127,8 @@ export function formatSurveyResponse(
     questionCode,
     questionObject: questionObject,
     timestamp,
-    read: false, // System messages start as unread
+    read: false,
+    options: questionObject?.options || [] // Tambahkan options dari questionObject jika ada
   };
 }
 
@@ -150,13 +154,15 @@ export function convertApiMessagesToChatMessages(
           minute: "2-digit",
         });
 
-    // Add user message
+    // Add user message with ID
     chatMessages.push({
+      id: `user_msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`, // Generate ID unik untuk pesan user
       text: apiMessage.user_message,
       user: true,
       mode: apiMessage.mode,
       timestamp,
       read: true, // User messages are always read
+      options: [] // Empty options for user messages
     });
 
     // Add system response based on its structure

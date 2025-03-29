@@ -7,22 +7,18 @@ import { useEffect, useState } from "react";
 import { WiMoonWaningCrescent4 } from "react-icons/wi";
 import MessageLoader from "./MessageLoader";
 import { ChatMessage } from "@/utils/surveyMessageFormatters";
-import { Question } from "@/services/survey/types";
 
 interface ChatMessageItemProps {
   message: ChatMessage;
   isDarkMode: boolean;
   index: number;
-  optionsAnimating?: boolean;
-  visibleOptions?: string[];
-  currentQuestion?: Question;
+  isAnimating?: boolean; // Flag untuk menunjukkan apakah pesan ini sedang dianimasikan
 }
 
 const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   message,
   isDarkMode,
-  optionsAnimating,
-  visibleOptions,
+  isAnimating,
 }) => {
   const [timestamp, setTimestamp] = useState<string>(
     message.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -57,16 +53,9 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
       : "rgba(0, 0, 0, 0.5)";
 
   // Determine which options to display
-  const shouldShowOptions = !message.user &&
-    message.questionObject?.options &&
-    message.questionObject.options.length > 0;
-
-  // Mengatasi error TypeScript dengan memastikan displayOptions selalu berupa array
-  const displayOptions: string[] = shouldShowOptions ?
-    (optionsAnimating && visibleOptions && visibleOptions.length > 0 ?
-      visibleOptions :
-      message.questionObject?.options || []) :
-    [];
+  const shouldShowOptions = !message.user && 
+    message.options && 
+    message.options.length > 0;
 
   return (
     <motion.div
@@ -104,30 +93,36 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
               <p className="break-words whitespace-pre-wrap">{message.text}</p>
 
               {/* Display options if they should be shown */}
-              {shouldShowOptions && displayOptions.length > 0 && (
+              {shouldShowOptions && (
                 <>
                   <p className="break-words whitespace-pre-wrap dark:text-white my-1">
                     Pilih salah satu opsi di bawah ini:
                   </p>
                   <ul className="space-y-1 my-2">
-                    {displayOptions.map((option, index) => (
-                      <li
+                    {message.options?.map((option, index) => (
+                      <motion.li
                         key={index}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ 
+                          duration: 0.3, 
+                          delay: isAnimating ? index * 0.15 : 0 // Animasi hanya saat isAnimating = true
+                        }}
                         className="flex items-start group rounded-lg p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200"
                       >
                         <span className="inline-flex w-2 h-2 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-400 dark:to-indigo-500 mr-3 mt-[6px] flex-shrink-0 shadow-sm"></span>
                         <span className="dark:text-white">{option}</span>
-                      </li>
+                      </motion.li>
                     ))}
                   </ul>
                 </>
               )}
 
-              {/* Debugging info - dapat dihapus setelah masalah teratasi */}
+              {/* Debugging info */}
               {!message.user && message.mode === 'survey' && message.questionObject && (
                 <div className="mt-1 text-xs opacity-50">
                   {message.questionObject.code === "KR004" ?
-                    <span>Pertanyaan KR004 {message.questionObject.options ? `(${message.questionObject.options.length} opsi)` : "(tanpa opsi)"}</span> :
+                    <span>Pertanyaan KR004 {message.options ? `(${message.options.length} opsi)` : "(tanpa opsi)"}</span> :
                     <span>Pertanyaan {message.questionObject.code}</span>
                   }
                 </div>

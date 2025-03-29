@@ -18,7 +18,7 @@ import { ChatMessage, formatSurveyResponse } from "@/utils/surveyMessageFormatte
 
 interface ChatLayoutProps {
     messages: ChatMessage[];
-    addMessage: (message: ChatMessage) => void;
+    addMessage: (message: Partial<ChatMessage> & { text: string; user: boolean; mode: "survey" | "qa" }) => void;
     updateLastMessage: (text: string, user: boolean) => void;
     sessionId?: string;
 }
@@ -37,10 +37,9 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     const [themeMenuOpen, setThemeMenuOpen] = useState(false);
     const [mode, setMode] = useState<'survey' | 'qa'>('survey');
     const [sessionId, setSessionId] = useState<string | undefined>(propSessionId);
+    const [activeAnimationMessageId, setActiveAnimationMessageId] = useState<string | null>(null);
 
-    // First, we'll need to track the state of option animation
-    const [optionsAnimating, setOptionsAnimating] = useState(false);
-    const [visibleOptions, setVisibleOptions] = useState<string[]>([]);
+    // State untuk animasi opsi
     const [currentQuestion, setCurrentQuestion] = useState<Question | undefined>(undefined);
 
     // Mode confirmation popup state
@@ -175,7 +174,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         setBotIsTyping(false);
     };
 
-    // Perbarui fungsi handleSwitchToSurvey
+    // Fungsi untuk beralih dari mode QA ke mode survei
     const handleSwitchToSurvey = async () => {
         setMode('survey');
         setShowModePopup(false);
@@ -186,27 +185,31 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             qaTimerRef.current = null;
         }
 
-        // Menampilkan pesan loading
-        addMessage({
-            text: "Beralih ke mode survei...",
-            user: false,
-            mode: 'survey',
-            loading: true
-        });
-
         try {
             // Mendapatkan pertanyaan saat ini dari API
             const response = await getCurrentQuestion();
 
             let pesanTeks = "Mode berubah ke survei. Mari lanjutkan survei Anda.";
-            let questionObject: Question | undefined = undefined;
 
             if (response.success && response.data) {
                 const { status, current_question, message } = response.data;
 
                 if (status === "COMPLETED") {
-                    pesanTeks += message || "Survei telah selesai. Terima kasih atas partisipasi Anda.";
+                    pesanTeks += message || " Survei telah selesai. Terima kasih atas partisipasi Anda.";
+                    addMessage({
+                        id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                        text: pesanTeks,
+                        user: false,
+                        mode: 'survey',
+                        options: []
+                    });
                 } else if (current_question) {
+                    pesanTeks += `\n\nPertanyaan saat ini: ${current_question.text}`;
+
+                    // Simpan ke state terlebih dahulu
+                    setCurrentQuestion(current_question);
+
+                    // Kirim ke database
                     const surveyMessage: SurveyMessageRequest = {
                         user_message: null,
                         system_response: {
@@ -217,60 +220,107 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                         mode: 'survey',
                     };
                     await addSurveyMessage(surveyMessage);
-                    pesanTeks += `\n\nPertanyaan saat ini: ${current_question.text}`;
-                    questionObject = current_question;
+
+                    // Buat pesan baru dengan ID unik
+                    const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+                    // Tambahkan pesan ke UI dengan options kosong awalnya
+                    addMessage({
+                        id: messageId,
+                        text: pesanTeks,
+                        user: false,
+                        mode: 'survey',
+                        questionObject: current_question,
+                        questionCode: current_question.code,
+                        options: [] // Mulai dengan opsi kosong
+                    });
+
+                    // Set message ID ini sebagai message yang akan menerima animasi opsi
+                    setActiveAnimationMessageId(messageId);
+
+                    // Jadwalkan animasi opsi untuk pesan ini secara khusus
+                    if (current_question?.options?.length) {
+                        animateOptionsForMessage(messageId, current_question.options);
+                    }
                 } else {
-                    pesanTeks += "Mari lanjutkan survei Anda.";
+                    addMessage({
+                        id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                        text: pesanTeks + " Mari lanjutkan survei Anda.",
+                        user: false,
+                        mode: 'survey',
+                        options: []
+                    });
                 }
             } else {
-                // Pesan cadangan jika panggilan API gagal
-                pesanTeks += "Mari lanjutkan survei Anda. Jika Anda membutuhkan bantuan, Anda dapat bertanya kapan saja.";
+                addMessage({
+                    id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                    text: pesanTeks + " Mari lanjutkan survei Anda.",
+                    user: false,
+                    mode: 'survey',
+                    options: []
+                });
             }
-
-            // Pass the question object if it exists
-            simulateTyping(pesanTeks, questionObject);
-
         } catch (error) {
-            // Jika terjadi kesalahan, tampilkan pesan umum
-            updateLastMessage("Mode berubah ke survei. Mari lanjutkan survei Anda.", false);
             console.error("Kesalahan saat mendapatkan pertanyaan saat ini:", error);
+            addMessage({
+                id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                text: "Mode berubah ke survei. Mari lanjutkan survei Anda.",
+                user: false,
+                mode: 'survey',
+                options: []
+            });
         }
     };
 
-    // Send message handler
+    // Handle mengirim pesan
     const handleSend = async () => {
         if (!input.trim() || loading || botIsTyping) return;
-
+    
         const userMessage = input.trim();
         setInput("");
-        addMessage({ text: userMessage, user: true, mode: mode });
-
+        
+        // Tambahkan pesan pengguna ke daftar pesan
+        addMessage({ 
+            id: `user_msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`, 
+            text: userMessage, 
+            user: true, 
+            mode: mode,
+            options: [] 
+        });
+    
         setLoading(true);
         setBotIsTyping(true);
         setUserHasScrolled(false);
-
+    
         // Reset token generation state
         tokenGenerationRef.current = {
             stopped: false,
             timeouts: []
         };
-
-        // Add loading message
-        addMessage({ text: "", user: false, loading: true, mode: mode });
-
+    
+        // Tambahkan pesan loading
+        addMessage({ 
+            id: `loading_msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+            text: "", 
+            user: false, 
+            loading: true, 
+            mode: mode,
+            options: [] 
+        });
+    
         try {
             const token = getToken();
             const userData = getUserData();
-
+    
             if (!token) throw new Error("Authentication token not found");
             if (!userData) throw new Error("User data not found");
-
+    
             if (mode === 'survey') {
                 await handleSurveyMode(userData, userMessage);
             } else {
                 await handleQaMode(userMessage);
-
-                // Reset QA mode timer on each interaction
+    
+                // Reset QA mode timer pada setiap interaksi
                 if (qaTimerRef.current) {
                     clearTimeout(qaTimerRef.current);
                 }
@@ -287,6 +337,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         }
     };
 
+    // Handle mode QA
     const handleQaMode = async (userMessage: string) => {
         try {
             const ragResponse = await queryRAG(userMessage);
@@ -304,112 +355,123 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         }
     };
 
-    // Handle survey mode logic
+    // Handle mode survei
     const handleSurveyMode = async (userData: UserData, userMessage: string) => {
-        // Use sessionId from state or from userData
+        // Gunakan sessionId dari state atau dari userData
         const currentSessionId = sessionId || userData?.activeSurveySessionId || "";
-    
+
         try {
             // Kirim permintaan ke API unified /api/survey/respond
             const response = await submitResponse(currentSessionId, userMessage);
-    
+
             // Jika berhasil dan ada session_id baru, perbarui
             if (response.session_id && response.session_id !== currentSessionId) {
                 setSessionId(response.session_id);
                 updateUserProperty('activeSurveySessionId', response.session_id);
             }
-    
+
             // Format respons untuk ditampilkan ke user
             const botResponse = formatSurveyResponse(response);
-            
+
             // Update current question state
             if (botResponse.questionObject) {
                 setCurrentQuestion(botResponse.questionObject);
             }
-            
-            // Debugging - log question code and options
-            console.log("Question code:", botResponse.questionObject?.code);
-            console.log("Question options:", botResponse.questionObject?.options);
-            
-            // Pass the question object if it exists
-            simulateTyping(botResponse.text, botResponse.questionObject);
-    
+
+            // Tambahkan pesan ke UI
+            addMessage(botResponse);
+
+            // Animasi opsi jika ini adalah pertanyaan dengan opsi
+            if (botResponse.questionObject?.options?.length) {
+                animateOptionsForMessage(botResponse.id, botResponse.questionObject.options);
+            }
+
         } catch (error) {
             console.error("Error dalam mode survei:", error);
-            simulateTyping("Terjadi kesalahan saat memproses pesan Anda. Silakan coba lagi.");
+            addMessage({
+                id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                text: "Terjadi kesalahan saat memproses pesan Anda. Silakan coba lagi.",
+                user: false,
+                mode: 'survey',
+                options: []
+            });
         }
     };
 
-    // Simulate typing with support for options animation
+    // Simulasi pengetikan teks respons
     const simulateTyping = (response: string, question?: Question) => {
         const tokens = response.split(" ");
         let currentText = "";
 
-        // Reset options state
-        setVisibleOptions([]);
-        
-        // Store the question for later reference
+        // Simpan pertanyaan ke state jika ada
         if (question) {
             setCurrentQuestion(question);
         }
 
         tokens.forEach((token, index) => {
             const timeout = setTimeout(() => {
-                // Skip if generation has been stopped
+                // Lewati jika generasi telah dihentikan
                 if (tokenGenerationRef.current.stopped) return;
 
                 currentText += (index === 0 ? "" : " ") + token;
                 updateLastMessage(currentText, false);
 
-                // After last token, allow user to send messages again and start options animation
+                // Setelah token terakhir, izinkan pengguna untuk mengirim pesan lagi
                 if (index === tokens.length - 1) {
                     setBotIsTyping(false);
-
-                    // Check for KR004 question or any question with options
-                    if (question?.options?.length) {
-                        console.log("Starting options animation for question:", question.code);
-                        animateOptions(question.options);
-                    }
                 }
             }, index * 100);
 
-            // Store timeout reference
+            // Simpan referensi timeout
             tokenGenerationRef.current.timeouts.push(timeout);
         });
     };
 
-    // New function to animate showing the options
-    const animateOptions = (options: string[]) => {
+    // Fungsi untuk menganimasi opsi jawaban dalam pesan
+    const animateOptionsForMessage = (messageId: string, options: string[]) => {
         if (!options || options.length === 0) {
             console.log("No options to animate");
             return;
         }
-        
-        console.log("Animating options:", options);
-        setOptionsAnimating(true);
-        let currentOptions: string[] = [];
 
+        console.log(`Animating options for message ${messageId}:`, options);
+
+        // Set messageId ini sebagai yang aktif untuk animasi
+        setActiveAnimationMessageId(messageId);
+
+        // Bersihkan timeout yang ada
+        tokenGenerationRef.current.timeouts.forEach(clearTimeout);
+        tokenGenerationRef.current.timeouts = [];
+
+        // Animasikan opsi satu per satu dengan memperbarui options array dalam pesan
         options.forEach((option, index) => {
             const timeout = setTimeout(() => {
-                // Skip if generation has been stopped
-                if (tokenGenerationRef.current.stopped) return;
+                // Perbarui pesan dengan opsi yang ditambahkan
+                setMessages(prevMessages => {
+                    return prevMessages.map(msg => {
+                        if (msg.id === messageId) {
+                            return {
+                                ...msg,
+                                options: [...options.slice(0, index + 1)], // Tambahkan opsi hingga indeks ini
+                            };
+                        }
+                        return msg;
+                    });
+                });
 
-                currentOptions = [...options.slice(0, index + 1)];
-                setVisibleOptions(currentOptions);
-                console.log("Updated visible options:", currentOptions);
-
-                // After last option, mark animation as complete
+                // Setelah opsi terakhir, selesaikan animasi
                 if (index === options.length - 1) {
-                    setOptionsAnimating(false);
+                    setTimeout(() => {
+                        setActiveAnimationMessageId(null);
+                    }, 500);
                 }
-            }, index * 300); // Slightly slower than text to make it noticeable
+            }, 300 + (index * 300)); // Add delay
 
-            // Store timeout references
             tokenGenerationRef.current.timeouts.push(timeout);
         });
     };
 
-    // Function to close all dropdowns
+    // Fungsi untuk menutup semua dropdown
     const closeAllDropdowns = () => {
         setSidebarOpen(false);
         setThemeMenuOpen(false);
@@ -468,8 +530,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 messagesEndRef={messagesEndRef}
                 chatContainerRef={chatContainerRef}
                 closeAllDropdowns={closeAllDropdowns}
-                optionsAnimating={optionsAnimating}
-                visibleOptions={visibleOptions}
+                activeAnimationMessageId={activeAnimationMessageId}
                 currentQuestion={currentQuestion}
             />
 
