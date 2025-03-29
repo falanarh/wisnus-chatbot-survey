@@ -9,6 +9,7 @@ import ChatHeader from "./ChatHeader";
 import ChatScrollButton from "./ChatScrollButton";
 import ChatInputArea from "./ChatInputArea";
 import ChatMessageArea from "./ChatMessageArea";
+import ModeConfirmationPopup from "./ModeConfirmationPopup";
 import { queryRAG } from "@/services/survey/ragService";
 import { getToken, getUserData, updateUserProperty, UserData } from "@/services/auth";
 import { submitResponse } from "@/services/survey/surveyManagement";
@@ -36,6 +37,12 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     const [themeMenuOpen, setThemeMenuOpen] = useState(false);
     const [mode, setMode] = useState<'survey' | 'qa'>('survey');
     const [sessionId, setSessionId] = useState<string | undefined>(propSessionId);
+
+    // Mode confirmation popup state
+    const [showModePopup, setShowModePopup] = useState(false);
+    const qaTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const qaTimeoutDuration = 10000; // 10 seconds in QA mode before showing popup
+    const popupCountdown = 5; // 5 seconds countdown in the popup
 
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -67,6 +74,31 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             setSessionId(propSessionId);
         }
     }, [propSessionId]);
+
+    // Handle mode change and set timer for QA mode
+    useEffect(() => {
+        // Clear any existing timers
+        if (qaTimerRef.current) {
+            clearTimeout(qaTimerRef.current);
+            qaTimerRef.current = null;
+        }
+
+        // Set timer if in QA mode
+        if (mode === 'qa') {
+            qaTimerRef.current = setTimeout(() => {
+                setShowModePopup(true);
+            }, qaTimeoutDuration);
+        } else {
+            setShowModePopup(false);
+        }
+
+        // Cleanup on unmount
+        return () => {
+            if (qaTimerRef.current) {
+                clearTimeout(qaTimerRef.current);
+            }
+        };
+    }, [mode]);
 
     // Function to scroll to bottom
     const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
@@ -138,6 +170,25 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         setBotIsTyping(false);
     };
 
+    // Handle mode switch from popup
+    const handleSwitchToSurvey = () => {
+        setMode('survey');
+        setShowModePopup(false);
+        
+        // Clear QA mode timer
+        if (qaTimerRef.current) {
+            clearTimeout(qaTimerRef.current);
+            qaTimerRef.current = null;
+        }
+        
+        // Add system message to indicate mode switch
+        addMessage({
+            text: "Mode berubah ke survei. Mari lanjutkan survei Anda.",
+            user: false,
+            mode: 'survey'
+        });
+    };
+
     // Send message handler
     const handleSend = async () => {
         if (!input.trim() || loading || botIsTyping) return;
@@ -169,9 +220,15 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             if (mode === 'survey') {
                 await handleSurveyMode(userData, userMessage);
             } else {
-                // const ragResponse = await queryRAG(userMessage);
-                // simulateTyping(ragResponse.answer);
                 await handleQaMode(userMessage);
+                
+                // Reset QA mode timer on each interaction
+                if (qaTimerRef.current) {
+                    clearTimeout(qaTimerRef.current);
+                }
+                qaTimerRef.current = setTimeout(() => {
+                    setShowModePopup(true);
+                }, qaTimeoutDuration);
             }
         } catch (error) {
             console.error("Error processing message:", error);
@@ -333,6 +390,15 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
             </div>
+
+            {/* Mode Confirmation Popup */}
+            <ModeConfirmationPopup
+                isOpen={showModePopup}
+                onClose={() => setShowModePopup(false)}
+                onSwitchMode={handleSwitchToSurvey}
+                isDarkMode={isDarkMode}
+                countdown={popupCountdown}
+            />
 
             {/* Sidebar */}
             <ChatSidebar
