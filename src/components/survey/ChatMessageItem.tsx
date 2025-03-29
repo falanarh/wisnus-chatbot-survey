@@ -53,8 +53,8 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
       : "rgba(0, 0, 0, 0.5)";
 
   // Determine which options to display
-  const shouldShowOptions = !message.user && 
-    message.options && 
+  const shouldShowOptions = !message.user &&
+    message.options &&
     message.options.length > 0;
 
   return (
@@ -93,7 +93,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
               <p className="break-words whitespace-pre-wrap">{message.text}</p>
 
               {/* Display options if they should be shown */}
-              {shouldShowOptions && (
+              {shouldShowOptions && message.questionCode === "KR004" && (
                 <>
                   <p className="break-words whitespace-pre-wrap dark:text-white my-1">
                     Pilih salah satu opsi di bawah ini:
@@ -104,8 +104,8 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                         key={index}
                         initial={{ opacity: 0, y: 5 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ 
-                          duration: 0.3, 
+                        transition={{
+                          duration: 0.3,
                           delay: isAnimating ? index * 0.15 : 0 // Animasi hanya saat isAnimating = true
                         }}
                         className="flex items-start group rounded-lg p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200"

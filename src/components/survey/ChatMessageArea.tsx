@@ -14,7 +14,8 @@ interface ChatMessageAreaProps {
   messagesEndRef: RefObject<HTMLDivElement | null>;
   chatContainerRef: RefObject<HTMLDivElement | null>;
   closeAllDropdowns: () => void;
-  activeAnimationMessageId: string | null; // ID pesan yang sedang dianimasikan
+  visibleOptions: Record<string, string[]>; // Options yang terlihat untuk setiap ID pesan
+  animatingMessageId: string | null; // ID pesan yang sedang dianimasikan
   currentQuestion?: Question;
 }
 
@@ -25,7 +26,8 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   messagesEndRef,
   chatContainerRef,
   closeAllDropdowns,
-  activeAnimationMessageId,
+  visibleOptions,
+  animatingMessageId,
 }) => {
   return (
     <div
@@ -38,24 +40,37 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
       ) : (
         <AnimatePresence>
           <div className="max-w-4xl w-full px-6 md:px-4 overflow-x-hidden md:overflow-x-visible">
-            {messages.map((msg, index) => (
-              <div key={`message-wrapper-${index}`}>
-                {index === 0 && (
-                  <div className="h-5" key={`spacer-top-${index}`}></div>
-                )}
-                {msg.text && (
-                  <ChatMessageItem
-                    message={msg}
-                    isDarkMode={isDarkMode}
-                    index={index}
-                    isAnimating={msg.id === activeAnimationMessageId}
-                  />
-                )}
-                {index === messages.length - 1 && (
-                  <div className="h-20" key={`spacer-bottom-${index}`}></div>
-                )}
-              </div>
-            ))}
+            {messages.map((msg, index) => {
+              // Gunakan opsi dari visibleOptions jika pesan ini sedang dianimasikan
+              const messageOptions = msg.id && visibleOptions[msg.id] 
+                ? visibleOptions[msg.id] 
+                : msg.options || [];
+
+              // Buat salinan pesan dengan opsi yang terlihat
+              const messageWithVisibleOptions = {
+                ...msg,
+                options: messageOptions
+              };
+
+              return (
+                <div key={`message-wrapper-${msg.id || index}`}>
+                  {index === 0 && (
+                    <div className="h-5" key={`spacer-top-${index}`}></div>
+                  )}
+                  {msg.text && (
+                    <ChatMessageItem
+                      message={messageWithVisibleOptions}
+                      isDarkMode={isDarkMode}
+                      index={index}
+                      isAnimating={msg.id === animatingMessageId}
+                    />
+                  )}
+                  {index === messages.length - 1 && (
+                    <div className="h-20" key={`spacer-bottom-${index}`}></div>
+                  )}
+                </div>
+              );
+            })}
             
             {/* Target for scrolling */}
             <div ref={messagesEndRef} className="h-1" />

@@ -37,10 +37,13 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     const [themeMenuOpen, setThemeMenuOpen] = useState(false);
     const [mode, setMode] = useState<'survey' | 'qa'>('survey');
     const [sessionId, setSessionId] = useState<string | undefined>(propSessionId);
-    const [activeAnimationMessageId, setActiveAnimationMessageId] = useState<string | null>(null);
+
+    // State untuk pertanyaan saat ini
+    const [currentQuestion, setCurrentQuestion] = useState<Question | undefined>(undefined);
 
     // State untuk animasi opsi
-    const [currentQuestion, setCurrentQuestion] = useState<Question | undefined>(undefined);
+    const [animatingMessageId, setAnimatingMessageId] = useState<string | null>(null);
+    const [visibleOptions, setVisibleOptions] = useState<Record<string, string[]>>({});
 
     // Mode confirmation popup state
     const [showModePopup, setShowModePopup] = useState(false);
@@ -116,7 +119,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         if (!userHasScrolled && !isUserScrollingRef.current) {
             scrollToBottom();
         }
-    }, [messages, userHasScrolled]);
+    }, [messages, userHasScrolled, visibleOptions]);
 
     // Handle scroll detection
     useEffect(() => {
@@ -221,10 +224,10 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                     };
                     await addSurveyMessage(surveyMessage);
 
-                    // Buat pesan baru dengan ID unik
+                    // Buat messageId unik
                     const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-                    // Tambahkan pesan ke UI dengan options kosong awalnya
+                    // Tambahkan pesan ke UI
                     addMessage({
                         id: messageId,
                         text: pesanTeks,
@@ -235,19 +238,9 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                         options: [] // Mulai dengan opsi kosong
                     });
 
-                    // Set message ID ini sebagai message yang akan menerima animasi opsi
-                    setActiveAnimationMessageId(messageId);
-
-                    // Jadwalkan animasi opsi untuk pesan ini secara khusus
-                    if (current_question?.options?.length) {
-                        // Pass the text, question object and code directly
-                        animateOptionsForMessage(
-                            messageId, 
-                            current_question.options,
-                            pesanTeks,
-                            current_question,
-                            current_question.code
-                        );
+                    // Animasi opsi jika pertanyaan memiliki opsi
+                    if (current_question.options?.length) {
+                        animateOptions(messageId, current_question.options);
                     }
                 } else {
                     addMessage({
@@ -279,54 +272,88 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         }
     };
 
+    // Fungsi untuk menganimasi opsi jawaban
+    const animateOptions = (messageId: string, options: string[]) => {
+        if (!options || options.length === 0) return;
+
+        // Set message ini sebagai yang sedang dianimasi
+        setAnimatingMessageId(messageId);
+
+        // Mulai dengan array opsi kosong
+        setVisibleOptions(prev => ({
+            ...prev,
+            [messageId]: []
+        }));
+
+        // Tambahkan opsi satu per satu
+        options.forEach((_, index) => {
+            const timeout = setTimeout(() => {
+                setVisibleOptions(prev => ({
+                    ...prev,
+                    [messageId]: options.slice(0, index + 1)
+                }));
+
+                // Setelah semua opsi ditampilkan, akhiri animasi
+                if (index === options.length - 1) {
+                    setTimeout(() => {
+                        setAnimatingMessageId(null);
+                    }, 300);
+                }
+            }, 300 * (index + 1));
+
+            tokenGenerationRef.current.timeouts.push(timeout);
+        });
+    };
+
     // Handle mengirim pesan
     const handleSend = async () => {
         if (!input.trim() || loading || botIsTyping) return;
-    
+
         const userMessage = input.trim();
         setInput("");
-        
+
         // Tambahkan pesan pengguna ke daftar pesan
-        addMessage({ 
-            id: `user_msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`, 
-            text: userMessage, 
-            user: true, 
+        addMessage({
+            id: `user_msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+            text: userMessage,
+            user: true,
             mode: mode,
-            options: [] 
+            options: []
         });
-    
+
         setLoading(true);
         setBotIsTyping(true);
         setUserHasScrolled(false);
-    
+
         // Reset token generation state
         tokenGenerationRef.current = {
             stopped: false,
             timeouts: []
         };
-    
+
         // Tambahkan pesan loading
-        addMessage({ 
-            id: `loading_msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-            text: "", 
-            user: false, 
-            loading: true, 
+        const loadingMsgId = `loading_msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        addMessage({
+            id: loadingMsgId,
+            text: "",
+            user: false,
+            loading: true,
             mode: mode,
-            options: [] 
+            options: []
         });
-    
+
         try {
             const token = getToken();
             const userData = getUserData();
-    
+
             if (!token) throw new Error("Authentication token not found");
             if (!userData) throw new Error("User data not found");
-    
+
             if (mode === 'survey') {
-                await handleSurveyMode(userData, userMessage);
+                await handleSurveyMode(userData, userMessage, loadingMsgId);
             } else {
-                await handleQaMode(userMessage);
-    
+                await handleQaMode(userMessage, loadingMsgId);
+
                 // Reset QA mode timer pada setiap interaksi
                 if (qaTimerRef.current) {
                     clearTimeout(qaTimerRef.current);
@@ -345,7 +372,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     };
 
     // Handle mode QA
-    const handleQaMode = async (userMessage: string) => {
+    const handleQaMode = async (userMessage: string, loadingMsgId: string) => {
         try {
             const ragResponse = await queryRAG(userMessage);
             const surveyMessage: SurveyMessageRequest = {
@@ -354,16 +381,19 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 mode: 'qa'
             };
             await addSurveyMessage(surveyMessage);
-            simulateTyping(ragResponse.answer);
+
+            // Update pesan loading dengan hasil respons
+            updateLastMessage(ragResponse.answer, false);
+            setBotIsTyping(false);
         } catch (error) {
             console.error("Error processing message:", error);
             updateLastMessage("Terjadi kesalahan saat memproses pesan Anda. Silakan coba lagi.", false);
             setBotIsTyping(false);
         }
     };
-
+    
     // Handle mode survei
-    const handleSurveyMode = async (userData: UserData, userMessage: string) => {
+    const handleSurveyMode = async (userData: UserData, userMessage: string, loadingMsgId: string) => {
         // Gunakan sessionId dari state atau dari userData
         const currentSessionId = sessionId || userData?.activeSurveySessionId || "";
 
@@ -380,125 +410,66 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             // Format respons untuk ditampilkan ke user
             const botResponse = formatSurveyResponse(response);
 
-            // Update current question state
+            // Update current question state jika ada
             if (botResponse.questionObject) {
                 setCurrentQuestion(botResponse.questionObject);
             }
 
-            // Tambahkan pesan ke UI
-            addMessage(botResponse);
+            // Perlakuan khusus untuk pertanyaan KR004
+            if (botResponse.questionObject?.code === "KR004" && botResponse.questionObject?.options?.length) {
+                console.log("Terdeteksi pertanyaan KR004 - menampilkan dengan opsi lengkap");
 
-            // Animasi opsi jika ini adalah pertanyaan dengan opsi
-            if (botResponse.questionObject?.options?.length) {
-                animateOptionsForMessage(
-                    botResponse.id, 
-                    botResponse.questionObject.options,
-                    botResponse.text,
-                    botResponse.questionObject,
-                    botResponse.questionCode
-                );
+                // Hapus pesan loading sebelumnya
+                const updatedMessages = messages.filter(msg => msg.id !== loadingMsgId);
+
+                // Buat ID pesan baru
+                const newMessageId = `kr004_msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+                // Tambahkan pesan baru dengan opsi kosong awalnya
+                addMessage({
+                    id: newMessageId,
+                    text: botResponse.text,
+                    user: false,
+                    mode: 'survey',
+                    questionObject: botResponse.questionObject,
+                    questionCode: botResponse.questionObject.code,
+                    options: [] // Mulai dengan opsi kosong, akan diisi melalui animasi
+                });
+
+                // Tampilkan semua opsi langsung
+                setVisibleOptions(prev => ({
+                    ...prev,
+                    [newMessageId]: botResponse.questionObject?.options || []
+                }));
+
+                // Set message ini sebagai yang sedang dianimasi (untuk efek visual)
+                setAnimatingMessageId(newMessageId);
+
+                // Setelah sedikit delay, hentikan animasi
+                setTimeout(() => {
+                    setAnimatingMessageId(null);
+                }, 500);
+            } else {
+                // Untuk pertanyaan lain, gunakan cara biasa
+                updateLastMessage(botResponse.text, false);
+
+                // Tambahkan ID pesan saat ini ke objek botResponse
+                const currentMessageId = loadingMsgId;
+                botResponse.id = currentMessageId;
+
+                // Animasi opsi jika ini adalah pertanyaan dengan opsi
+                if (botResponse.questionObject?.options?.length) {
+                    animateOptions(currentMessageId, botResponse.questionObject.options);
+                }
             }
+
+            setBotIsTyping(false);
 
         } catch (error) {
             console.error("Error dalam mode survei:", error);
-            addMessage({
-                id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-                text: "Terjadi kesalahan saat memproses pesan Anda. Silakan coba lagi.",
-                user: false,
-                mode: 'survey',
-                options: []
-            });
+            updateLastMessage("Terjadi kesalahan saat memproses pesan Anda. Silakan coba lagi.", false);
+            setBotIsTyping(false);
         }
-    };
-
-    // Simulasi pengetikan teks respons
-    const simulateTyping = (response: string, question?: Question) => {
-        const tokens = response.split(" ");
-        let currentText = "";
-
-        // Simpan pertanyaan ke state jika ada
-        if (question) {
-            setCurrentQuestion(question);
-        }
-
-        tokens.forEach((token, index) => {
-            const timeout = setTimeout(() => {
-                // Lewati jika generasi telah dihentikan
-                if (tokenGenerationRef.current.stopped) return;
-
-                currentText += (index === 0 ? "" : " ") + token;
-                updateLastMessage(currentText, false);
-
-                // Setelah token terakhir, izinkan pengguna untuk mengirim pesan lagi
-                if (index === tokens.length - 1) {
-                    setBotIsTyping(false);
-                }
-            }, index * 100);
-
-            // Simpan referensi timeout
-            tokenGenerationRef.current.timeouts.push(timeout);
-        });
-    };
-
-    // Fungsi untuk menganimasi opsi jawaban dalam pesan
-    const animateOptionsForMessage = (messageId: string, options: string[], initialText?: string, questionObj?: Question, questionCode?: string) => {
-        if (!options || options.length === 0) {
-            console.log("No options to animate");
-            return;
-        }
-
-        console.log(`Animating options for message ${messageId}:`, options);
-
-        // Set messageId ini sebagai yang aktif untuk animasi
-        setActiveAnimationMessageId(messageId);
-
-        // Bersihkan timeout yang ada
-        tokenGenerationRef.current.timeouts.forEach(clearTimeout);
-        tokenGenerationRef.current.timeouts = [];
-        
-        // Dapatkan teks pesan dan properti lain
-        const targetMessage = messages.find(msg => msg.id === messageId);
-        const messageText = initialText || targetMessage?.text || "";
-        const messageQuestionObj = questionObj || targetMessage?.questionObject;
-        const messageQuestionCode = questionCode || targetMessage?.questionCode;
-
-        // Tunggu sebentar untuk memastikan pesan pertama ada di state
-        const startDelay = setTimeout(() => {
-            console.log("Starting option animation after delay");
-            
-            // Animasikan opsi satu per satu
-            options.forEach((option, index) => {
-                const timeout = setTimeout(() => {
-                    console.log(`Animating option ${index + 1}/${options.length}: ${option}`);
-                    
-                    // Perbarui pesan dengan menambahkan opsi yang bertambah
-                    const updatedOptions = options.slice(0, index + 1);
-                    
-                    // Buat pesan baru dengan opsi yang diperbarui
-                    addMessage({
-                        id: messageId,
-                        text: messageText,
-                        user: false,
-                        mode: "survey",
-                        options: updatedOptions,
-                        questionObject: messageQuestionObj,
-                        questionCode: messageQuestionCode,
-                    });
-
-                    // Setelah opsi terakhir, selesaikan animasi
-                    if (index === options.length - 1) {
-                        setTimeout(() => {
-                            setActiveAnimationMessageId(null);
-                            console.log("Animation completed");
-                        }, 500);
-                    }
-                }, 300 + (index * 300)); // Add delay
-
-                tokenGenerationRef.current.timeouts.push(timeout);
-            });
-        }, 500); // Delay 500ms untuk memastikan pesan sudah di-render
-        
-        tokenGenerationRef.current.timeouts.push(startDelay);
     };
 
     // Fungsi untuk menutup semua dropdown
@@ -560,7 +531,8 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 messagesEndRef={messagesEndRef}
                 chatContainerRef={chatContainerRef}
                 closeAllDropdowns={closeAllDropdowns}
-                activeAnimationMessageId={activeAnimationMessageId}
+                visibleOptions={visibleOptions}
+                animatingMessageId={animatingMessageId}
                 currentQuestion={currentQuestion}
             />
 
