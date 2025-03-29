@@ -1,6 +1,6 @@
 // src/services/survey/surveyApiClient.ts
 import { getToken } from "../auth/tokenStorage";
-import { SurveyMessagesResult, SurveyResponseResult } from "./types";
+import { CurrentQuestionResponseResult, SurveyMessagesResult, SurveyResponseResult } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 const RAG_API_URL = process.env.NEXT_PUBLIC_RAG_API_URL || "";
@@ -12,7 +12,7 @@ export async function surveyApiRequest(
   endpoint: string,
   options: RequestInit = {},
   signal?: AbortSignal
-): Promise<SurveyResponseResult | SurveyMessagesResult> {
+): Promise<SurveyResponseResult | SurveyMessagesResult | CurrentQuestionResponseResult> {
   try {
     const token = getToken();
     if (!token) {

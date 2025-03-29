@@ -4,7 +4,7 @@
 export * from "./types";
 
 // Export survey management functionality
-export { startSurvey, submitResponse } from "./surveyManagement";
+export { submitResponse } from "./surveyManagement";
 
 // Export survey status functionality
 export { getSurveyStatus } from "./surveyStatus";
@@ -18,5 +18,7 @@ export { queryRAG } from "./ragService";
 // Export survey messages functionality
 export {
   getSurveyMessages,
-  type SurveyMessagesResponse,
 } from "./surveyMessages";
+
+// Tambahkan baris ini di bagian akhir file
+export { getCurrentQuestion } from "./currentQuestion";

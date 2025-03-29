@@ -15,6 +15,7 @@ import { getToken, getUserData, updateUserProperty, UserData } from "@/services/
 import { submitResponse } from "@/services/survey/surveyManagement";
 import { SurveyResponseResult, SurveyResponseType, Question, SurveyMessageRequest } from "@/services/survey/types";
 import { addSurveyMessage } from "@/services/survey/surveyMessages";
+import { getCurrentQuestion } from "@/services/survey";
 
 interface ChatLayoutProps {
     messages: ChatMessage[];
@@ -170,23 +171,59 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         setBotIsTyping(false);
     };
 
-    // Handle mode switch from popup
-    const handleSwitchToSurvey = () => {
+    // Perbarui fungsi handleSwitchToSurvey
+    const handleSwitchToSurvey = async () => {
         setMode('survey');
         setShowModePopup(false);
-        
-        // Clear QA mode timer
+
+        // Membersihkan timer mode QA
         if (qaTimerRef.current) {
             clearTimeout(qaTimerRef.current);
             qaTimerRef.current = null;
         }
-        
-        // Add system message to indicate mode switch
+
+        // Menampilkan pesan loading
         addMessage({
-            text: "Mode berubah ke survei. Mari lanjutkan survei Anda.",
+            text: "Beralih ke mode survei...",
             user: false,
-            mode: 'survey'
+            mode: 'survey',
+            loading: true
         });
+
+        try {
+            // Mendapatkan pertanyaan saat ini dari API
+            const response = await getCurrentQuestion();
+
+            let pesanTeks = "Mode berubah ke survei. ";
+
+            if (response.success && response.data) {
+                const { status, current_question, message } = response.data;
+
+                if (status === "COMPLETED") {
+                    pesanTeks += message || "Survei telah selesai. Terima kasih atas partisipasi Anda.";
+                } else if (current_question) {
+                    const surveyMessage: SurveyMessageRequest = {
+                        user_message: null,
+                        system_response: { info: "switched_to_survey", currentQuestion: current_question},
+                        mode: 'survey',
+                    };
+                    await addSurveyMessage(surveyMessage);
+                } else {
+                    pesanTeks += "Mari lanjutkan survei Anda.";
+                }
+            } else {
+                // Pesan cadangan jika panggilan API gagal
+                pesanTeks += "Mari lanjutkan survei Anda. Jika Anda membutuhkan bantuan, Anda dapat bertanya kapan saja.";
+            }
+
+            // Memperbarui atau menambahkan pesan dengan pertanyaan saat ini
+            updateLastMessage(pesanTeks, false);
+
+        } catch (error) {
+            // Jika terjadi kesalahan, tampilkan pesan umum
+            updateLastMessage("Mode berubah ke survei. Mari lanjutkan survei Anda.", false);
+            console.error("Kesalahan saat mendapatkan pertanyaan saat ini:", error);
+        }
     };
 
     // Send message handler
@@ -221,7 +258,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 await handleSurveyMode(userData, userMessage);
             } else {
                 await handleQaMode(userMessage);
-                
+
                 // Reset QA mode timer on each interaction
                 if (qaTimerRef.current) {
                     clearTimeout(qaTimerRef.current);

@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { getSurveyMessages, Question, SurveyMessage } from "@/services/survey";
 import { getUserData } from "@/services/auth";
-import { generateUnorderedList } from "@/utils/otherUtils";
 
 // Chat message type (keeping the same interface but adding support for new fields)
 export interface ChatMessage {
@@ -37,22 +36,6 @@ export function useSurveyMessages() {
   const convertApiMessagesToChatMessages = useCallback(
     (apiMessages: SurveyMessage[]): ChatMessage[] => {
       const chatMessages: ChatMessage[] = [];
-
-      // Helper function to format a question
-      const formatQuestion = (question: Question): string => {
-        // if (question.code === "KR004" && question.options?.length) {
-        //   return `${
-        //     question.text
-        //   }\n\nPilih salah satu opsi di bawah ini:\n`;
-        //   // return `${
-        //   //   question.text
-        //   // }\n\nPilih salah satu opsi di bawah ini: ${generateUnorderedList(
-        //   //   question.options,
-        //   //   "◆"
-        //   // )}`;
-        // }
-        return question.text;
-      };
 
       apiMessages.forEach((apiMessage) => {
         // Format the timestamp from API or create a new one
@@ -105,7 +88,8 @@ export function useSurveyMessages() {
               if (!next_question) {
                 responseText = "Pertanyaan berikutnya tidak tersedia.";
               } else {
-                responseText = formatQuestion(next_question);
+                responseText =
+                  next_question.text || "Pertanyaan tidak ditemukan.";
                 questionObject = next_question;
               }
               break;
@@ -120,14 +104,6 @@ export function useSurveyMessages() {
                   "Mohon berikan jawaban yang sesuai dengan pertanyaan.";
               } else {
                 responseText = `${clarification_reason} ${follow_up_question}`;
-                // responseText = `${clarification_reason} ${follow_up_question} ${
-                //   currentQuestion.code === "KR004"
-                //     ? `\n\nPilih salah satu opsi di bawah ini: ${generateUnorderedList(
-                //         currentQuestion.options || [],
-                //         "◆"
-                //       )}`
-                //     : ""
-                // }`;
                 questionObject = currentQuestion;
               }
               break;
@@ -136,9 +112,7 @@ export function useSurveyMessages() {
               if (!currentQuestion || !answer) {
                 responseText = "Silakan jawab pertanyaan saat ini.";
               } else {
-                responseText = `${answer} \n\nPertanyaan saat ini: ${formatQuestion(
-                  currentQuestion
-                )}`;
+                responseText = `${answer} \n\nPertanyaan saat ini: ${currentQuestion.text}`;
                 questionObject = currentQuestion;
               }
               break;
@@ -146,7 +120,7 @@ export function useSurveyMessages() {
             case "survey_started":
               responseText = additional_info || "Survei telah dimulai.";
               if (next_question) {
-                responseText += `\n\n${formatQuestion(next_question)}`;
+                responseText += `\n\n${next_question.text}`;
               }
               break;
 
@@ -160,6 +134,13 @@ export function useSurveyMessages() {
               responseText =
                 additional_info ||
                 "Terjadi kesalahan dalam memproses jawaban Anda.";
+              break;
+
+            case "switched_to_survey":
+              responseText =
+                "Anda telah beralih ke mode survei. Silakan jawab pertanyaan survei.\n\nPertanyaan saat ini: " +
+                (currentQuestion?.text || "Pertanyaan tidak ditemukan.");
+              questionObject = currentQuestion;
               break;
 
             default:

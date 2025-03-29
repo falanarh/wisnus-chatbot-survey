@@ -106,6 +106,7 @@ export enum SurveyResponseType {
   QUESTION = "question",
   SURVEY_COMPLETED = "survey_completed",
   ERROR = "error",
+  SWITCHED_TO_SURVEY = "switched_to_survey",
 }
 
 /**
@@ -186,7 +187,33 @@ export interface SurveyMessagesResult {
 
 export interface SurveyMessageRequest {
   session_id?: string;
-  user_message: string;
+  user_message: string | null;
   system_response: SurveyResponseData;
   mode: "survey" | "qa";
+}
+
+/**
+ * Interface untuk respons pertanyaan saat ini
+ */
+export interface CurrentQuestionResponse {
+  session_id: string;
+  status: "IN_PROGRESS" | "COMPLETED";
+  current_question_index?: number;
+  current_question?: Question;
+  progress?: {
+    total_questions: number;
+    answered_questions: number;
+    progress_percentage: number;
+  };
+  message?: string;
+}
+
+/**
+ * Interface untuk respons pertanyaan saat ini
+ */
+export interface CurrentQuestionResponseResult extends ApiResponse<CurrentQuestionResponse> {
+  success: boolean;
+  message?: string;
+  error?: string;
+  data?: CurrentQuestionResponse;
 }
