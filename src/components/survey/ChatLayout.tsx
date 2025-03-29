@@ -240,7 +240,14 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
 
                     // Jadwalkan animasi opsi untuk pesan ini secara khusus
                     if (current_question?.options?.length) {
-                        animateOptionsForMessage(messageId, current_question.options);
+                        // Pass the text, question object and code directly
+                        animateOptionsForMessage(
+                            messageId, 
+                            current_question.options,
+                            pesanTeks,
+                            current_question,
+                            current_question.code
+                        );
                     }
                 } else {
                     addMessage({
@@ -383,7 +390,13 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
 
             // Animasi opsi jika ini adalah pertanyaan dengan opsi
             if (botResponse.questionObject?.options?.length) {
-                animateOptionsForMessage(botResponse.id, botResponse.questionObject.options);
+                animateOptionsForMessage(
+                    botResponse.id, 
+                    botResponse.questionObject.options,
+                    botResponse.text,
+                    botResponse.questionObject,
+                    botResponse.questionCode
+                );
             }
 
         } catch (error) {
@@ -428,7 +441,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     };
 
     // Fungsi untuk menganimasi opsi jawaban dalam pesan
-    const animateOptionsForMessage = (messageId: string, options: string[]) => {
+    const animateOptionsForMessage = (messageId: string, options: string[], initialText?: string, questionObj?: Question, questionCode?: string) => {
         if (!options || options.length === 0) {
             console.log("No options to animate");
             return;
@@ -442,33 +455,50 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         // Bersihkan timeout yang ada
         tokenGenerationRef.current.timeouts.forEach(clearTimeout);
         tokenGenerationRef.current.timeouts = [];
+        
+        // Dapatkan teks pesan dan properti lain
+        const targetMessage = messages.find(msg => msg.id === messageId);
+        const messageText = initialText || targetMessage?.text || "";
+        const messageQuestionObj = questionObj || targetMessage?.questionObject;
+        const messageQuestionCode = questionCode || targetMessage?.questionCode;
 
-        // Animasikan opsi satu per satu dengan memperbarui options array dalam pesan
-        options.forEach((option, index) => {
-            const timeout = setTimeout(() => {
-                // Perbarui pesan dengan opsi yang ditambahkan
-                setMessages(prevMessages => {
-                    return prevMessages.map(msg => {
-                        if (msg.id === messageId) {
-                            return {
-                                ...msg,
-                                options: [...options.slice(0, index + 1)], // Tambahkan opsi hingga indeks ini
-                            };
-                        }
-                        return msg;
+        // Tunggu sebentar untuk memastikan pesan pertama ada di state
+        const startDelay = setTimeout(() => {
+            console.log("Starting option animation after delay");
+            
+            // Animasikan opsi satu per satu
+            options.forEach((option, index) => {
+                const timeout = setTimeout(() => {
+                    console.log(`Animating option ${index + 1}/${options.length}: ${option}`);
+                    
+                    // Perbarui pesan dengan menambahkan opsi yang bertambah
+                    const updatedOptions = options.slice(0, index + 1);
+                    
+                    // Buat pesan baru dengan opsi yang diperbarui
+                    addMessage({
+                        id: messageId,
+                        text: messageText,
+                        user: false,
+                        mode: "survey",
+                        options: updatedOptions,
+                        questionObject: messageQuestionObj,
+                        questionCode: messageQuestionCode,
                     });
-                });
 
-                // Setelah opsi terakhir, selesaikan animasi
-                if (index === options.length - 1) {
-                    setTimeout(() => {
-                        setActiveAnimationMessageId(null);
-                    }, 500);
-                }
-            }, 300 + (index * 300)); // Add delay
+                    // Setelah opsi terakhir, selesaikan animasi
+                    if (index === options.length - 1) {
+                        setTimeout(() => {
+                            setActiveAnimationMessageId(null);
+                            console.log("Animation completed");
+                        }, 500);
+                    }
+                }, 300 + (index * 300)); // Add delay
 
-            tokenGenerationRef.current.timeouts.push(timeout);
-        });
+                tokenGenerationRef.current.timeouts.push(timeout);
+            });
+        }, 500); // Delay 500ms untuk memastikan pesan sudah di-render
+        
+        tokenGenerationRef.current.timeouts.push(startDelay);
     };
 
     // Fungsi untuk menutup semua dropdown

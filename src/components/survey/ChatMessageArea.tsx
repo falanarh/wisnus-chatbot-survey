@@ -26,7 +26,6 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   chatContainerRef,
   closeAllDropdowns,
   activeAnimationMessageId,
-  currentQuestion,
 }) => {
   return (
     <div

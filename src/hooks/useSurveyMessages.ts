@@ -1,4 +1,4 @@
-// src/hooks/useSurveyMessages.ts - Updated to use shared formatter
+// src/hooks/useSurveyMessages.ts
 import { useState, useEffect } from "react";
 import { getSurveyMessages } from "@/services/survey";
 import { getUserData } from "@/services/auth";
