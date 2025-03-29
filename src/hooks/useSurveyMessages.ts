@@ -77,7 +77,7 @@ export function useSurveyMessages() {
             hour: "2-digit",
             minute: "2-digit",
           }),
-        read: message.user ? true : message.read, // Mark user messages as read by default
+        read: message.user ? true : message.read,
       },
     ]);
   };

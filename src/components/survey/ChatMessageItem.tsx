@@ -10,9 +10,11 @@ interface ChatMessageItemProps {
   message: ChatMessage;
   isDarkMode: boolean;
   index: number;
+  optionsAnimating?: boolean;
+  visibleOptions?: string[];
 }
 
-const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ message, isDarkMode }) => {
+const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ message, isDarkMode, optionsAnimating, visibleOptions }) => {
   const [timestamp, setTimestamp] = useState<string>(
     message.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   );
@@ -81,9 +83,12 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ message, isDarkMode }
               <p className="break-words whitespace-pre-wrap">{message.text}</p>
               {message.questionObject?.code === "KR004" && (
                 <>
-                  <p className="break-words whitespace-pre-wrap dark:text-white my-1">Pilih salah satu opsi di bawah ini:</p>
+                  <p className="break-words whitespace-pre-wrap dark:text-white my-1">
+                    Pilih salah satu opsi di bawah ini:
+                  </p>
                   <ul className="space-y-1 my-2">
-                    {message.questionObject.options?.map((option, index) => (
+                    {/* Use visibleOptions instead of message.questionObject.options */}
+                    {(optionsAnimating ? visibleOptions : message.questionObject.options)?.map((option, index) => (
                       <li
                         key={index}
                         className="flex items-start group rounded-lg p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200"

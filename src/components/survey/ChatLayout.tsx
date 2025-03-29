@@ -11,7 +11,7 @@ import ModeConfirmationPopup from "./ModeConfirmationPopup";
 import { queryRAG } from "@/services/survey/ragService";
 import { getToken, getUserData, updateUserProperty, UserData } from "@/services/auth";
 import { submitResponse } from "@/services/survey/surveyManagement";
-import { SurveyMessageRequest } from "@/services/survey/types";
+import { Question, SurveyMessageRequest } from "@/services/survey/types";
 import { addSurveyMessage } from "@/services/survey/surveyMessages";
 import { getCurrentQuestion } from "@/services/survey";
 import { ChatMessage, formatSurveyResponse } from "@/utils/surveyMessageFormatters";
@@ -37,6 +37,10 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     const [themeMenuOpen, setThemeMenuOpen] = useState(false);
     const [mode, setMode] = useState<'survey' | 'qa'>('survey');
     const [sessionId, setSessionId] = useState<string | undefined>(propSessionId);
+
+    // First, we'll need to track the state of option animation
+    const [optionsAnimating, setOptionsAnimating] = useState(false);
+    const [visibleOptions, setVisibleOptions] = useState<string[]>([]);
 
     // Mode confirmation popup state
     const [showModePopup, setShowModePopup] = useState(false);
@@ -194,6 +198,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             const response = await getCurrentQuestion();
 
             let pesanTeks = "Mode berubah ke survei. Mari lanjutkan survei Anda.";
+            let questionObject: Question | undefined = undefined;
 
             if (response.success && response.data) {
                 const { status, current_question, message } = response.data;
@@ -212,6 +217,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                     };
                     await addSurveyMessage(surveyMessage);
                     pesanTeks += `\n\nPertanyaan saat ini: ${current_question.text}`;
+                    questionObject = current_question;
                 } else {
                     pesanTeks += "Mari lanjutkan survei Anda.";
                 }
@@ -220,8 +226,8 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 pesanTeks += "Mari lanjutkan survei Anda. Jika Anda membutuhkan bantuan, Anda dapat bertanya kapan saja.";
             }
 
-            // Memperbarui atau menambahkan pesan dengan pertanyaan saat ini
-            updateLastMessage(pesanTeks, false);
+            // Pass the question object if it exists
+            simulateTyping(pesanTeks, questionObject);
 
         } catch (error) {
             // Jika terjadi kesalahan, tampilkan pesan umum
@@ -301,31 +307,36 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     const handleSurveyMode = async (userData: UserData, userMessage: string) => {
         // Use sessionId from state or from userData
         const currentSessionId = sessionId || userData?.activeSurveySessionId || "";
-
+    
         try {
             // Kirim permintaan ke API unified /api/survey/respond
             const response = await submitResponse(currentSessionId, userMessage);
-
+    
             // Jika berhasil dan ada session_id baru, perbarui
             if (response.session_id && response.session_id !== currentSessionId) {
                 setSessionId(response.session_id);
                 updateUserProperty('activeSurveySessionId', response.session_id);
             }
-
+    
             // Format respons untuk ditampilkan ke user
             const botResponse = formatSurveyResponse(response);
-            simulateTyping(botResponse.text);
-
+            
+            // Pass the question object if it exists
+            simulateTyping(botResponse.text, botResponse.questionObject);
+    
         } catch (error) {
             console.error("Error dalam mode survei:", error);
             simulateTyping("Terjadi kesalahan saat memproses pesan Anda. Silakan coba lagi.");
         }
     };
 
-    // Simulate typing
-    const simulateTyping = (response: string) => {
+    // Simulate typing with support for options animation
+    const simulateTyping = (response: string, question?: Question) => {
         const tokens = response.split(" ");
         let currentText = "";
+
+        // Reset options state
+        setVisibleOptions([]);
 
         tokens.forEach((token, index) => {
             const timeout = setTimeout(() => {
@@ -335,13 +346,42 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 currentText += (index === 0 ? "" : " ") + token;
                 updateLastMessage(currentText, false);
 
-                // After last token, allow user to send messages again
+                // After last token, allow user to send messages again and start options animation
                 if (index === tokens.length - 1) {
                     setBotIsTyping(false);
+
+                    // Start animating options if it's KR004 question
+                    if (question?.code === "KR004" && question.options?.length) {
+                        animateOptions(question.options);
+                    }
                 }
             }, index * 100);
 
             // Store timeout reference
+            tokenGenerationRef.current.timeouts.push(timeout);
+        });
+    };
+
+    // New function to animate showing the options
+    const animateOptions = (options: string[]) => {
+        setOptionsAnimating(true);
+        let currentOptions: string[] = [];
+
+        options.forEach((option, index) => {
+            const timeout = setTimeout(() => {
+                // Skip if generation has been stopped
+                if (tokenGenerationRef.current.stopped) return;
+
+                currentOptions = [...options.slice(0, index + 1)];
+                setVisibleOptions(currentOptions);
+
+                // After last option, mark animation as complete
+                if (index === options.length - 1) {
+                    setOptionsAnimating(false);
+                }
+            }, index * 300); // Slightly slower than text to make it noticeable
+
+            // Store timeout references
             tokenGenerationRef.current.timeouts.push(timeout);
         });
     };
@@ -405,6 +445,8 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 messagesEndRef={messagesEndRef}
                 chatContainerRef={chatContainerRef}
                 closeAllDropdowns={closeAllDropdowns}
+                optionsAnimating={optionsAnimating}
+                visibleOptions={visibleOptions}
             />
 
             {/* Scroll to Bottom Button */}

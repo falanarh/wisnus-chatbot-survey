@@ -11,6 +11,8 @@ interface ChatMessageAreaProps {
   messagesEndRef: RefObject<HTMLDivElement | null>;
   chatContainerRef: RefObject<HTMLDivElement | null>;
   closeAllDropdowns: () => void;
+  optionsAnimating?: boolean;
+  visibleOptions?: string[];
 }
 
 const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
@@ -19,7 +21,9 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
   mode,
   messagesEndRef,
   chatContainerRef,
-  closeAllDropdowns
+  closeAllDropdowns,
+  optionsAnimating,
+  visibleOptions,
 }) => {
   return (
     <div
@@ -42,6 +46,8 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                     message={msg}
                     isDarkMode={isDarkMode}
                     index={index}
+                    optionsAnimating={optionsAnimating}
+                    visibleOptions={visibleOptions}
                   />
                 )}
                 {index === messages.length - 1 && (
