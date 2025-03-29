@@ -352,7 +352,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             if (mode === 'survey') {
                 await handleSurveyMode(userData, userMessage, loadingMsgId);
             } else {
-                await handleQaMode(userMessage, loadingMsgId);
+                await handleQaMode(userMessage);
 
                 // Reset QA mode timer pada setiap interaksi
                 if (qaTimerRef.current) {
@@ -372,7 +372,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     };
 
     // Handle mode QA
-    const handleQaMode = async (userMessage: string, loadingMsgId: string) => {
+    const handleQaMode = async (userMessage: string) => {
         try {
             const ragResponse = await queryRAG(userMessage);
             const surveyMessage: SurveyMessageRequest = {
@@ -418,9 +418,6 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             // Perlakuan khusus untuk pertanyaan KR004
             if (botResponse.questionObject?.code === "KR004" && botResponse.questionObject?.options?.length) {
                 console.log("Terdeteksi pertanyaan KR004 - menampilkan dengan opsi lengkap");
-
-                // Hapus pesan loading sebelumnya
-                const updatedMessages = messages.filter(msg => msg.id !== loadingMsgId);
 
                 // Buat ID pesan baru
                 const newMessageId = `kr004_msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
