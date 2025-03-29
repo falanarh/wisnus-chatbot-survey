@@ -1,4 +1,4 @@
-// src/components/ModernGoogleAuthButton.tsx
+// src/components/auth/ModernGoogleAuthButton.tsx
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { motion } from 'framer-motion';
@@ -80,17 +80,40 @@ const ModernGoogleAuthButton: React.FC<ModernGoogleAuthButtonProps> = ({
 
   // The Google button might be rendered after the customButton is hidden
   const googleButtonRef = useRef<HTMLDivElement>(null);
+  const scriptLoadedRef = useRef<boolean>(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !window.google) {
-      loadGoogleScript();
-    } else if (window.google) {
-      // Google script already loaded
-      initializeGoogleButton();
+    // Set up error handler for Google API related errors
+    const originalConsoleError = console.error;
+    console.error = (...args) => {
+      // Check if this is the Google Identity Services error
+      if (args[0] === 'Google Identity Services not available') {
+        // Don't log to console, silently handle it
+        if (!scriptLoadedRef.current) {
+          // Try loading the script again after a delay
+          setTimeout(() => {
+            loadGoogleScript();
+          }, 1000);
+        }
+        return;
+      }
+      
+      // Pass through other error calls
+      originalConsoleError.apply(console, args);
+    };
+
+    if (typeof window !== 'undefined') {
+      if (window.google) {
+        scriptLoadedRef.current = true;
+        initializeGoogleButton();
+      } else {
+        loadGoogleScript();
+      }
     }
 
     return () => {
-      // Cleanup if needed
+      // Restore original console.error
+      console.error = originalConsoleError;
     };
   }, []);
 
@@ -102,35 +125,49 @@ const ModernGoogleAuthButton: React.FC<ModernGoogleAuthButtonProps> = ({
       return;
     }
 
-    // Check if script is already loaded
+    // Check if script is already loaded or being loaded
     if (document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
-      initializeGoogleButton();
+      if (window.google) {
+        scriptLoadedRef.current = true;
+        initializeGoogleButton();
+      }
       return;
     }
 
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    script.onload = initializeGoogleButton;
-    script.onerror = () => {
-      console.error('Failed to load Google Identity Services script');
-      setError('Failed to load Google authentication');
-    };
-    document.body.appendChild(script);
+    try {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      
+      script.onload = () => {
+        scriptLoadedRef.current = true;
+        // Add a small delay to ensure Google's JS is fully initialized
+        setTimeout(() => {
+          if (window.google && window.google.accounts) {
+            initializeGoogleButton();
+          }
+        }, 100);
+      };
+      
+      script.onerror = () => {
+        console.warn('Failed to load Google Identity Services script');
+        setError('Failed to load Google authentication');
+      };
+      
+      document.body.appendChild(script);
+    } catch (err) {
+      console.warn('Error loading Google script:', err);
+    }
   };
 
   const initializeGoogleButton = () => {
     if (!window.google || !window.google.accounts || !window.google.accounts.id) {
-      console.error('Google Identity Services not available');
-    //   setError('Google authentication is not available');
+      // Don't show error, just silently fail
       return;
     }
 
-    if (!googleButtonRef.current) {
-      console.error('Google button ref is not available');
-      return;
-    }
+    if (!googleButtonRef.current) return;
 
     try {
       // Initialize Google Sign-In
@@ -158,8 +195,7 @@ const ModernGoogleAuthButton: React.FC<ModernGoogleAuthButtonProps> = ({
         });
       }
     } catch (err) {
-      console.error('Error initializing Google button:', err);
-      setError('Failed to initialize Google authentication');
+      console.warn('Error initializing Google button:', err);
     }
   };
 
@@ -188,6 +224,9 @@ const ModernGoogleAuthButton: React.FC<ModernGoogleAuthButtonProps> = ({
       const googleButton = googleButtonRef.current.querySelector('div[role="button"]');
       if (googleButton) {
         (googleButton as HTMLElement).click();
+      } else {
+        // If Google button is not available, try loading it again
+        loadGoogleScript();
       }
     }
   };
@@ -278,20 +317,6 @@ const ModernGoogleAuthButton: React.FC<ModernGoogleAuthButtonProps> = ({
           borderWidth: 0
         }}
       ></div>
-      
-      {/* Separator with label (optional) */}
-      {/* <div className="relative mt-6 mb-3">
-        <div className="absolute inset-0 flex items-center">
-          <div className={`w-full border-t ${isDarkMode ? 'border-gray-700/70' : 'border-gray-200/70'}`}></div>
-        </div>
-        <div className="relative flex justify-center">
-          <span className={`px-3 text-xs ${
-            isDarkMode ? 'bg-gray-900/70 text-gray-400' : 'bg-white/70 text-gray-500'
-          }`}>
-            {isSignIn ? 'Google SSO dijamin aman & terpercaya' : 'Daftar tanpa perlu isi form'}
-          </span>
-        </div>
-      </div> */}
     </div>
   );
 };
