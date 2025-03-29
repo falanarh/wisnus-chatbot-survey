@@ -1,3 +1,5 @@
+//src/components/survey/ChatMessageItem.tsx
+
 import { motion } from "framer-motion";
 import { CheckCheck } from "lucide-react";
 import ModeBadge from "./ModeBadge";
@@ -5,6 +7,7 @@ import { useEffect, useState } from "react";
 import { WiMoonWaningCrescent4 } from "react-icons/wi";
 import MessageLoader from "./MessageLoader";
 import { ChatMessage } from "@/utils/surveyMessageFormatters";
+import { Question } from "@/services/survey/types";
 
 interface ChatMessageItemProps {
   message: ChatMessage;
@@ -12,9 +15,15 @@ interface ChatMessageItemProps {
   index: number;
   optionsAnimating?: boolean;
   visibleOptions?: string[];
+  currentQuestion?: Question;
 }
 
-const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ message, isDarkMode, optionsAnimating, visibleOptions }) => {
+const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
+  message,
+  isDarkMode,
+  optionsAnimating,
+  visibleOptions,
+}) => {
   const [timestamp, setTimestamp] = useState<string>(
     message.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   );
@@ -46,6 +55,18 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ message, isDarkMode, 
     : isDarkMode
       ? "rgba(255, 255, 255, 0.5)"
       : "rgba(0, 0, 0, 0.5)";
+
+  // Determine which options to display
+  const shouldShowOptions = !message.user &&
+    message.questionObject?.options &&
+    message.questionObject.options.length > 0;
+
+  // Mengatasi error TypeScript dengan memastikan displayOptions selalu berupa array
+  const displayOptions: string[] = shouldShowOptions ?
+    (optionsAnimating && visibleOptions && visibleOptions.length > 0 ?
+      visibleOptions :
+      message.questionObject?.options || []) :
+    [];
 
   return (
     <motion.div
@@ -81,14 +102,15 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ message, isDarkMode, 
                 </div>
               )}
               <p className="break-words whitespace-pre-wrap">{message.text}</p>
-              {message.questionObject?.code === "KR004" && (
+
+              {/* Display options if they should be shown */}
+              {shouldShowOptions && displayOptions.length > 0 && (
                 <>
                   <p className="break-words whitespace-pre-wrap dark:text-white my-1">
                     Pilih salah satu opsi di bawah ini:
                   </p>
                   <ul className="space-y-1 my-2">
-                    {/* Use visibleOptions instead of message.questionObject.options */}
-                    {(optionsAnimating ? visibleOptions : message.questionObject.options)?.map((option, index) => (
+                    {displayOptions.map((option, index) => (
                       <li
                         key={index}
                         className="flex items-start group rounded-lg p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200"
@@ -99,6 +121,16 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({ message, isDarkMode, 
                     ))}
                   </ul>
                 </>
+              )}
+
+              {/* Debugging info - dapat dihapus setelah masalah teratasi */}
+              {!message.user && message.mode === 'survey' && message.questionObject && (
+                <div className="mt-1 text-xs opacity-50">
+                  {message.questionObject.code === "KR004" ?
+                    <span>Pertanyaan KR004 {message.questionObject.options ? `(${message.questionObject.options.length} opsi)` : "(tanpa opsi)"}</span> :
+                    <span>Pertanyaan {message.questionObject.code}</span>
+                  }
+                </div>
               )}
             </>
           )}

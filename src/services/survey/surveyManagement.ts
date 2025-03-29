@@ -23,8 +23,6 @@ export async function submitResponse(
       }
     ) as SurveyResponseResult;
 
-    console.log("Survey response submitted:", response);
-
     // If the response contains a session ID, save it to user data
     if (response.success && response.session_id) {
       updateUserProperty('activeSurveySessionId', response.session_id);
@@ -36,8 +34,6 @@ export async function submitResponse(
         info: response.message || "Failed to submit response",
       };
     }
-
-    console.log("Survey response submitted:", response);
 
     return response;
   } catch (error) {

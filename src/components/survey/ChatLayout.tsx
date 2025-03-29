@@ -41,6 +41,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     // First, we'll need to track the state of option animation
     const [optionsAnimating, setOptionsAnimating] = useState(false);
     const [visibleOptions, setVisibleOptions] = useState<string[]>([]);
+    const [currentQuestion, setCurrentQuestion] = useState<Question | undefined>(undefined);
 
     // Mode confirmation popup state
     const [showModePopup, setShowModePopup] = useState(false);
@@ -321,6 +322,15 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             // Format respons untuk ditampilkan ke user
             const botResponse = formatSurveyResponse(response);
             
+            // Update current question state
+            if (botResponse.questionObject) {
+                setCurrentQuestion(botResponse.questionObject);
+            }
+            
+            // Debugging - log question code and options
+            console.log("Question code:", botResponse.questionObject?.code);
+            console.log("Question options:", botResponse.questionObject?.options);
+            
             // Pass the question object if it exists
             simulateTyping(botResponse.text, botResponse.questionObject);
     
@@ -337,6 +347,11 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
 
         // Reset options state
         setVisibleOptions([]);
+        
+        // Store the question for later reference
+        if (question) {
+            setCurrentQuestion(question);
+        }
 
         tokens.forEach((token, index) => {
             const timeout = setTimeout(() => {
@@ -350,8 +365,9 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 if (index === tokens.length - 1) {
                     setBotIsTyping(false);
 
-                    // Start animating options if it's KR004 question
-                    if (question?.code === "KR004" && question.options?.length) {
+                    // Check for KR004 question or any question with options
+                    if (question?.options?.length) {
+                        console.log("Starting options animation for question:", question.code);
                         animateOptions(question.options);
                     }
                 }
@@ -364,6 +380,12 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
 
     // New function to animate showing the options
     const animateOptions = (options: string[]) => {
+        if (!options || options.length === 0) {
+            console.log("No options to animate");
+            return;
+        }
+        
+        console.log("Animating options:", options);
         setOptionsAnimating(true);
         let currentOptions: string[] = [];
 
@@ -374,6 +396,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
 
                 currentOptions = [...options.slice(0, index + 1)];
                 setVisibleOptions(currentOptions);
+                console.log("Updated visible options:", currentOptions);
 
                 // After last option, mark animation as complete
                 if (index === options.length - 1) {
@@ -447,6 +470,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 closeAllDropdowns={closeAllDropdowns}
                 optionsAnimating={optionsAnimating}
                 visibleOptions={visibleOptions}
+                currentQuestion={currentQuestion}
             />
 
             {/* Scroll to Bottom Button */}
