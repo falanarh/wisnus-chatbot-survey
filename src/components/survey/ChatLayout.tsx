@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ChatMessage } from "@/hooks/useSurveyMessages";
 import { useTheme } from "@/components/other/ThemeProvider";
-import { generateUnorderedList } from "@/utils/otherUtils";
 import ChatSidebar from "./ChatSidebar";
 import ChatHeader from "./ChatHeader";
 import ChatScrollButton from "./ChatScrollButton";
@@ -13,9 +11,10 @@ import ModeConfirmationPopup from "./ModeConfirmationPopup";
 import { queryRAG } from "@/services/survey/ragService";
 import { getToken, getUserData, updateUserProperty, UserData } from "@/services/auth";
 import { submitResponse } from "@/services/survey/surveyManagement";
-import { SurveyResponseResult, SurveyResponseType, Question, SurveyMessageRequest } from "@/services/survey/types";
+import { SurveyMessageRequest } from "@/services/survey/types";
 import { addSurveyMessage } from "@/services/survey/surveyMessages";
 import { getCurrentQuestion } from "@/services/survey";
+import { ChatMessage, formatSurveyResponse } from "@/utils/surveyMessageFormatters";
 
 interface ChatLayoutProps {
     messages: ChatMessage[];
@@ -194,7 +193,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             // Mendapatkan pertanyaan saat ini dari API
             const response = await getCurrentQuestion();
 
-            let pesanTeks = "Mode berubah ke survei. ";
+            let pesanTeks = "Mode berubah ke survei. Mari lanjutkan survei Anda.";
 
             if (response.success && response.data) {
                 const { status, current_question, message } = response.data;
@@ -204,10 +203,15 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 } else if (current_question) {
                     const surveyMessage: SurveyMessageRequest = {
                         user_message: null,
-                        system_response: { info: "switched_to_survey", currentQuestion: current_question},
+                        system_response: {
+                            info: "switched_to_survey",
+                            currentQuestion: current_question,
+                            additional_info: "Anda telah beralih ke mode survei."
+                        },
                         mode: 'survey',
                     };
                     await addSurveyMessage(surveyMessage);
+                    pesanTeks += `\n\nPertanyaan saat ini: ${current_question.text}`;
                 } else {
                     pesanTeks += "Mari lanjutkan survei Anda.";
                 }
@@ -310,73 +314,12 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
 
             // Format respons untuk ditampilkan ke user
             const botResponse = formatSurveyResponse(response);
-            simulateTyping(botResponse);
+            simulateTyping(botResponse.text);
 
         } catch (error) {
             console.error("Error dalam mode survei:", error);
             simulateTyping("Terjadi kesalahan saat memproses pesan Anda. Silakan coba lagi.");
         }
-    };
-
-    // Format survey response
-    const formatSurveyResponse = (response: SurveyResponseResult): string => {
-        const {
-            info,
-            additional_info,
-            next_question,
-            currentQuestion,
-            clarification_reason,
-            follow_up_question,
-            answer,
-            system_message
-        } = response;
-
-        // Format respons berdasarkan tipe info
-        switch (info) {
-            case SurveyResponseType.SURVEY_COMPLETED:
-                return additional_info || "Survei telah selesai.";
-
-            case SurveyResponseType.EXPECTED_ANSWER:
-                if (!next_question) return "Pertanyaan berikutnya tidak tersedia.";
-                return formatQuestion(next_question);
-
-            case SurveyResponseType.UNEXPECTED_ANSWER:
-                if (!currentQuestion || !clarification_reason || !follow_up_question) {
-                    return "Mohon berikan jawaban yang sesuai dengan pertanyaan.";
-                }
-                return `${clarification_reason} ${follow_up_question}\n\n${currentQuestion.code === "KR004" && currentQuestion.options
-                    ? `Pilih salah satu opsi di bawah ini: ${generateUnorderedList(currentQuestion.options, "◆")}`
-                    : ""
-                    }`;
-
-            case SurveyResponseType.QUESTION:
-                if (!currentQuestion || !answer) return "Silakan jawab pertanyaan saat ini.";
-                return `${answer} \n\nPertanyaan saat ini: ${formatQuestion(currentQuestion)}`;
-
-            case SurveyResponseType.SURVEY_STARTED:
-                let startText = additional_info || "Survei telah dimulai.";
-                if (next_question) {
-                    startText += `\n\n${formatQuestion(next_question)}`;
-                }
-                return startText;
-
-            case SurveyResponseType.NOT_READY_FOR_SURVEY:
-                return system_message || "Sepertinya Anda belum siap untuk memulai survei. Silakan kirim pesan kapan saja jika Anda ingin memulai.";
-
-            case SurveyResponseType.ERROR:
-                return additional_info || "Terjadi kesalahan dalam memproses jawaban Anda.";
-
-            default:
-                return additional_info || "Silakan lanjutkan menjawab pertanyaan survei.";
-        }
-    };
-
-    // Format questions with options if needed
-    const formatQuestion = (question: Question): string => {
-        if (question.code === "KR004" && question.options?.length) {
-            return `${question.text}\n\nPilih salah satu opsi di bawah ini: ${generateUnorderedList(question.options, "◆")}`;
-        }
-        return question.text;
     };
 
     // Simulate typing

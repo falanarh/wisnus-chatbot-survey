@@ -1,8 +1,8 @@
 import { RefObject } from "react";
 import { AnimatePresence } from "framer-motion";
-import { ChatMessage } from "@/hooks/useSurveyMessages";
 import EmptyStateMessage from "./EmptyStateMessage";
 import ChatMessageItem from "./ChatMessageItem";
+import { ChatMessage } from "@/utils/surveyMessageFormatters";
 
 interface ChatMessageAreaProps {
   messages: ChatMessage[];
@@ -37,11 +37,13 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                 {index === 0 && (
                   <div className="h-5" key={`spacer-top-${index}`}></div>
                 )}
-                <ChatMessageItem
-                  message={msg}
-                  isDarkMode={isDarkMode}
-                  index={index}
-                />
+                {msg.text && (
+                  <ChatMessageItem
+                    message={msg}
+                    isDarkMode={isDarkMode}
+                    index={index}
+                  />
+                )}
                 {index === messages.length - 1 && (
                   <div className="h-20" key={`spacer-bottom-${index}`}></div>
                 )}

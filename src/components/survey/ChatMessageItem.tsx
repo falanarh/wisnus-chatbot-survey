@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
 import { CheckCheck } from "lucide-react";
-import { ChatMessage } from "@/hooks/useSurveyMessages";
 import ModeBadge from "./ModeBadge";
 import { useEffect, useState } from "react";
 import { WiMoonWaningCrescent4 } from "react-icons/wi";
 import MessageLoader from "./MessageLoader";
+import { ChatMessage } from "@/utils/surveyMessageFormatters";
 
 interface ChatMessageItemProps {
   message: ChatMessage;

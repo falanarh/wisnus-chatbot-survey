@@ -1,20 +1,12 @@
-// src/hooks/useSurveyMessages.ts - Update to match the new API
-import { useState, useEffect, useCallback } from "react";
-import { getSurveyMessages, Question, SurveyMessage } from "@/services/survey";
+// src/hooks/useSurveyMessages.ts - Updated to use shared formatter
+import { useState, useEffect } from "react";
+import { getSurveyMessages } from "@/services/survey";
 import { getUserData } from "@/services/auth";
-
-// Chat message type (keeping the same interface but adding support for new fields)
-export interface ChatMessage {
-  text: string;
-  user: boolean;
-  mode: "survey" | "qa";
-  loading?: boolean;
-  responseType?: string;
-  questionCode?: string;
-  questionObject?: Question;
-  timestamp?: string; // Add timestamp field
-  read?: boolean; // Add read status for double check marks
-}
+import {  
+  ChatMessage,
+  convertApiMessagesToChatMessages,
+  formatSurveyResponse 
+} from "@/utils/surveyMessageFormatters";
 
 export function useSurveyMessages() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -32,148 +24,7 @@ export function useSurveyMessages() {
     setIsLoaded(true);
   }, []);
 
-  // Convert API messages to chat messages - updated for new response format
-  const convertApiMessagesToChatMessages = useCallback(
-    (apiMessages: SurveyMessage[]): ChatMessage[] => {
-      const chatMessages: ChatMessage[] = [];
-
-      apiMessages.forEach((apiMessage) => {
-        // Format the timestamp from API or create a new one
-        const timestamp = apiMessage.timestamp
-          ? new Date(apiMessage.timestamp).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          : new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
-
-        // Add user message
-        chatMessages.push({
-          text: apiMessage.user_message,
-          user: true,
-          mode: apiMessage.mode,
-          timestamp,
-          read: true, // User messages are always read
-        });
-
-        // Add system response based on its structure
-        const response = apiMessage.system_response;
-
-        const {
-          info,
-          additional_info,
-          next_question,
-          currentQuestion,
-          clarification_reason,
-          follow_up_question,
-          answer,
-          system_message,
-        } = response;
-
-        let responseText = "";
-        let mode: "survey" | "qa" = "survey";
-        let questionObject: Question | undefined = undefined;
-        const questionCode = next_question?.code || currentQuestion?.code;
-
-        // Determine the appropriate text based on info type
-        if (info) {
-          switch (info) {
-            case "survey_completed":
-              responseText = additional_info || "Survei telah selesai.";
-              break;
-
-            case "expected_answer":
-              if (!next_question) {
-                responseText = "Pertanyaan berikutnya tidak tersedia.";
-              } else {
-                responseText =
-                  next_question.text || "Pertanyaan tidak ditemukan.";
-                questionObject = next_question;
-              }
-              break;
-
-            case "unexpected_answer_or_other":
-              if (
-                !currentQuestion ||
-                !clarification_reason ||
-                !follow_up_question
-              ) {
-                responseText =
-                  "Mohon berikan jawaban yang sesuai dengan pertanyaan.";
-              } else {
-                responseText = `${clarification_reason} ${follow_up_question}`;
-                questionObject = currentQuestion;
-              }
-              break;
-
-            case "question":
-              if (!currentQuestion || !answer) {
-                responseText = "Silakan jawab pertanyaan saat ini.";
-              } else {
-                responseText = `${answer} \n\nPertanyaan saat ini: ${currentQuestion.text}`;
-                questionObject = currentQuestion;
-              }
-              break;
-
-            case "survey_started":
-              responseText = additional_info || "Survei telah dimulai.";
-              if (next_question) {
-                responseText += `\n\n${next_question.text}`;
-              }
-              break;
-
-            case "not_ready_for_survey":
-              responseText =
-                system_message ||
-                "Sepertinya Anda belum siap untuk memulai survei. Silakan kirim pesan kapan saja jika Anda ingin memulai.";
-              break;
-
-            case "error":
-              responseText =
-                additional_info ||
-                "Terjadi kesalahan dalam memproses jawaban Anda.";
-              break;
-
-            case "switched_to_survey":
-              responseText =
-                "Anda telah beralih ke mode survei. Silakan jawab pertanyaan survei.\n\nPertanyaan saat ini: " +
-                (currentQuestion?.text || "Pertanyaan tidak ditemukan.");
-              questionObject = currentQuestion;
-              break;
-
-            default:
-              responseText = "Silakan lanjutkan menjawab pertanyaan survei.";
-          }
-        } else if (response.answer) {
-          // For QA-type responses
-          responseText = response.answer;
-          mode = "qa";
-        } else {
-          // Fallback if no recognizable format
-          responseText =
-            additional_info || "System response (could not be displayed)";
-        }
-
-        chatMessages.push({
-          text: responseText,
-          user: false,
-          mode: mode,
-          responseType: info,
-          questionCode,
-          questionObject: questionObject,
-          timestamp,
-          read: false, // System messages start as unread
-        });
-      });
-
-      return chatMessages;
-    },
-    []
-  );
-
-  // Load chat history - unchanged
+  // Load chat history
   useEffect(() => {
     if (!isLoaded) return;
 
@@ -188,6 +39,7 @@ export function useSurveyMessages() {
         const response = await getSurveyMessages(userId);
 
         if (response.success && response.data) {
+          // Using the shared convertApiMessagesToChatMessages function
           const convertedMessages = convertApiMessagesToChatMessages(
             response.data
           );
@@ -211,9 +63,9 @@ export function useSurveyMessages() {
     }
 
     loadChatHistory();
-  }, [userId, isLoaded, convertApiMessagesToChatMessages]);
+  }, [userId, isLoaded]);
 
-  // Message management functions remain unchanged to maintain UI compatibility
+  // Message management functions
   const addMessage = (message: ChatMessage) => {
     setMessages((prev) => [
       ...prev,
@@ -258,6 +110,7 @@ export function useSurveyMessages() {
       const response = await getSurveyMessages(userId);
 
       if (response.success && response.data) {
+        // Using the shared convertApiMessagesToChatMessages function
         const convertedMessages = convertApiMessagesToChatMessages(
           response.data
         );
@@ -290,5 +143,6 @@ export function useSurveyMessages() {
     isLoading,
     error,
     userId,
+    formatSurveyResponse,
   };
 }
