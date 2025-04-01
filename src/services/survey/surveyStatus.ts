@@ -1,6 +1,7 @@
 // src/services/survey/surveyStatus.ts
+
 import { surveyApiRequest } from "./surveyApiClient";
-import { SurveyStatusResponse, SurveySessionStatus } from "./types";
+import { SurveyStatusResponse } from "./types";
 
 /**
  * Gets the current status of a survey session
@@ -15,11 +16,11 @@ export async function getSurveyStatus(
 ): Promise<SurveyStatusResponse> {
   try {
     // Correctly use SurveySessionStatus as the generic type parameter
-    const response = await surveyApiRequest<SurveySessionStatus>(
+    const response = await surveyApiRequest(
       `/api/survey/status/${sessionId}`,
       { method: "GET" },
       signal
-    );
+    ) as SurveyStatusResponse;
 
     // Return the response directly
     return response;
