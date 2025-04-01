@@ -46,9 +46,9 @@ const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollToSectio
         };
 
         const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
+            // if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+            //     setIsOpen(false);
+            // }
         };
 
         handleResize();
@@ -319,8 +319,8 @@ const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollToSectio
                             <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95">
                                 {isAuthenticated ? (
                                     <div className="space-y-3">
-                                        <div className="flex justify-center">
-                                            <UserAvatar />
+                                        <div className="flex">
+                                            <UserAvatar inMobileMenu={true} />
                                         </div>
                                         <motion.button
                                             variants={buttonVariants}
