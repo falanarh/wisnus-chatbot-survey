@@ -25,34 +25,68 @@ const UserAvatar: React.FC = () => {
   const [historyDropdownOpen, setHistoryDropdownOpen] = useState(false);
   const [surveyStatus, setSurveyStatus] = useState({
     activeSurvey: false,
-    activeEvaluation: false
+    activeEvaluation: false,
+    completionPercentage: 0
   });
   const menuRef = useRef<HTMLDivElement>(null);
   const { sessionData } = useSurveyStatus();
-  const { isComplete: isEvaluationComplete } = useEvaluation();
+  const { isComplete: isEvaluationComplete, evaluation } = useEvaluation();
 
   // Check survey and evaluation status on component mount and when user changes
   useEffect(() => {
     const checkSurveyStatus = async () => {
       let isSurveyActive = false;
       let isEvaluationActive = false;
+      let completionPercentage = 0;
 
       if (!user) return;
 
       try {
         // Check Survey Status
+        let surveyProgressPercentage = 0;
         if (!sessionData) {
           isSurveyActive = true;
+          surveyProgressPercentage = 0; // If sessionData is null, survey progress is 0%
         } else {
           isSurveyActive = sessionData.status === "IN_PROGRESS" ? true : false;
+          surveyProgressPercentage = sessionData.progress?.progress_percentage || 0;
         }
 
-        // Check Evaluation Status
+        // Check Evaluation Status and calculate progress based on answered questions
         isEvaluationActive = !isEvaluationComplete;
+        
+        // Calculate evaluation progress based on number of answered questions
+        let evalProgressPercentage = 0;
+        if (isEvaluationComplete) {
+          evalProgressPercentage = 100;
+        } else if (evaluation && evaluation.answers) {
+          // Count the number of answered questions
+          const answeredCount = Object.keys(evaluation.answers).length;
+          // Total questions is 6 based on the type definition
+          const totalQuestions = 6; // ease_of_use, participation_ease, enjoyment, data_security, privacy_safety, mental_effort
+          evalProgressPercentage = Math.round((answeredCount / totalQuestions) * 100);
+        }
+
+        // Calculate overall completion percentage
+        // If both are active, take average. If one is completed, weight accordingly
+        if (isSurveyActive && isEvaluationActive) {
+          // Both active, average the two percentages (50% weight each)
+          completionPercentage = Math.round((surveyProgressPercentage + evalProgressPercentage) / 2);
+        } else if (isSurveyActive && !isEvaluationActive) {
+          // Survey active, evaluation complete
+          completionPercentage = Math.round((surveyProgressPercentage + 100) / 2);
+        } else if (!isSurveyActive && isEvaluationActive) {
+          // Survey complete, evaluation active
+          completionPercentage = Math.round((100 + evalProgressPercentage) / 2);
+        } else {
+          // Both complete
+          completionPercentage = 100;
+        }
 
         setSurveyStatus({
           activeSurvey: isSurveyActive,
-          activeEvaluation: isEvaluationActive
+          activeEvaluation: isEvaluationActive,
+          completionPercentage
         });
       } catch (error) {
         console.error("Error checking survey status:", error);
@@ -60,7 +94,7 @@ const UserAvatar: React.FC = () => {
     };
 
     checkSurveyStatus();
-  }, [user, sessionData, isEvaluationComplete]);
+  }, [user, sessionData, isEvaluationComplete, evaluation]);
  
   // Close menu when clicking outside
   useEffect(() => {
@@ -90,6 +124,14 @@ const UserAvatar: React.FC = () => {
       nameParts[0].charAt(0).toUpperCase() +
       nameParts[nameParts.length - 1].charAt(0).toUpperCase()
     );
+  };
+
+  // Calculate number of active/available surveys
+  const getActiveSurveyCount = () => {
+    let count = 0;
+    if (surveyStatus.activeSurvey) count += 1;
+    if (surveyStatus.activeEvaluation) count += 1;
+    return count;
   };
 
   // Toggle surveys dropdown
@@ -180,11 +222,11 @@ const UserAvatar: React.FC = () => {
             {/* Stats summary */}
             <div className="grid grid-cols-2 divide-x divide-gray-100 dark:divide-gray-700 border-b border-gray-100 dark:border-gray-700">
               <div className="px-2 py-3 text-center">
-                <div className="text-sm font-semibold text-gray-900 dark:text-white">2</div>
+                <div className="text-sm font-semibold text-gray-900 dark:text-white">{getActiveSurveyCount()}</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">Survei</div>
               </div>
               <div className="px-2 py-3 text-center">
-                <div className="text-sm font-semibold text-gray-900 dark:text-white">85%</div>
+                <div className="text-sm font-semibold text-gray-900 dark:text-white">{surveyStatus.completionPercentage}%</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">Penyelesaian</div>
               </div>
             </div>
