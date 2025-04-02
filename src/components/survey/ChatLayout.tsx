@@ -538,7 +538,11 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     
             // Important: Update the loading message right away to show content
             // This stops the loader from showing and displays the actual message
-            updateLastMessage(botResponse.text, false);
+            if (!(botResponse.questionObject?.code === "KR004")) {
+                updateLastMessage(botResponse.text, false);
+            } else {
+                updateLastMessage("", false); // Clear the message for KR004
+            }
     
             // Perlakuan khusus untuk pertanyaan KR004
             if (botResponse.questionObject?.code === "KR004" && botResponse.questionObject?.options?.length) {

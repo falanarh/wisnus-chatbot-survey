@@ -26,9 +26,8 @@ interface UserAvatarProps {
 const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [surveysDropdownOpen, setSurveysDropdownOpen] = useState(inMobileMenu);
-  const [historyDropdownOpen, setHistoryDropdownOpen] = useState(inMobileMenu);
-  const [isMobile, setIsMobile] = useState(false);
+  const [surveysDropdownOpen, setSurveysDropdownOpen] = useState(false);
+  const [historyDropdownOpen, setHistoryDropdownOpen] = useState(false);
   const [surveyStatus, setSurveyStatus] = useState({
     activeSurvey: false,
     activeEvaluation: false,
@@ -38,17 +37,6 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
   const { sessionData } = useSurveyStatus();
   const { isComplete: isEvaluationComplete, evaluation } = useEvaluation();
   const pathname = usePathname();
-
-  // Detect mobile screen
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   // Check survey and evaluation status on component mount and when user changes
   useEffect(() => {
@@ -72,7 +60,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
 
         // Check Evaluation Status and calculate progress based on answered questions
         isEvaluationActive = !isEvaluationComplete;
-        
+
         // Calculate evaluation progress based on number of answered questions
         let evalProgressPercentage = 0;
         if (isEvaluationComplete) {
@@ -113,11 +101,11 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
 
     checkSurveyStatus();
   }, [user, sessionData, isEvaluationComplete, evaluation]);
- 
+
   // Close menu when clicking outside (only for desktop dropdown)
   useEffect(() => {
     if (inMobileMenu) return; // Skip this for mobile menu version
-    
+
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
@@ -231,7 +219,8 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
         {/* Menu items */}
         <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
           <div
-            className={`flex items-center justify-between px-4 py-3 text-sm ${pathname === '/profile' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'}`}
+            onClick={toggleSurveysDropdown}
+            className={`flex items-center justify-between px-4 py-3 text-sm cursor-pointer ${pathname === '/profile' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'}`}
           >
             <div className="flex items-center">
               <ClipboardList className={`w-4 h-4 mr-3 ${pathname === '/profile' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'}`} />
@@ -240,103 +229,100 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
             <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${surveysDropdownOpen ? 'rotate-180' : ''}`} />
           </div>
 
-          {/* Dynamic survey items - always visible in mobile menu */}
-          <motion.div
-            initial={!inMobileMenu ? { opacity: 0, height: 0 } : { opacity: 1, height: 'auto' }}
-            animate={surveysDropdownOpen || inMobileMenu ? { opacity: 1, height: 'auto' } : { opacity: 0, height: 0 }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700 text-sm"
-          >
-            {!surveyStatus.activeSurvey && !surveyStatus.activeEvaluation ? (
-              <div className="px-4 py-3 text-center text-gray-500 dark:text-gray-400">
-                Tidak Ada Survei
-              </div>
-            ) : (
-              <>
-                {surveyStatus.activeSurvey && (
-                  <Link
-                    href="/survey"
-                    className={`flex items-center pl-11 pr-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${pathname === '/survey' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-200'}`}
-                    onClick={handleLinkClick}
-                  >
-                    <Plane className={`w-5 h-5 mr-2 ${pathname === '/survey' ? 'text-blue-600 dark:text-blue-400' : 'text-blue-500 dark:text-blue-400'}`} />
-                    <span>Wisatawan Nusantara</span>
-                  </Link>
+          {/* Surveys dropdown content */}
+          <AnimatePresence>
+            {surveysDropdownOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700 text-sm"
+              >
+                {!surveyStatus.activeSurvey && !surveyStatus.activeEvaluation ? (
+                  <div className="px-4 py-3 text-center text-gray-500 dark:text-gray-400">
+                    Tidak Ada Survei
+                  </div>
+                ) : (
+                  <>
+                    {surveyStatus.activeSurvey && (
+                      <Link
+                        href="/survey"
+                        className={`flex items-center pl-11 pr-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${pathname === '/survey' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-200'}`}
+                        onClick={handleLinkClick}
+                      >
+                        <Plane className={`w-5 h-5 mr-2 ${pathname === '/survey' ? 'text-blue-600 dark:text-blue-400' : 'text-blue-500 dark:text-blue-400'}`} />
+                        <span>Wisatawan Nusantara</span>
+                      </Link>
+                    )}
+                    {surveyStatus.activeEvaluation && (
+                      <Link
+                        href="/survey/evaluation"
+                        className={`flex items-center pl-11 pr-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${pathname === '/survey/evaluation' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-200'}`}
+                        onClick={handleLinkClick}
+                      >
+                        <ShieldUser className={`w-5 h-5 mr-2 ${pathname === '/survey/evaluation' ? 'text-green-600 dark:text-green-400' : 'text-green-500 dark:text-green-400'}`} />
+                        <span>Persepsi Pengguna</span>
+                      </Link>
+                    )}
+                  </>
                 )}
-                {surveyStatus.activeEvaluation && (
-                  <Link
-                    href="/survey/evaluation"
-                    className={`flex items-center pl-11 pr-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${pathname === '/survey/evaluation' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-200'}`}
-                    onClick={handleLinkClick}
-                  >
-                    <ShieldUser className={`w-5 h-5 mr-2 ${pathname === '/survey/evaluation' ? 'text-green-600 dark:text-green-400' : 'text-green-500 dark:text-green-400'}`} />
-                    <span>Persepsi Pengguna</span>
-                  </Link>
-                )}
-              </>
+              </motion.div>
             )}
-          </motion.div>
+          </AnimatePresence>
 
           {/* History dropdown */}
           <div className="border-t border-gray-100 dark:border-gray-700">
-            <button
+            <div
               onClick={toggleHistoryDropdown}
-              className="flex w-full items-center justify-between px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="flex cursor-pointer w-full items-center justify-between px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               <div className="flex items-center">
                 <Calendar className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" />
                 <span>Riwayat Survei</span>
               </div>
               <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${historyDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
+            </div>
 
-            {/* Dynamic history items - always visible in mobile menu */}
-            <motion.div
-              initial={!inMobileMenu ? { opacity: 0, height: 0 } : { opacity: 1, height: 'auto' }}
-              animate={historyDropdownOpen || inMobileMenu ? { opacity: 1, height: 'auto' } : { opacity: 0, height: 0 }}
-              exit={{ opacity: 0, height: 0 }}
-              className="bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700 text-sm"
-            >
-              {surveyStatus.activeSurvey && surveyStatus.activeEvaluation ? (
-                <div className="px-4 py-3 text-center text-gray-500 dark:text-gray-400">
-                  Tidak Ada Riwayat
-                </div>
-              ) : (
-                <>
-                  {!surveyStatus.activeSurvey && (
-                    <Link
-                      href="/survey"
-                      className="flex items-center pl-11 pr-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                      onClick={handleLinkClick}
-                    >
-                      <Plane className="w-5 h-5 mr-2 text-blue-500 dark:text-blue-400" />
-                      <span>Wisatawan Nusantara</span>
-                    </Link>
+            {/* History dropdown content */}
+            <AnimatePresence>
+              {historyDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700 text-sm"
+                >
+                  {surveyStatus.activeSurvey && surveyStatus.activeEvaluation ? (
+                    <div className="px-4 py-3 text-center text-gray-500 dark:text-gray-400">
+                      Tidak Ada Riwayat
+                    </div>
+                  ) : (
+                    <>
+                      {!surveyStatus.activeSurvey && (
+                        <Link
+                          href="/survey"
+                          className="flex items-center pl-11 pr-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          onClick={handleLinkClick}
+                        >
+                          <Plane className="w-5 h-5 mr-2 text-blue-500 dark:text-blue-400" />
+                          <span>Wisatawan Nusantara</span>
+                        </Link>
+                      )}
+                      {!surveyStatus.activeEvaluation && (
+                        <Link
+                          href="/survey/evaluation"
+                          className="flex items-center pl-11 pr-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          onClick={handleLinkClick}
+                        >
+                          <ShieldUser className="w-5 h-5 mr-2 text-green-500 dark:text-green-400" />
+                          <span>Persepsi Pengguna</span>
+                        </Link>
+                      )}
+                    </>
                   )}
-                  {!surveyStatus.activeEvaluation && (
-                    <Link
-                      href="/survey/evaluation"
-                      className="flex items-center pl-11 pr-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                      onClick={handleLinkClick}
-                    >
-                      <ShieldUser className="w-5 h-5 mr-2 text-green-500 dark:text-green-400" />
-                      <span>Persepsi Pengguna</span>
-                    </Link>
-                  )}
-                </>
+                </motion.div>
               )}
-            </motion.div>
-          </div>
-
-          {/* Logout button */}
-          <div className="border-t border-gray-100 dark:border-gray-700 p-3">
-            <button
-              onClick={logout}
-              className="flex w-full items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-100 dark:border-red-800/30 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Logout</span>
-            </button>
+            </AnimatePresence>
           </div>
         </div>
       </div>
@@ -421,18 +407,6 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
 
             {/* Menu items */}
             <div className="py-1">
-              <Link
-                href="/profile"
-                className="flex items-center justify-between px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                onClick={handleLinkClick}
-              >
-                <div className="flex items-center">
-                  <User className="w-4 h-4 mr-3 text-gray-500 dark:text-gray-400" />
-                  <span>Profil Saya</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
-              </Link>
-
               {/* Surveys dropdown */}
               <div className="relative">
                 <button
@@ -447,44 +421,46 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
                 </button>
 
                 {/* Surveys submenu */}
-                {surveysDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="bg-gray-100 dark:bg-gray-800 border-t border-b border-gray-200 dark:border-gray-700 text-sm"
-                  >
-                    {/* Dynamic survey menu items */}
-                    {!surveyStatus.activeSurvey && !surveyStatus.activeEvaluation ? (
-                      <div className="px-4 py-3 text-center text-gray-500 dark:text-gray-400">
-                        Tidak Ada Survei
-                      </div>
-                    ) : (
-                      <>
-                        {surveyStatus.activeSurvey && (
-                          <Link
-                            href="/survey"
-                            className="flex items-center pl-11 pr-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                            onClick={handleLinkClick}
-                          >
-                            <Plane className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" />
-                            <span>Wisatawan Nusantara</span>
-                          </Link>
-                        )}
-                        {surveyStatus.activeEvaluation && (
-                          <Link
-                            href="/survey/evaluation"
-                            className="flex items-center pl-11 pr-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                            onClick={handleLinkClick}
-                          >
-                            <ShieldUser className="w-5 h-5 mr-2 text-green-600 dark:text-green-400" />
-                            <span>Persepsi Pengguna</span>
-                          </Link>
-                        )}
-                      </>
-                    )}
-                  </motion.div>
-                )}
+                <AnimatePresence>
+                  {surveysDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="bg-gray-100 dark:bg-gray-800 border-t border-b border-gray-200 dark:border-gray-700 text-sm"
+                    >
+                      {/* Dynamic survey menu items */}
+                      {!surveyStatus.activeSurvey && !surveyStatus.activeEvaluation ? (
+                        <div className="px-4 py-3 text-center text-gray-500 dark:text-gray-400">
+                          Tidak Ada Survei
+                        </div>
+                      ) : (
+                        <>
+                          {surveyStatus.activeSurvey && (
+                            <Link
+                              href="/survey"
+                              className="flex items-center pl-11 pr-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                              onClick={handleLinkClick}
+                            >
+                              <Plane className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" />
+                              <span>Wisatawan Nusantara</span>
+                            </Link>
+                          )}
+                          {surveyStatus.activeEvaluation && (
+                            <Link
+                              href="/survey/evaluation"
+                              className="flex items-center pl-11 pr-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                              onClick={handleLinkClick}
+                            >
+                              <ShieldUser className="w-5 h-5 mr-2 text-green-600 dark:text-green-400" />
+                              <span>Persepsi Pengguna</span>
+                            </Link>
+                          )}
+                        </>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* History dropdown */}
@@ -500,44 +476,46 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${historyDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                {historyDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="bg-gray-100 dark:bg-gray-800 border-t border-b border-gray-200 dark:border-gray-700 text-sm"
-                  >
-                    {/* Dynamic history menu items */}
-                    {surveyStatus.activeSurvey && surveyStatus.activeEvaluation ? (
-                      <div className="px-4 py-3 text-center text-gray-500 dark:text-gray-400">
-                        Tidak Ada Riwayat
-                      </div>
-                    ) : (
-                      <>
-                        {!surveyStatus.activeSurvey && (
-                          <Link
-                            href="/survey"
-                            className="flex items-center pl-11 pr-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                            onClick={handleLinkClick}
-                          >
-                            <Plane className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" />
-                            <span>Wisatawan Nusantara</span>
-                          </Link>
-                        )}
-                        {!surveyStatus.activeEvaluation && (
-                          <Link
-                            href="/survey/evaluation"
-                            className="flex items-center pl-11 pr-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                            onClick={handleLinkClick}
-                          >
-                            <ShieldUser className="w-5 h-5 mr-2 text-green-600 dark:text-green-400" />
-                            <span>Persepsi Pengguna</span>
-                          </Link>
-                        )}
-                      </>
-                    )}
-                  </motion.div>
-                )}
+                <AnimatePresence>
+                  {historyDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="bg-gray-100 dark:bg-gray-800 border-t border-b border-gray-200 dark:border-gray-700 text-sm"
+                    >
+                      {/* Dynamic history menu items */}
+                      {surveyStatus.activeSurvey && surveyStatus.activeEvaluation ? (
+                        <div className="px-4 py-3 text-center text-gray-500 dark:text-gray-400">
+                          Tidak Ada Riwayat
+                        </div>
+                      ) : (
+                        <>
+                          {!surveyStatus.activeSurvey && (
+                            <Link
+                              href="/survey"
+                              className="flex items-center pl-11 pr-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                              onClick={handleLinkClick}
+                            >
+                              <Plane className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" />
+                              <span>Wisatawan Nusantara</span>
+                            </Link>
+                          )}
+                          {!surveyStatus.activeEvaluation && (
+                            <Link
+                              href="/survey/evaluation"
+                              className="flex items-center pl-11 pr-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                              onClick={handleLinkClick}
+                            >
+                              <ShieldUser className="w-5 h-5 mr-2 text-green-600 dark:text-green-400" />
+                              <span>Persepsi Pengguna</span>
+                            </Link>
+                          )}
+                        </>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>

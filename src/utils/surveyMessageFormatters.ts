@@ -60,7 +60,11 @@ export function formatSurveyResponse(
         if (!currentQuestion || !clarification_reason || !follow_up_question) {
           responseText = "Mohon berikan jawaban yang sesuai dengan pertanyaan.";
         } else {
-          responseText = `${clarification_reason} ${follow_up_question}`;
+          if (currentQuestion.code === "S003" || currentQuestion.code === "S005") {
+            responseText = clarification_reason;
+          } else {
+            responseText = `${clarification_reason} ${follow_up_question}`;
+          }
           questionObject = currentQuestion;
         }
         break;

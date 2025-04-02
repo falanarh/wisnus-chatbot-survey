@@ -15,9 +15,9 @@ import UserAvatar from './UserAvatar';
 import ThemeToggle from '../other/ThemeToggle';
 
 const merriweatherSans = Merriweather_Sans({
-  variable: "--font-merriweather-sans",
-  subsets: ["latin"],
-  weight: ["400", "700"],
+    variable: "--font-merriweather-sans",
+    subsets: ["latin"],
+    weight: ["400", "700"],
 });
 
 interface HeaderProps {
@@ -45,19 +45,11 @@ const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollToSectio
             }
         };
 
-        const handleClickOutside = (event: MouseEvent) => {
-            // if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-            //     setIsOpen(false);
-            // }
-        };
-
         handleResize();
         window.addEventListener('resize', handleResize);
-        document.addEventListener('mousedown', handleClickOutside);
 
         return () => {
             window.removeEventListener('resize', handleResize);
-            document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
 
@@ -227,7 +219,7 @@ const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollToSectio
                         setIsOpen={setThemeMenuOpen}
                         closeOtherDropdowns={closeOtherDropdowns}
                     />
-                    
+
                     {isAuthenticated ? (
                         <div className="flex items-center space-x-3">
                             <UserAvatar />
@@ -270,7 +262,7 @@ const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollToSectio
                         />
 
                         <motion.div
-                            className="fixed top-0 left-0 h-full w-full md:w-[380px] bg-gradient-to-br from-white to-white/95 dark:from-gray-900 dark:to-gray-800/95 backdrop-blur-md shadow-xl z-50 flex flex-col"
+                            className="fixed top-0 left-0 h-screen w-full md:w-[380px] overflow-hidden bg-gradient-to-br from-white to-white/95 dark:from-gray-900 dark:to-gray-800/95 backdrop-blur-md shadow-xl z-50 flex flex-col"
                             initial="hidden"
                             animate="visible"
                             exit="exit"
@@ -293,86 +285,89 @@ const Header: React.FC<HeaderProps> = ({ fontClass = 'font-sans', scrollToSectio
                                     <X size={20} />
                                 </button>
                             </div>
-
-                            <nav className="flex-1 p-5 bg-white dark:bg-gray-900">
-                                <div className="mb-3 text-sm font-medium text-gray-400 dark:text-gray-500 px-2">MENU UTAMA</div>
-                                <ul className="space-y-2">
-                                    {menuItems.map((item, index) => (
-                                        <motion.li
-                                            key={index}
-                                            variants={menuItemVariants}
-                                        >
-                                            <button
-                                                onClick={() => handleNavigation(item.section)}
-                                                className="flex items-center gap-3 px-3 py-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 group transition-colors w-full text-left"
+                            <div className='flex-1 flex flex-col overflow-y-auto'>
+                                <nav className="flex-1 p-5 bg-white dark:bg-gray-900">
+                                    <div className="mb-3 text-sm font-medium text-gray-400 dark:text-gray-500 px-2">MENU UTAMA</div>
+                                    <ul className="space-y-2">
+                                        {menuItems.map((item, index) => (
+                                            <motion.li
+                                                key={index}
+                                                variants={menuItemVariants}
                                             >
-                                                <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-800/50 text-blue-600 dark:text-blue-400 group-hover:bg-blue-500 group-hover:text-white dark:group-hover:bg-blue-700 transition-colors">
-                                                    {item.icon}
-                                                </div>
-                                                <span className="font-medium">{item.name}</span>
-                                            </button>
-                                        </motion.li>
-                                    ))}
-                                </ul>
-                            </nav>
-
-                            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95">
-                                {isAuthenticated ? (
-                                    <div className="space-y-3">
-                                        <div className="flex">
-                                            <UserAvatar inMobileMenu={true} />
+                                                <button
+                                                    onClick={() => handleNavigation(item.section)}
+                                                    className="flex items-center gap-3 px-3 py-3 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 group transition-colors w-full text-left"
+                                                >
+                                                    <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-800/50 text-blue-600 dark:text-blue-400 group-hover:bg-blue-500 group-hover:text-white dark:group-hover:bg-blue-700 transition-colors">
+                                                        {item.icon}
+                                                    </div>
+                                                    <span className="font-medium">{item.name}</span>
+                                                </button>
+                                            </motion.li>
+                                        ))}
+                                    </ul>
+                                </nav>
+                                <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95">
+                                    {isAuthenticated ? (
+                                        <div className="space-y-3">
+                                            <motion.div
+                                                className="flex"
+                                                variants={menuItemVariants}
+                                            >
+                                                <UserAvatar inMobileMenu={true} />
+                                            </motion.div>
+                                            <motion.button
+                                                variants={buttonVariants}
+                                                initial="hidden"
+                                                animate="visible"
+                                                whileHover="hover"
+                                                whileTap="tap"
+                                                onClick={handleLogout}
+                                                className="w-full py-2.5 px-3 flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800/30 rounded-lg shadow transition-shadow hover:shadow-md"
+                                            >
+                                                <LogOut size={16} />
+                                                <span className="font-medium">Keluar</span>
+                                            </motion.button>
                                         </div>
-                                        <motion.button
-                                            variants={buttonVariants}
-                                            initial="hidden"
-                                            animate="visible"
-                                            whileHover="hover"
-                                            whileTap="tap"
-                                            onClick={handleLogout}
-                                            className="w-full py-2.5 px-3 flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800/30 rounded-lg shadow transition-shadow hover:shadow-md"
-                                        >
-                                            <LogOut size={16} />
-                                            <span className="font-medium">Keluar</span>
-                                        </motion.button>
-                                    </div>
-                                ) : (
-                                    <div className="flex gap-3 mb-3">
-                                        <motion.button
-                                            variants={buttonVariants}
-                                            initial="hidden"
-                                            animate="visible"
-                                            whileHover="hover"
-                                            whileTap="tap"
-                                            onClick={() => router.push('/auth?tab=register')}
-                                            className="flex-1 py-2.5 px-3 flex items-center justify-center gap-2 bg-white dark:bg-gray-700 text-blue-600 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-lg shadow transition-shadow hover:shadow-md"
-                                        >
-                                            <UserPlus size={16} />
-                                            <span className="font-medium">Register</span>
-                                        </motion.button>
+                                    ) : (
+                                        <div className="flex gap-3 mb-3">
+                                            <motion.button
+                                                variants={buttonVariants}
+                                                initial="hidden"
+                                                animate="visible"
+                                                whileHover="hover"
+                                                whileTap="tap"
+                                                onClick={() => router.push('/auth?tab=register')}
+                                                className="flex-1 py-2.5 px-3 flex items-center justify-center gap-2 bg-white dark:bg-gray-700 text-blue-600 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-lg shadow transition-shadow hover:shadow-md"
+                                            >
+                                                <UserPlus size={16} />
+                                                <span className="font-medium">Register</span>
+                                            </motion.button>
 
-                                        <motion.button
-                                            variants={buttonVariants}
-                                            initial="hidden"
-                                            animate="visible"
-                                            whileHover="hover"
-                                            whileTap="tap"
-                                            onClick={() => router.push('/auth?tab=login')}
-                                            className="flex-1 py-2.5 px-3 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-shadow"
-                                        >
-                                            <LogIn size={16} />
-                                            <span className="font-medium">Login</span>
-                                        </motion.button>
-                                    </div>
-                                )}
+                                            <motion.button
+                                                variants={buttonVariants}
+                                                initial="hidden"
+                                                animate="visible"
+                                                whileHover="hover"
+                                                whileTap="tap"
+                                                onClick={() => router.push('/auth?tab=login')}
+                                                className="flex-1 py-2.5 px-3 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-shadow"
+                                            >
+                                                <LogIn size={16} />
+                                                <span className="font-medium">Login</span>
+                                            </motion.button>
+                                        </div>
+                                    )}
 
-                                <motion.div
-                                    variants={menuItemVariants}
-                                    className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400"
-                                >
-                                    <p className="text-blue-500 dark:text-blue-400 font-medium hover:underline">
-                                        © 2025 Badan Pusat Statistik Republik Indonesia
-                                    </p>
-                                </motion.div>
+                                    <motion.div
+                                        variants={menuItemVariants}
+                                        className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400"
+                                    >
+                                        <p className="text-blue-500 dark:text-blue-400 font-medium hover:underline">
+                                            © 2025 Badan Pusat Statistik Republik Indonesia
+                                        </p>
+                                    </motion.div>
+                                </div>
                             </div>
                         </motion.div>
                     </>
