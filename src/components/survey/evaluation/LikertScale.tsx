@@ -1,5 +1,3 @@
-//src/components/survey/evaluation/LikertScale.tsx
-
 import React from "react";
 import { motion } from "framer-motion";
 
@@ -8,9 +6,9 @@ interface LikertScaleProps {
   max: number;
   minLabel: string;
   maxLabel: string;
-  scaleType: "agreement" | "effort";
-  selectedValue: number | undefined;
-  onSelect: (value: number) => void;
+  scaleType: "agreement" | "effort" | "text";
+  selectedValue: number | string | undefined;
+  onSelect: (value: number | string) => void;
 }
 
 const LikertScale: React.FC<LikertScaleProps> = ({
@@ -53,6 +51,11 @@ const LikertScale: React.FC<LikertScaleProps> = ({
       return "bg-red-500 ring-red-300 dark:ring-red-500/30";
     }
   };
+
+  // If scale type is text, return null
+  if (scaleType === "text") {
+    return null;
+  }
 
   // Calculate number of buttons
   const numButtons = max - min + 1;
@@ -102,13 +105,13 @@ const LikertScale: React.FC<LikertScaleProps> = ({
 
       <div className="flex justify-between mt-2">
         <div className="text-xs text-gray-500 dark:text-gray-400">
-          {scaleType === "agreement" ? "Strongly Disagree" : "Very Low"}
+          {scaleType === "agreement" ? "Sangat Tidak Setuju" : "Sangat Rendah"}
         </div>
         <div className="text-xs text-gray-500 dark:text-gray-400">
-          {scaleType === "agreement" ? "Neutral" : "Moderate"}
+          {scaleType === "agreement" ? "Netral" : "Sedang"}
         </div>
         <div className="text-xs text-gray-500 dark:text-gray-400">
-          {scaleType === "agreement" ? "Strongly Agree" : "Very High"}
+          {scaleType === "agreement" ? "Sangat Setuju" : "Sangat Tinggi"}
         </div>
       </div>
     </div>

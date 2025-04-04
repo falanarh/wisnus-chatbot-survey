@@ -1,5 +1,3 @@
-//src/components/survey/evaluation/EvaluationPage.tsx
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -76,14 +74,15 @@ const EvaluationPage: React.FC = () => {
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
   const isFirstQuestion = currentQuestionIndex === 0;
 
-  const handleAnswerSelect = (value: number) => {
+  // Keep track of currently selected value before submitting
+  const [selectedValue, setSelectedValue] = useState<number | string | undefined>(undefined);
+
+  // Handle answer selection for both numeric and text inputs
+  const handleAnswerSelect = (value: number | string) => {
     // We don't need to update local state since useEvaluation handles this
     // Just storing the selected value temporarily until "Next" is clicked
     setSelectedValue(value);
   };
-
-  // Keep track of currently selected value before submitting
-  const [selectedValue, setSelectedValue] = useState<number | undefined>(undefined);
 
   // Reset selected value when question changes
   React.useEffect(() => {

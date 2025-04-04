@@ -1,5 +1,3 @@
-// src/services/evaluation/types.ts
-
 import { ReactNode } from "react";
 
 export interface Evaluation {
@@ -13,6 +11,7 @@ export interface Evaluation {
     data_security?: number;
     privacy_safety?: number;
     mental_effort?: number;
+    overall_experience?: string;
   };
   completed: boolean;
   created_at: string;
@@ -21,7 +20,7 @@ export interface Evaluation {
 export interface EvaluationQuestion {
   id: string;
   text: string;
-  scaleType: "agreement" | "effort";
+  scaleType: "agreement" | "effort" | "text";
   min: number;
   max: number;
   minLabel: string;
@@ -31,7 +30,7 @@ export interface EvaluationQuestion {
 }
 
 export interface EvaluationQuestionItem extends EvaluationQuestion {
-  value?: number;
+  value?: number | string;
 }
 
 export interface ApiResponse<T> {
@@ -48,7 +47,7 @@ export interface InitializeEvaluationRequest {
 export interface SubmitAnswerRequest {
   evaluation_id: string;
   question_id: string;
-  value: number;
+  value: number | string;
 }
 
 export interface CompleteEvaluationRequest {

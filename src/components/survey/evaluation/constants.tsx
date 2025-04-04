@@ -1,8 +1,5 @@
-//src/components/survey/evaluation/constants.tsx
-
 import { EvaluationQuestion } from "@/services/survey/evaluation";
-import { ThumbsUp, Award, Star, Brain, Shield } from "lucide-react";
-
+import { ThumbsUp, Award, Star, Brain, Shield, MessageCircle } from "lucide-react";
 
 export const evaluationQuestions: EvaluationQuestion[] = [
   {
@@ -71,4 +68,15 @@ export const evaluationQuestions: EvaluationQuestion[] = [
     icon: <Brain size={24} className="text-purple-500" />,
     description: "Evaluasi tingkat usaha mental yang diperlukan untuk menyelesaikan survei"
   },
+  {
+    id: "overall_experience",
+    text: "Ceritakan pengalaman Anda menggunakan kuesioner ini. Apa yang Anda sukai atau tidak sukai?",
+    scaleType: "text",
+    min: 1,
+    max: 500,
+    minLabel: "",
+    maxLabel: "",
+    icon: <MessageCircle size={24} className="text-teal-500" />,
+    description: "Berikan umpan balik mendalam tentang pengalaman survei Anda"
+  }
 ];

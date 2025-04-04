@@ -1,5 +1,3 @@
-// src/hooks/useEvaluation.ts
-
 import { useState, useEffect, useCallback } from "react";
 import {
   Evaluation,
@@ -143,7 +141,7 @@ export function useEvaluation({ sessionId }: UseEvaluationProps = {}) {
 
   // Submit answer to current question
   const submitQuestionAnswer = useCallback(
-    async (questionId: string, value: number) => {
+    async (questionId: string, value: number | string) => {
       if (!evaluation) return;
 
       setIsSubmitting(true);

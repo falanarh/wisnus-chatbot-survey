@@ -1,5 +1,3 @@
-// src/components/survey/evaluation/QuestionCard.tsx
-
 import React from "react";
 import { motion } from "framer-motion";
 import LikertScale from "./LikertScale";
@@ -8,8 +6,8 @@ import { EvaluationQuestion } from "@/services/survey/evaluation";
 
 interface QuestionCardProps {
   question: EvaluationQuestion;
-  selectedValue: number | undefined;
-  onSelect: (value: number) => void;
+  selectedValue: number | string | undefined;
+  onSelect: (value: number | string) => void;
   onPrevious: () => void;
   onNext: () => void;
   isFirstQuestion: boolean;
@@ -32,10 +30,16 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     if (type === "agreement") {
       return "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900";
     }
-    return "bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900";
+    if (type === "effort") {
+      return "bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900";
+    }
+    return "bg-gradient-to-br from-teal-50 to-green-50 dark:from-gray-800 dark:to-gray-900";
   };
 
-  const isQuestionAnswered = selectedValue !== undefined;
+  const isQuestionAnswered = 
+    question.scaleType !== "text" 
+      ? selectedValue !== undefined 
+      : typeof selectedValue === 'string' && selectedValue.trim().length > 0;
 
   return (
     <motion.div
@@ -61,15 +65,26 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           {question.text}
         </h2>
 
-        <LikertScale
-          min={question.min}
-          max={question.max}
-          minLabel={question.minLabel}
-          maxLabel={question.maxLabel}
-          scaleType={question.scaleType}
-          selectedValue={selectedValue}
-          onSelect={onSelect}
-        />
+        {question.scaleType === "text" ? (
+          <textarea
+            value={selectedValue as string || ''}
+            onChange={(e) => onSelect(e.target.value)}
+            placeholder="Tuliskan pendapat Anda di sini..."
+            rows={4}
+            maxLength={500}
+            className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+          />
+        ) : (
+          <LikertScale
+            min={question.min}
+            max={question.max}
+            minLabel={question.minLabel}
+            maxLabel={question.maxLabel}
+            scaleType={question.scaleType}
+            selectedValue={selectedValue as number}
+            onSelect={onSelect}
+          />
+        )}
 
         <NavigationButtons
           onPrevious={onPrevious}
