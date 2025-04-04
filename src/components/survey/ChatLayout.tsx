@@ -54,8 +54,8 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     // Mode confirmation popup state
     const [showModePopup, setShowModePopup] = useState(false);
     const qaTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const qaTimeoutDuration = 10000; // 10 seconds in QA mode before showing popup
-    const popupCountdown = 5; // 5 seconds countdown in the popup
+    const qaTimeoutDuration = 120; // 120 seconds in QA mode before showing popup
+    const popupCountdown = 10; // 10 seconds countdown in the popup
 
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -100,7 +100,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         if (mode === 'qa') {
             qaTimerRef.current = setTimeout(() => {
                 setShowModePopup(true);
-            }, qaTimeoutDuration);
+            }, qaTimeoutDuration * 1000);
         } else {
             setShowModePopup(false);
         }
@@ -477,7 +477,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 }
                 qaTimerRef.current = setTimeout(() => {
                     setShowModePopup(true);
-                }, qaTimeoutDuration);
+                }, qaTimeoutDuration * 1000);
             }
         } catch (error) {
             console.error("Error processing message:", error);
