@@ -1,5 +1,3 @@
-// src/components/survey/evaluation/NavigationButtons.tsx
-
 import React from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -11,6 +9,7 @@ interface NavigationButtonsProps {
   isLastQuestion: boolean;
   isQuestionAnswered: boolean;
   isSubmitting: boolean;
+  charError?: string | null; // Tambahkan prop untuk error karakter
 }
 
 const NavigationButtons: React.FC<NavigationButtonsProps> = ({
@@ -20,7 +19,17 @@ const NavigationButtons: React.FC<NavigationButtonsProps> = ({
   isLastQuestion,
   isQuestionAnswered,
   isSubmitting,
+  charError, // Tambahkan parameter baru
 }) => {
+  // Tombol selanjutnya akan dinonaktifkan jika:
+  // 1. Pertanyaan belum terjawab, ATAU
+  // 2. Sedang mengirim, ATAU
+  // 3. Ada error karakter
+  const isNextButtonDisabled = 
+    !isQuestionAnswered || 
+    isSubmitting || 
+    !!charError; // Tambahkan pengecekan error karakter
+
   return (
     <div className="flex justify-between">
       <motion.button
@@ -42,9 +51,9 @@ const NavigationButtons: React.FC<NavigationButtonsProps> = ({
         whileHover={{ x: isLastQuestion ? 0 : 3 }}
         whileTap={{ scale: 0.97 }}
         onClick={onNext}
-        disabled={!isQuestionAnswered || isSubmitting}
+        disabled={isNextButtonDisabled} // Gunakan kondisi baru
         className={`flex items-center px-6 py-2 rounded-lg shadow-sm ${
-          isQuestionAnswered && !isSubmitting
+          !isNextButtonDisabled
             ? "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
             : "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
         }`}

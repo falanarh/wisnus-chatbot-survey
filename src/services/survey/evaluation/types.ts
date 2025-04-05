@@ -47,7 +47,7 @@ export interface InitializeEvaluationRequest {
 export interface SubmitAnswerRequest {
   evaluation_id: string;
   question_id: string;
-  value: number | string;
+  value: number | string; // Mendukung numerik dan string
 }
 
 export interface CompleteEvaluationRequest {

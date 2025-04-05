@@ -7,11 +7,9 @@ import Link from "next/link";
 import { useSurveyStatus } from "@/hooks/useSurveyStatus";
 import {
   LogOut,
-  User,
   ClipboardList,
   MapPin,
   Calendar,
-  ChevronRight,
   ChevronDown,
   Plane,
   ShieldUser,
@@ -518,7 +516,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
                 </AnimatePresence>
               </div>
 
-              <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+              {!historyDropdownOpen && <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>}
 
               <button
                 onClick={logout}

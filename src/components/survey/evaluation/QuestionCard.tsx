@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import LikertScale from "./LikertScale";
 import NavigationButtons from "./NavigationButtons";
@@ -25,6 +25,39 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   isLastQuestion,
   isSubmitting,
 }) => {
+  // State untuk melacak jumlah karakter
+  const [charCount, setCharCount] = useState(0);
+  const [charError, setCharError] = useState<string | null>(null);
+
+  // Tambahkan efek untuk memperbarui jumlah karakter saat selectedValue berubah
+  useEffect(() => {
+    if (question.scaleType === "text" && typeof selectedValue === 'string') {
+      const trimmedValue = selectedValue.trim();
+      setCharCount(trimmedValue.length);
+
+      // Validasi panjang minimal dan maksimal
+      if (trimmedValue.length < (question.min || 10)) {
+        setCharError(`Minimal ${question.min || 10} karakter`);
+      } else if (trimmedValue.length > (question.max || 500)) {
+        setCharError(`Maksimal ${question.max || 500} karakter`);
+      } else {
+        setCharError(null);
+      }
+    }
+  }, [selectedValue, question.scaleType, question.min, question.max]);
+
+  // Tentukan warna dan gaya untuk penghitung karakter
+  const getCharCountColor = () => {
+    const maxLength = question.max || 500;
+    const minLength = question.min || 10;
+    const remainingChars = maxLength - charCount;
+
+    if (charCount < minLength) return 'text-red-500';
+    if (remainingChars <= 50) return 'text-red-500';
+    if (remainingChars <= 100) return 'text-yellow-500';
+    return 'text-gray-500';
+  };
+
   // Card color by question type
   const getGradientByType = (type: string) => {
     if (type === "agreement") {
@@ -36,10 +69,58 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     return "bg-gradient-to-br from-teal-50 to-green-50 dark:from-gray-800 dark:to-gray-900";
   };
 
-  const isQuestionAnswered = 
-    question.scaleType !== "text" 
-      ? selectedValue !== undefined 
-      : typeof selectedValue === 'string' && selectedValue.trim().length > 0;
+  // Validasi apakah pertanyaan sudah terjawab
+  const isQuestionAnswered =
+    question.scaleType !== "text"
+      ? selectedValue !== undefined
+      : typeof selectedValue === 'string' &&
+      selectedValue.trim().length >= (question.min || 10) &&
+      selectedValue.trim().length <= (question.max || 500);
+
+  // Render textarea khusus untuk pertanyaan terbuka
+  const renderTextInput = () => {
+    const maxLength = question.max || 1000;
+
+    return (
+      <div className="relative">
+        <textarea
+          value={selectedValue as string || ''}
+          onChange={(e) => {
+            // Potong input jika melebihi batas maksimal
+            const truncatedValue = e.target.value.slice(0, maxLength);
+            onSelect(truncatedValue);
+          }}
+          placeholder="Tuliskan pendapat Anda di sini..."
+          rows={4}
+          maxLength={maxLength}
+          className={`
+            w-full p-3 
+            border 
+            rounded-lg 
+            focus:outline-none 
+            focus:ring-2 
+            ${charError
+              ? 'border-red-500 focus:ring-red-500'
+              : 'border-gray-300 dark:border-gray-700 focus:ring-blue-500'
+            }
+            dark:bg-gray-800 
+            dark:text-white
+          `}
+        />
+        {/* Tambahkan penghitung karakter dan error */}
+        <div className="absolute bottom-2 right-2 flex flex-row-reverse justify-between items-center w-full">
+          <span className={`text-xs ${getCharCountColor()}`}>
+            {charCount} / {maxLength}
+          </span>
+          {charError && (
+            <span className="text-xs text-red-500 mt-1 mb-1 ml-5">
+              {charError}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <motion.div
@@ -66,14 +147,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         </h2>
 
         {question.scaleType === "text" ? (
-          <textarea
-            value={selectedValue as string || ''}
-            onChange={(e) => onSelect(e.target.value)}
-            placeholder="Tuliskan pendapat Anda di sini..."
-            rows={4}
-            maxLength={500}
-            className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
-          />
+          renderTextInput()
         ) : (
           <LikertScale
             min={question.min}
@@ -91,8 +165,9 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           onNext={onNext}
           isFirstQuestion={isFirstQuestion}
           isLastQuestion={isLastQuestion}
-          isQuestionAnswered={isQuestionAnswered}
+          isQuestionAnswered={isQuestionAnswered && !charError}
           isSubmitting={isSubmitting}
+          charError={question.scaleType === "text" ? charError : undefined} // Tambahkan ini
         />
       </div>
     </motion.div>
