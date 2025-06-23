@@ -124,9 +124,11 @@ export interface RetrievedDocument {
  * RAG response
  */
 export interface RAGResponse {
-  question: string;
-  context: RetrievedDocument[];
-  answer: string;
+  question?: string;
+  context?: RetrievedDocument[];
+  answer?: string;
+  error?: boolean;
+  message?: string;
 }
 
 /**

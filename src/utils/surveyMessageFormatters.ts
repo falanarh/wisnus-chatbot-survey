@@ -146,6 +146,8 @@ export function convertApiMessagesToChatMessages(
 ): ChatMessage[] {
   const chatMessages: ChatMessage[] = [];
 
+  console.log("Converting API messages to chat messages:", apiMessages);
+
   apiMessages.forEach((apiMessage) => {
     // Format the timestamp from API or create a new one
     const timestamp = apiMessage.timestamp
@@ -157,6 +159,8 @@ export function convertApiMessagesToChatMessages(
           hour: "2-digit",
           minute: "2-digit",
         });
+
+    console.log("Api message:", apiMessage);
 
     // Add user message with ID
     chatMessages.push({
@@ -175,8 +179,12 @@ export function convertApiMessagesToChatMessages(
     // Preserve the timestamp from the API
     systemResponse.timestamp = timestamp;
 
+    console.log("Formatted system response:", systemResponse);
+
     chatMessages.push(systemResponse);
   });
+
+  console.log("Converted chat messages:", chatMessages);
 
   return chatMessages;
 }

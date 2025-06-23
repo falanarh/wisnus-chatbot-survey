@@ -86,7 +86,7 @@ export async function ragApiRequest<T>(
 
     return await response.json();
   } catch (error) {
-    console.error("RAG API request error:", error);
+    // console.error("RAG API request error:", error);
     throw error;
   }
 }

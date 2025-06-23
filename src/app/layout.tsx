@@ -12,7 +12,6 @@ const mulish = Mulish({
 
 export const metadata: Metadata = {
   title: "Survei Digital Wisatawan Nusantara",
-  description: "Asisten AI untuk Survei Digital Wisatawan Nusantara",
 };
 
 export default function RootLayout({

@@ -39,10 +39,13 @@ export function useSurveyMessages() {
         const response = await getSurveyMessages(userId);
 
         if (response.success && response.data) {
+          console.log("Loaded messages:", response.data);
           // Using the shared convertApiMessagesToChatMessages function
           const convertedMessages = convertApiMessagesToChatMessages(
             response.data
           );
+
+          console.log("Converted messages:", convertedMessages);
 
           setMessages(convertedMessages);
         } else {

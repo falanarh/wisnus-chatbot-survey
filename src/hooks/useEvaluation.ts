@@ -8,12 +8,10 @@ import {
   EvaluationQuestionItem,
 } from "@/services/survey/evaluation";
 import { evaluationQuestions } from "@/components/survey/evaluation/constants";
+import { useSurveyStatus } from "./useSurveyStatus";
 
-interface UseEvaluationProps {
-  sessionId?: string;
-}
-
-export function useEvaluation({ sessionId }: UseEvaluationProps = {}) {
+export function useEvaluation() {
+  const { sessionData } = useSurveyStatus();
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questions, setQuestions] = useState<EvaluationQuestionItem[]>([]);
@@ -36,8 +34,16 @@ export function useEvaluation({ sessionId }: UseEvaluationProps = {}) {
 
       setIsLoading(true);
       setError(null);
+      const sessionId = sessionData?.session_id;
 
       try {
+        // Pastikan sessionId valid
+        if (!sessionId) {
+          setError("Session ID tidak ditemukan.");
+          setIsLoading(false);
+          return;
+        }
+
         // First check if user has an active evaluation
         const latestResponse = await getUserLatestEvaluation();
 
@@ -118,7 +124,7 @@ export function useEvaluation({ sessionId }: UseEvaluationProps = {}) {
     return () => {
       isMounted = false;
     };
-  }, [sessionId]);
+  }, [sessionData?.session_id]);
 
   // Update questions with current values - FIXED to prevent infinite loop
   useEffect(() => {

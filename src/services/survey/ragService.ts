@@ -15,17 +15,12 @@ export async function queryRAG(question: string): Promise<RAGResponse> {
       body: JSON.stringify({ question }),
     });
   } catch (error) {
-    console.error("Error querying RAG system:", error);
+    // console.error("Error querying RAG system:", error);
 
     // Return a structured error response
     return {
-      question: question,
-      context: [],
-      answer: `Error: ${
-        error instanceof Error
-          ? error.message
-          : "An error occurred while processing your question"
-      }`,
+      error: true,
+      message: error instanceof Error ? error.message : "An error occurred while querying the RAG system.",
     };
   }
 }

@@ -57,6 +57,12 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     const qaTimeoutDuration = 120; // 120 seconds in QA mode before showing popup
     const popupCountdown = 10; // 10 seconds countdown in the popup
 
+    // Tambahkan state untuk error popup di atas
+    // const [qaErrorPopup, setQaErrorPopup] = useState<{ open: boolean; message: string }>({ open: false, message: "" });
+
+    // Ganti nama state untuk toast
+    const [qaErrorToast, setQaErrorToast] = useState<{ open: boolean; message: string }>({ open: false, message: "" });
+
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -356,12 +362,12 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                     // Tambahkan pesan kosong terlebih dahulu
                     addMessage({
                         id: messageId,
-                        text: pesanTeks, // CHANGE: Add initial text to prevent disappearing
+                        text: pesanTeks,
                         user: false,
                         mode: 'survey',
                         questionObject: current_question,
                         questionCode: current_question.code,
-                        options: [] // Mulai dengan opsi kosong
+                        options: []
                     });
 
                     // Animasi token dan kemudian opsi
@@ -377,7 +383,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                     // Tambahkan pesan kosong terlebih dahulu
                     addMessage({
                         id: messageId,
-                        text: pesanTeks, // CHANGE: Add initial text to prevent disappearing
+                        text: pesanTeks, 
                         user: false,
                         mode: 'survey',
                         options: []
@@ -393,7 +399,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 // Tambahkan pesan kosong terlebih dahulu
                 addMessage({
                     id: messageId,
-                    text: pesanTeks, // CHANGE: Add initial text to prevent disappearing
+                    text: pesanTeks, 
                     user: false,
                     mode: 'survey',
                     options: []
@@ -452,7 +458,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         const loadingMsgId = `loading_msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
         addMessage({
             id: loadingMsgId,
-            text: "", // Start with empty text
+            text: "",
             user: false,
             loading: true,
             mode: mode,
@@ -492,27 +498,34 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     const handleQaMode = async (userMessage: string, loadingMsgId: string) => {
         try {
             const ragResponse = await queryRAG(userMessage);
+            console.log("RAG Response:", ragResponse);
+
+            // Jika ada error dari RAG, tampilkan toast dan hentikan loading
+            if (ragResponse.error) {
+                setQaErrorToast({ open: true, message: ragResponse.message || "Terjadi kesalahan pada sistem RAG." });
+                setBotIsTyping(false);
+                // setLoading(false);
+                updateLastMessage("", false);
+                return;
+            }
+
             const surveyMessage: SurveyMessageRequest = {
                 user_message: userMessage,
                 system_response: { answer: ragResponse.answer },
                 mode: 'qa'
             };
             await addSurveyMessage(surveyMessage);
-    
-            // Important: Update the message immediately to stop showing the loader
-            // and show the actual text content
-            updateLastMessage(ragResponse.answer, false);
-    
-            // Then animate the response token by token
-            animateTokenByToken(loadingMsgId, ragResponse.answer);
-            
+
+            updateLastMessage(ragResponse.answer ?? "No response available", false);
+            animateTokenByToken(loadingMsgId, ragResponse.answer ?? "No response available");
         } catch (error) {
-            console.error("Error processing message:", error);
-            updateLastMessage("Terjadi kesalahan saat memproses pesan Anda. Silakan coba lagi.", false);
+            setQaErrorToast({ open: true, message: error instanceof Error ? error.message : "Terjadi kesalahan saat memproses pesan Anda." });
             setBotIsTyping(false);
+            // setLoading(false);
+            updateLastMessage("", false);
         }
     };
-    
+
     // Handle mode survei
     const handleSurveyMode = async (userData: UserData, userMessage: string, loadingMsgId: string) => {
         // Gunakan sessionId dari state atau dari userData
@@ -622,6 +635,23 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 isDarkMode={isDarkMode}
                 countdown={popupCountdown}
             />
+
+            {/* Toast Error (letakkan setelah <ModeConfirmationPopup />) */}
+            {qaErrorToast.open && (
+                <div className="fixed top-6 right-6 z-50">
+                    <div className="bg-red-600 text-white px-4 py-3 rounded shadow-lg flex items-center space-x-2 animate-fade-in">
+                        <span className="font-semibold">Error:</span>
+                        <span>{qaErrorToast.message}</span>
+                        <button
+                            className="ml-4 text-white hover:text-gray-200"
+                            onClick={() => setQaErrorToast({ open: false, message: "" })}
+                            aria-label="Tutup"
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Sidebar */}
             <ChatSidebar
