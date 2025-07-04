@@ -39,8 +39,8 @@ export function useSurveyMessages() {
       try {
         // Always load from DB
         const response = await getSurveyMessages();
-        if (response.success && response.data) {
-          const convertedMessages = convertApiMessagesToChatMessages(response.data);
+          if (response.success && response.data) {
+            const convertedMessages = convertApiMessagesToChatMessages(response.data);
           if (convertedMessages.length === 0) {
             // Add and persist opening message if chat is empty
             const openingText = "Selamat datang! Survei ini bertujuan untuk mengumpulkan informasi tentang profil wisatawan nusantara, maksud perjalanan, akomodasi yang digunakan, lama perjalanan, dan rata-rata pengeluaran terkait perjalanan yang dilakukan oleh penduduk Indonesia di dalam wilayah teritorial Indonesia.\n\nSebelum memulai, apakah Anda sudah siap untuk mengikuti survei ini?";

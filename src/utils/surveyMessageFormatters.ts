@@ -154,9 +154,9 @@ export function convertApiMessagesToChatMessages(
     // Format the timestamp from API or create a new one
     const rawTimestamp = apiMessage.timestamp || new Date().toISOString();
     const timestamp = new Date(rawTimestamp).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+          hour: "2-digit",
+          minute: "2-digit",
+        });
 
     const numericTime = new Date(rawTimestamp).getTime();
 
