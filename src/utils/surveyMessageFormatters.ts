@@ -31,7 +31,6 @@ export function formatSurveyResponse(
     currentQuestion,
     clarification_reason,
     follow_up_question,
-    answer,
     system_message,
   } = response;
 
@@ -70,11 +69,11 @@ export function formatSurveyResponse(
         break;
 
       case "question":
-        if (!currentQuestion || !answer) {
-          responseText = "Silakan jawab pertanyaan saat ini.";
-        } else {
-          responseText = `${answer} \n\nPertanyaan saat ini: ${currentQuestion.text}`;
+        if (currentQuestion) {
+          responseText = currentQuestion.text || system_message || "Silakan jawab pertanyaan saat ini.";
           questionObject = currentQuestion;
+        } else {
+          responseText = system_message || "Silakan jawab pertanyaan saat ini.";
         }
         break;
 
@@ -113,7 +112,7 @@ export function formatSurveyResponse(
   } else {
     // Fallback if no recognizable format
     responseText =
-      additional_info || "System response (could not be displayed)";
+      system_message || additional_info || "System response (could not be displayed)";
   }
 
   // Create timestamp for the current time
@@ -144,47 +143,52 @@ export function formatSurveyResponse(
 export function convertApiMessagesToChatMessages(
   apiMessages: SurveyMessage[]
 ): ChatMessage[] {
-  const chatMessages: ChatMessage[] = [];
+  // Temporary extended interface for sorting purposes
+  interface ExtendedChatMessage extends ChatMessage {
+    __sortTime: number;
+  }
 
-  console.log("Converting API messages to chat messages:", apiMessages);
+  const chatMessages: ExtendedChatMessage[] = [];
 
   apiMessages.forEach((apiMessage) => {
     // Format the timestamp from API or create a new one
-    const timestamp = apiMessage.timestamp
-      ? new Date(apiMessage.timestamp).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-
-    console.log("Api message:", apiMessage);
-
-    // Add user message with ID
-    chatMessages.push({
-      id: `user_msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`, // Generate ID unik untuk pesan user
-      text: apiMessage.user_message,
-      user: true,
-      mode: apiMessage.mode,
-      timestamp,
-      read: true, // User messages are always read
-      options: [] // Empty options for user messages
+    const rawTimestamp = apiMessage.timestamp || new Date().toISOString();
+    const timestamp = new Date(rawTimestamp).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
     });
 
-    // Add system response based on its structure
-    const systemResponse = formatSurveyResponse(apiMessage.system_response);
+    const numericTime = new Date(rawTimestamp).getTime();
 
-    // Preserve the timestamp from the API
-    systemResponse.timestamp = timestamp;
+    // Hanya tambahkan pesan user jika user_message ada isinya
+    if (apiMessage.user_message && apiMessage.user_message.trim() !== "") {
+      chatMessages.push({
+        id: `user_msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        text: apiMessage.user_message,
+        user: true,
+        mode: apiMessage.mode,
+        timestamp,
+        read: true,
+        options: [],
+        __sortTime: numericTime,
+      });
+    }
 
-    console.log("Formatted system response:", systemResponse);
-
-    chatMessages.push(systemResponse);
+    // Hanya tambahkan pesan sistem jika system_response ada isinya (bukan null/undefined/empty object)
+    if (apiMessage.system_response && Object.keys(apiMessage.system_response).length > 0) {
+      const systemResponse = formatSurveyResponse(apiMessage.system_response) as ChatMessage;
+      systemResponse.timestamp = timestamp;
+      chatMessages.push({
+        ...systemResponse,
+        __sortTime: numericTime,
+      });
+    }
   });
 
-  console.log("Converted chat messages:", chatMessages);
+  // Sort messages by their original timestamp to maintain chronological order
+  chatMessages.sort((a, b) => a.__sortTime - b.__sortTime);
 
-  return chatMessages;
+  // Remove the temporary __sortTime property before returning
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  return chatMessages.map(({ __sortTime, ...rest }) => rest);
 }

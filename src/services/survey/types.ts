@@ -166,11 +166,10 @@ export interface SurveySessionStatus {
 export type SurveyStatusResponse = ApiResponse<SurveySessionStatus>;
 
 /**
- * Survey message interface
+ * Survey message interface (no session_id required)
  */
 export interface SurveyMessage {
   _id: string;
-  session_id: string;
   user_message: string;
   system_response: SurveyResponseData;
   mode: "survey" | "qa";
@@ -180,15 +179,16 @@ export interface SurveyMessage {
 /**
  * Survey messages result
  */
-
 export interface SurveyMessagesResult {
   success: boolean;
   data?: SurveyMessage[];
   message?: string;
 }
 
+/**
+ * SurveyMessageRequest (no session_id required)
+ */
 export interface SurveyMessageRequest {
-  session_id?: string;
   user_message: string | null;
   system_response: SurveyResponseData;
   mode: "survey" | "qa";

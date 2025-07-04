@@ -3,19 +3,17 @@ import { surveyApiRequest } from "./surveyApiClient";
 import { SurveyMessagesResult, SurveyMessageRequest } from "./types";
 
 /**
- * Retrieves all messages exchanged during a specific survey session
+ * Retrieves all survey messages
  *
- * @param sessionId - The ID of the survey session to retrieve messages for
  * @param signal - Optional AbortSignal for cancelling the request
- * @returns All messages in the specified survey session
+ * @returns All messages
  */
 export async function getSurveyMessages(
-  sessionId: string,
   signal?: AbortSignal
 ): Promise<SurveyMessagesResult> {
   try {
     const response = await surveyApiRequest(
-      `/api/survey/messages/${sessionId}`,
+      `/api/survey/messages`,
       { method: "GET" },
       signal
     ) as SurveyMessagesResult;
@@ -32,8 +30,8 @@ export async function getSurveyMessages(
 
 /**
  * Adds a new message to the survey system
- * 
- * @param messageData - The message data including user_message, system_response, and optional session_id and mode
+ *
+ * @param messageData - The message data including user_message, system_response, and mode
  * @param signal - Optional AbortSignal for cancelling the request
  * @returns The created message or error information
  */
@@ -44,12 +42,12 @@ export async function addSurveyMessage(
   try {
     const response = await surveyApiRequest(
       "/api/survey/messages",
-      { 
+      {
         method: "POST",
         body: JSON.stringify(messageData),
         headers: {
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+        },
       },
       signal
     ) as SurveyMessagesResult;

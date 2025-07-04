@@ -2,12 +2,14 @@
 
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import SurveyCompletionPage from "@/components/survey/SurveyCompletionPage";
 import { useSurveyStatus } from "@/hooks/useSurveyStatus";
 import ChatLayout from "./ChatLayout";
 import Loader from "../other/Loader";
 import { useSurveyMessages } from "@/hooks/useSurveyMessages";
+import ProgressBar from "@/components/survey/evaluation/ProgressBar";
+import { CheckCircle, Circle, BarChart2 } from "lucide-react";
 
 // Reusable background component
 const StyledBackground = ({ children }: { children: React.ReactNode }) => (
@@ -85,6 +87,7 @@ const ErrorState = ({ error, refreshStatus }: { error: string, refreshStatus: ()
 const SurveyChatbot: React.FC = () => {
   const { isLoading: isLoadingSurveyStatus, error, sessionData, refreshStatus } = useSurveyStatus();
   const { isLoading: isLoadingSurveyMessages, messages, addMessage, updateLastMessage } = useSurveyMessages();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Selalu tampilkan LoadingState terlebih dahulu
   if (isLoadingSurveyStatus || isLoadingSurveyMessages) {
@@ -104,14 +107,93 @@ const SurveyChatbot: React.FC = () => {
       </StyledBackground>
     );
   } else if (sessionData?.status === 'IN_PROGRESS') {
-    // Otherwise show the chat interface for active survey
+    const progress = sessionData.progress;
+    const responses = sessionData.responses || [];
+    const answeredMap = new Map(responses.map(r => [r.question_code, r.valid_response]));
+    const allQuestionCodes = [
+      ...(progress.answered_question_codes || []),
+      ...(progress.current_question_code ? [progress.current_question_code] : [])
+    ];
+    const uniqueQuestionCodes = Array.from(new Set(allQuestionCodes));
     return (
       <StyledBackground>
+        {/* Floating Progress Button */}
+        <button
+          className="fixed z-40 bottom-5 right-5 sm:top-6 sm:bottom-auto sm:right-8 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-full shadow-lg p-3 sm:p-3.5 hover:scale-105 transition-all focus:outline-none focus:ring-2 focus:ring-blue-400"
+          aria-label="Lihat progress survei"
+          onClick={() => setDrawerOpen(true)}
+        >
+          <BarChart2 size={28} />
+        </button>
+
+        {/* Drawer Overlay */}
+        <div
+          className={`fixed inset-0 z-50 bg-black/30 transition-opacity duration-300 ${drawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+          onClick={() => setDrawerOpen(false)}
+          aria-hidden={!drawerOpen}
+        />
+
+        {/* Drawer Panel */}
+        <aside
+          className={`fixed top-0 right-0 h-full w-full sm:w-[420px] max-w-full z-50 bg-white dark:bg-gray-900 shadow-2xl border-l border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ${drawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Progress Survei"
+        >
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white tracking-tight">Progress Survei</h2>
+            <button
+              className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition"
+              onClick={() => setDrawerOpen(false)}
+              aria-label="Tutup progress"
+            >
+              <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </button>
+          </div>
+          <div className="px-6 py-4">
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-300 font-medium">
+                  {progress.answered_questions} / {progress.total_questions} terjawab
+                </span>
+                <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                  {progress.progress_percentage.toFixed(0)}%
+                </span>
+              </div>
+              <div className="w-full h-4 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden relative shadow-inner">
+                <div
+                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500 ease-out rounded-full"
+                  style={{ width: `${progress.progress_percentage}%` }}
+                  aria-label={`Progress: ${progress.progress_percentage}%`}
+                ></div>
+              </div>
+            </div>
+            <div className="bg-white/90 dark:bg-gray-900/80 rounded-xl shadow-xl p-3 sm:p-4 border border-gray-100 dark:border-gray-800">
+              <h3 className="text-base font-semibold mb-2 text-gray-700 dark:text-gray-200">Status Pertanyaan</h3>
+              <div className="flex flex-wrap gap-2 sm:gap-3 max-h-[40vh] overflow-y-auto hide-scrollbar">
+                {uniqueQuestionCodes.map((code, idx) => {
+                  const answered = answeredMap.has(code);
+                  return (
+                    <div
+                      key={code}
+                      className={`flex items-center gap-2 sm:gap-3 min-w-[140px] sm:min-w-0 p-2 sm:p-3 rounded-lg transition-all shadow-sm border group cursor-pointer ${answered ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700' : 'bg-gray-50 dark:bg-gray-800/40 border-gray-200 dark:border-gray-700'}`}
+                      tabIndex={0}
+                      aria-label={answered ? `Pertanyaan ${idx + 1} sudah dijawab` : `Pertanyaan ${idx + 1} belum dijawab`}
+                    >
+                      {answered ? <CheckCircle className="text-green-500" size={20} /> : <Circle className="text-gray-400" size={20} />}
+                      <span className={`font-medium truncate ${answered ? 'text-green-700 dark:text-green-300' : 'text-gray-700 dark:text-gray-300'}`}>Pertanyaan {idx + 1}</span>
+                      <span className="text-xs text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition" title={`Kode: ${code}`}>({code})</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </aside>
         <ChatLayout 
           messages={messages} 
           addMessage={addMessage} 
           updateLastMessage={updateLastMessage} 
-          sessionId={sessionData?.session_id}
         />
       </StyledBackground>
     );

@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useTheme } from "@/components/other/ThemeProvider";
 import ChatSidebar from "./ChatSidebar";
 import ChatHeader from "./ChatHeader";
@@ -11,25 +11,24 @@ import ChatInputArea from "./ChatInputArea";
 import ChatMessageArea from "./ChatMessageArea";
 import ModeConfirmationPopup from "./ModeConfirmationPopup";
 import { queryRAG } from "@/services/survey/ragService";
-import { getToken, getUserData, updateUserProperty, UserData } from "@/services/auth";
+import { getToken, getUserData, UserData } from "@/services/auth";
 import { submitResponse } from "@/services/survey/surveyManagement";
 import { Question, SurveyMessageRequest } from "@/services/survey/types";
 import { addSurveyMessage } from "@/services/survey/surveyMessages";
 import { getCurrentQuestion } from "@/services/survey";
 import { ChatMessage, formatSurveyResponse } from "@/utils/surveyMessageFormatters";
+import { analyzeIntent } from "@/services/survey/intentAnalysis";
 
 interface ChatLayoutProps {
     messages: ChatMessage[];
     addMessage: (message: Partial<ChatMessage> & { text: string; user: boolean; mode: "survey" | "qa" }) => void;
     updateLastMessage: (text: string, user: boolean) => void;
-    sessionId?: string;
 }
 
 const ChatLayout: React.FC<ChatLayoutProps> = ({
     messages,
     addMessage,
-    updateLastMessage,
-    sessionId: propSessionId
+    updateLastMessage
 }) => {
     // State
     const [input, setInput] = useState("");
@@ -37,8 +36,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     const [botIsTyping, setBotIsTyping] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [themeMenuOpen, setThemeMenuOpen] = useState(false);
-    const [mode, setMode] = useState<'survey' | 'qa'>('survey');
-    const [sessionId, setSessionId] = useState<string | undefined>(propSessionId);
+    const [mode, _setMode] = useState<'survey' | 'qa'>("survey");
 
     // State untuk pertanyaan saat ini
     const [currentQuestion, setCurrentQuestion] = useState<Question | undefined>(undefined);
@@ -56,9 +54,6 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     const qaTimerRef = useRef<NodeJS.Timeout | null>(null);
     const qaTimeoutDuration = 120; // 120 seconds in QA mode before showing popup
     const popupCountdown = 10; // 10 seconds countdown in the popup
-
-    // Tambahkan state untuk error popup di atas
-    // const [qaErrorPopup, setQaErrorPopup] = useState<{ open: boolean; message: string }>({ open: false, message: "" });
 
     // Ganti nama state untuk toast
     const [qaErrorToast, setQaErrorToast] = useState<{ open: boolean; message: string }>({ open: false, message: "" });
@@ -87,12 +82,91 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         stopped: false
     });
 
-    // Update sessionId when prop changes
-    useEffect(() => {
-        if (propSessionId) {
-            setSessionId(propSessionId);
+    // State untuk intercept kesiapan survei
+    const [awaitingSurveyReadiness, setAwaitingSurveyReadiness] = useState(false);
+
+    // Helper for async logic on mode switch (must be after animateTokenByToken is defined)
+    const setModeAsync = useCallback((newMode: 'survey' | 'qa') => {
+      if (newMode === 'survey' && mode !== 'survey') {
+        const lastSystemMsg = [...messages].reverse().find(m => !m.user);
+        const isQuestion = lastSystemMsg && (lastSystemMsg.questionObject || lastSystemMsg.questionCode);
+        if (!isQuestion) {
+          getCurrentQuestion().then(response => {
+            if (response.success && response.data?.current_question) {
+              const q = response.data.current_question;
+              const questionMsgId = `q_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+              addMessage({
+                id: questionMsgId,
+                text: q.text,
+                user: false,
+                mode: 'survey',
+                questionObject: q,
+                questionCode: q.code,
+                options: q.options || []
+              });
+              // Persist to DB
+              addSurveyMessage({
+                user_message: null,
+                system_response: {
+                  info: 'question',
+                  currentQuestion: q,
+                  system_message: q.text
+                },
+                mode: 'survey'
+              }).catch((err) => console.error('Failed to persist injected system question:', err));
+              animateTokenByToken(questionMsgId, q.text, () => {
+                if (q.options?.length) {
+                  setVisibleOptions(prev => ({ ...prev, [questionMsgId]: q.options! }));
+                }
+              });
+            }
+          });
         }
-    }, [propSessionId]);
+      }
+      _setMode(newMode);
+    }, [mode, messages, addMessage]);
+
+    // Wrapper to match Dispatch<SetStateAction<'survey' | 'qa'>> signature
+    const setModeDispatch: React.Dispatch<React.SetStateAction<'survey' | 'qa'>> = (value) => {
+      if (typeof value === 'function') {
+        // Not expected in this usage, fallback to previous mode
+        _setMode(value);
+      } else {
+        setModeAsync(value);
+      }
+    };
+
+    // Fungsi untuk menganimasi opsi jawaban
+    const animateOptions = (messageId: string, options: string[]) => {
+        if (!options || options.length === 0) return;
+
+        // Set message ini sebagai yang sedang dianimasi
+        setAnimatingMessageId(messageId);
+
+        // Mulai dengan array opsi kosong
+        setVisibleOptions(prev => ({
+            ...prev,
+            [messageId]: []
+        }));
+
+        // Tambahkan opsi satu per satu
+        options.forEach((_, index) => {
+            const timeout = setTimeout(() => {
+                setVisibleOptions(prev => ({
+                    ...prev,
+                    [messageId]: options.slice(0, index + 1)
+                }));
+
+                // Setelah semua opsi ditampilkan, akhiri animasi
+                if (index === options.length - 1) {
+                    setTimeout(() => {
+                        setAnimatingMessageId(null);
+                    }, 300);
+                }
+            }, 300 * (index + 1));
+            tokenGenerationRef.current.timeouts.push(timeout);
+        });
+    };
 
     // Handle mode change and set timer for QA mode
     useEffect(() => {
@@ -118,13 +192,6 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             }
         };
     }, [mode]);
-
-    // Function to scroll to bottom
-    const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior });
-        }
-    };
 
     // Auto-scroll when messages change if user hasn't scrolled
     useEffect(() => {
@@ -232,7 +299,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                     // Remove from animating state after a small delay
                     setTimeout(() => {
                         // IMPORTANT: Update the actual message with the final text before removing it from animatingText
-                        updateMessageText(messageId, fullText);
+                        updateLastMessage(fullText, false);
                         
                         setAnimatingText(prev => {
                             const newState = { ...prev };
@@ -249,61 +316,9 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         }
     };
 
-    // New helper function to update a specific message's text by ID
-    const updateMessageText = (messageId: string, text: string) => {
-        // Find the message in the existing messages array and update it
-        const index = messages.findIndex(msg => msg.id === messageId);
-        if (index !== -1) {
-            // We use the updateLastMessage if it's the last message (most common case)
-            if (index === messages.length - 1 && !messages[index].user) {
-                updateLastMessage(text, false);
-            } else {
-                // Otherwise, we need a more sophisticated approach
-                // This could involve updating the parent component's state
-                // For now, we'll update using the same updateLastMessage function
-                // but in a real implementation, you might want to add a more flexible
-                // updateMessage(id, text) function to your props
-                updateLastMessage(text, false);
-            }
-        }
-    };
-
-    // Fungsi untuk menganimasi opsi jawaban
-    const animateOptions = (messageId: string, options: string[]) => {
-        if (!options || options.length === 0) return;
-
-        // Set message ini sebagai yang sedang dianimasi
-        setAnimatingMessageId(messageId);
-
-        // Mulai dengan array opsi kosong
-        setVisibleOptions(prev => ({
-            ...prev,
-            [messageId]: []
-        }));
-
-        // Tambahkan opsi satu per satu
-        options.forEach((_, index) => {
-            const timeout = setTimeout(() => {
-                setVisibleOptions(prev => ({
-                    ...prev,
-                    [messageId]: options.slice(0, index + 1)
-                }));
-
-                // Setelah semua opsi ditampilkan, akhiri animasi
-                if (index === options.length - 1) {
-                    setTimeout(() => {
-                        setAnimatingMessageId(null);
-                    }, 300);
-                }
-            }, 300 * (index + 1));
-
-            tokenGenerationRef.current.timeouts.push(timeout);
-        });
-    };
-
     // Fungsi untuk beralih dari mode QA ke mode survei
     const handleSwitchToSurvey = async () => {
-        setMode('survey');
+        setModeDispatch('survey');
         setShowModePopup(false);
 
         // Membersihkan timer mode QA
@@ -466,6 +481,55 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         });
 
         try {
+            // INTERCEPT: intent analysis kesiapan survei
+            if (awaitingSurveyReadiness) {
+                const intentResult = await analyzeIntent(userMessage);
+                if (intentResult.success && intentResult.data?.wants_to_start) {
+                    // User siap, ambil pertanyaan pertama
+                    updateLastMessage("Terima kasih, kita akan mulai surveinya sekarang!", false);
+                    setAwaitingSurveyReadiness(false);
+                    // Ambil pertanyaan pertama
+                    const response = await getCurrentQuestion();
+                    if (response.success && response.data?.current_question) {
+                        const q = response.data.current_question;
+                        setCurrentQuestion(q);
+                        const questionMsgId = `q_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+                        addMessage({
+                            id: questionMsgId,
+                            text: q.text,
+                            user: false,
+                            mode: "survey",
+                            questionObject: q,
+                            questionCode: q.code,
+                            options: q.options || []
+                        });
+                        // Persist to DB
+                        addSurveyMessage({
+                          user_message: null,
+                          system_response: {
+                            info: 'question',
+                            currentQuestion: q,
+                            system_message: q.text
+                          },
+                          mode: 'survey'
+                        }).catch((err) => console.error('Failed to persist injected system question:', err));
+                        animateTokenByToken(questionMsgId, q.text, () => {
+                            if (q.options?.length) {
+                                setVisibleOptions(prev => ({ ...prev, [questionMsgId]: q.options! }));
+                            }
+                        });
+                    } else {
+                        updateLastMessage("Gagal mengambil pertanyaan survei. Silakan coba refresh halaman.", false);
+                    }
+                } else {
+                    // User belum siap
+                    updateLastMessage("Tidak masalah, silakan beri tahu jika Anda sudah siap untuk memulai survei.", false);
+                }
+                setLoading(false);
+                setBotIsTyping(false);
+                return;
+            }
+
             const token = getToken();
             const userData = getUserData();
 
@@ -504,7 +568,6 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             if (ragResponse.error) {
                 setQaErrorToast({ open: true, message: ragResponse.message || "Terjadi kesalahan pada sistem RAG." });
                 setBotIsTyping(false);
-                // setLoading(false);
                 updateLastMessage("", false);
                 return;
             }
@@ -521,25 +584,15 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         } catch (error) {
             setQaErrorToast({ open: true, message: error instanceof Error ? error.message : "Terjadi kesalahan saat memproses pesan Anda." });
             setBotIsTyping(false);
-            // setLoading(false);
             updateLastMessage("", false);
         }
     };
 
     // Handle mode survei
     const handleSurveyMode = async (userData: UserData, userMessage: string, loadingMsgId: string) => {
-        // Gunakan sessionId dari state atau dari userData
-        const currentSessionId = sessionId || userData?.activeSurveySessionId || "";
-    
         try {
             // Kirim permintaan ke API unified /api/survey/respond
-            const response = await submitResponse(currentSessionId, userMessage);
-    
-            // Jika berhasil dan ada session_id baru, perbarui
-            if (response.session_id && response.session_id !== currentSessionId) {
-                setSessionId(response.session_id);
-                updateUserProperty('activeSurveySessionId', response.session_id);
-            }
+            const response = await submitResponse(userMessage);
     
             // Format respons untuk ditampilkan ke user
             const botResponse = formatSurveyResponse(response);
@@ -606,6 +659,13 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     const closeAllDropdowns = () => {
         setSidebarOpen(false);
         setThemeMenuOpen(false);
+    };
+
+    // Function to scroll to bottom
+    const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior });
+        }
     };
 
     return (
@@ -697,7 +757,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 setInput={setInput}
                 isDarkMode={isDarkMode}
                 mode={mode}
-                setMode={setMode}
+                setMode={setModeDispatch}
                 botIsTyping={botIsTyping}
                 onSend={handleSend}
                 onStopGeneration={stopTokenGeneration}
