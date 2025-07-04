@@ -88,9 +88,12 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     // Helper for async logic on mode switch (must be after animateTokenByToken is defined)
     const setModeAsync = useCallback((newMode: 'survey' | 'qa') => {
       if (newMode === 'survey' && mode !== 'survey') {
-        const lastSystemMsg = [...messages].reverse().find(m => !m.user);
-        const isQuestion = lastSystemMsg && (lastSystemMsg.questionObject || lastSystemMsg.questionCode);
-        if (!isQuestion) {
+        // console.log("messages", messages)
+        const lastMsg = messages[messages.length - 1];
+        console.log("lastSystemMsg: ", lastMsg);
+        // const isQuestion = lastSystemMsg && (lastSystemMsg.questionObject || lastSystemMsg.questionCode);
+        // console.log("isQuestion:", isQuestion);
+        if (lastMsg.user || (!lastMsg.user && lastMsg.mode == "qa")) {
           getCurrentQuestion().then(response => {
             if (response.success && response.data?.current_question) {
               const q = response.data.current_question;

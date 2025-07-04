@@ -60,7 +60,7 @@ export function formatSurveyResponse(
           responseText = "Mohon berikan jawaban yang sesuai dengan pertanyaan.";
         } else {
           if (currentQuestion.code === "S003" || currentQuestion.code === "S005") {
-            responseText = clarification_reason;
+            responseText = `${clarification_reason} ${follow_up_question}`;
           } else {
             responseText = `${clarification_reason} ${follow_up_question}`;
           }
@@ -178,6 +178,7 @@ export function convertApiMessagesToChatMessages(
     if (apiMessage.system_response && Object.keys(apiMessage.system_response).length > 0) {
       const systemResponse = formatSurveyResponse(apiMessage.system_response) as ChatMessage;
       systemResponse.timestamp = timestamp;
+      console.log("systemResponse:", systemResponse);
       chatMessages.push({
         ...systemResponse,
         __sortTime: numericTime,
