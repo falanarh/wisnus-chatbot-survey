@@ -9,7 +9,7 @@ import { useAnsweredQuestions } from "@/hooks/useAnsweredQuestions";
 import ChatLayout from "./ChatLayout";
 import Loader from "../other/Loader";
 import { useSurveyMessages } from "@/hooks/useSurveyMessages";
-import { CheckCircle, Circle, BarChart2, Edit } from "lucide-react";
+import { CheckCircle, Circle, BarChart2, Edit, X, Send } from "lucide-react";
 import { getUserData } from "@/services/auth";
 
 // Reusable background component
@@ -90,6 +90,25 @@ const SurveyChatbot: React.FC = () => {
   const { isLoading: isLoadingSurveyMessages, messages, addMessage, updateLastMessage } = useSurveyMessages();
   const { data: answeredQuestions, isLoading: isLoadingAnsweredQuestions, refetch: refetchAnsweredQuestions } = useAnsweredQuestions();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editPopupOpen, setEditPopupOpen] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<{
+    question_code: string;
+    question_text: string;
+    answer: string;
+    displayNumber: number;
+  } | null>(null);
+  const [editChatMessages, setEditChatMessages] = useState<Array<{
+    id: string;
+    text: string;
+    user: boolean;
+    mode: 'survey' | 'qa';
+    questionObject?: {
+      code: string;
+      text: string;
+    };
+  }>>([]);
+  const [editInput, setEditInput] = useState("");
+  const [editLoading, setEditLoading] = useState(false);
 
   // Debug: Cek userData dan activeSurveySessionId
   const userData = getUserData();
@@ -102,6 +121,76 @@ const SurveyChatbot: React.FC = () => {
       refetchAnsweredQuestions();
     }
   }, [sessionData?.status, refetchAnsweredQuestions]);
+
+  // Handle edit question
+  const handleEditQuestion = (question: {
+    question_code: string;
+    question_text: string;
+    answer: string;
+    displayNumber: number;
+  }) => {
+    setEditingQuestion(question);
+    // Initialize chat messages with the question
+    setEditChatMessages([
+      {
+        id: 'system-question',
+        text: question.question_text,
+        user: false,
+        mode: 'survey',
+        questionObject: {
+          code: question.question_code,
+          text: question.question_text
+        }
+      }
+    ]);
+    setEditPopupOpen(true);
+  };
+
+  // Handle send edit message
+  const handleSendEditMessage = async () => {
+    if (!editInput.trim() || !editingQuestion) return;
+
+    const userMessage = {
+      id: `edit-user-${Date.now()}`,
+      text: editInput,
+      user: true,
+      mode: 'survey' as const
+    };
+
+    setEditChatMessages(prev => [...prev, userMessage]);
+    setEditInput("");
+    setEditLoading(true);
+
+    try {
+      // Simulate API call to update answer
+      // TODO: Implement actual API call to update answer
+      console.log('Updating answer for question:', editingQuestion.question_code, 'with:', editInput);
+      
+      // Add system response
+      setTimeout(() => {
+        const systemResponse = {
+          id: `edit-system-${Date.now()}`,
+          text: "Jawaban Anda telah diperbarui.",
+          user: false,
+          mode: 'survey' as const
+        };
+        setEditChatMessages(prev => [...prev, systemResponse]);
+        setEditLoading(false);
+        
+        // Close popup after a delay
+        setTimeout(() => {
+          setEditPopupOpen(false);
+          setEditingQuestion(null);
+          setEditChatMessages([]);
+          // Refresh data
+          refetchAnsweredQuestions();
+        }, 2000);
+      }, 1000);
+    } catch (error) {
+      console.error('Error updating answer:', error);
+      setEditLoading(false);
+    }
+  };
 
   // Selalu tampilkan LoadingState terlebih dahulu
   if (isLoadingSurveyStatus || isLoadingSurveyMessages) {
@@ -126,13 +215,55 @@ const SurveyChatbot: React.FC = () => {
     const progress = sessionData.progress;
     const answeredQuestionsData = answeredQuestions || [];
     
-    // Filter pertanyaan yang tidak memiliki jawaban "N/A" dan berikan urutan yang sesuai
+    // Helper function untuk sorting question codes
+    const sortQuestionCodes = (a: string, b: string) => {
+      // Extract numeric parts from question codes (handle leading zeros)
+      const getNumericPart = (code: string) => {
+        const match = code.match(/\d+/);
+        return match ? parseInt(match[0]) : 0;
+      };
+      
+      // Extract prefix (non-numeric part)
+      const getPrefix = (code: string) => {
+        return code.replace(/\d+/g, '');
+      };
+      
+      const prefixA = getPrefix(a);
+      const prefixB = getPrefix(b);
+      
+      // If prefixes are the same, sort by numeric part
+      if (prefixA === prefixB) {
+        return getNumericPart(a) - getNumericPart(b);
+      }
+      
+      // Define priority order for prefixes
+      const prefixPriority = {
+        'KR': 1,  // KR001, KR002, etc. come first
+        'S': 2    // S001, S002, etc. come second
+      };
+      
+      const priorityA = prefixPriority[prefixA as keyof typeof prefixPriority] || 999;
+      const priorityB = prefixPriority[prefixB as keyof typeof prefixPriority] || 999;
+      
+      // Sort by priority first, then alphabetically if same priority
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+      
+      // If same priority, sort alphabetically by prefix
+      return prefixA.localeCompare(prefixB);
+    };
+
+    // Filter pertanyaan yang tidak memiliki jawaban "N/A", sort berdasarkan kode, dan berikan urutan yang sesuai
     const validAnsweredQuestions = answeredQuestionsData
       .filter(question => question.answer !== "N/A" && question.answer !== "n/a")
+      .sort((a, b) => sortQuestionCodes(a.question_code, b.question_code))
       .map((question, index) => ({
         ...question,
         displayNumber: index + 1 // Urutan tampilan yang sesuai
       }));
+
+    console.log("validAnsweredQuestions:", validAnsweredQuestions)
     
     return (
       <StyledBackground>
@@ -185,21 +316,21 @@ const SurveyChatbot: React.FC = () => {
           <div className="flex-1 overflow-hidden flex flex-col">
             {/* Progress Bar - Fixed */}
             <div className="px-6 py-4 flex-shrink-0">
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-300 font-medium">
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-300 font-medium">
                     {validAnsweredQuestions.length} / {progress.total_questions} terjawab
-                  </span>
-                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                </span>
+                <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
                     {Math.round((validAnsweredQuestions.length / progress.total_questions) * 100)}%
-                  </span>
-                </div>
-                <div className="w-full h-4 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden relative shadow-inner">
-                  <div
-                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500 ease-out rounded-full"
+                </span>
+              </div>
+              <div className="w-full h-4 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden relative shadow-inner">
+                <div
+                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500 ease-out rounded-full"
                     style={{ width: `${(validAnsweredQuestions.length / progress.total_questions) * 100}%` }}
                     aria-label={`Progress: ${Math.round((validAnsweredQuestions.length / progress.total_questions) * 100)}%`}
-                  ></div>
+                ></div>
                 </div>
               </div>
             </div>
@@ -221,8 +352,8 @@ const SurveyChatbot: React.FC = () => {
                           const questionNumber = question.displayNumber;
                           const isCurrentQuestion = progress.current_question_code === question.question_code;
                           
-                          return (
-                            <div
+                  return (
+                    <div
                               key={question.question_code}
                               className={`p-3 rounded-lg border transition-all ${
                                 isCurrentQuestion 
@@ -267,14 +398,11 @@ const SurveyChatbot: React.FC = () => {
                                           ? 'text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/30'
                                           : 'text-orange-600 hover:bg-green-100 dark:text-orange-400 dark:hover:bg-green-900/30'
                                       }`}
-                                      onClick={() => {
-                                        console.log('Edit pertanyaan:', question.question_code);
-                                        // TODO: Implementasi edit pertanyaan
-                                      }}
+                                      onClick={() => handleEditQuestion(question)}
                                       aria-label={`Edit jawaban pertanyaan ${questionNumber}`}
                                     >
                                       <Edit size={16} />
-                                      <span className="text-xs font-medium">ubah</span>
+                                      <span className="text-xs font-medium">Ubah</span>
                                     </button>
                                   </div>
                                   <div className="mb-2">
@@ -312,10 +440,93 @@ const SurveyChatbot: React.FC = () => {
         <ChatLayout 
           messages={messages} 
           addMessage={addMessage} 
-          updateLastMessage={updateLastMessage}
+          updateLastMessage={updateLastMessage} 
           refreshStatus={refreshStatusSilent}
           refreshAnsweredQuestions={refetchAnsweredQuestions}
         />
+
+        {/* Edit Answer Popup */}
+        {editPopupOpen && (
+          <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-2xl h-[600px] flex flex-col">
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                    Edit Jawaban
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Pertanyaan {editingQuestion?.displayNumber} • {editingQuestion?.question_code}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setEditPopupOpen(false);
+                    setEditingQuestion(null);
+                    setEditChatMessages([]);
+                    setEditInput("");
+                  }}
+                  className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Chat Messages */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {editChatMessages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.user ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[80%] p-3 rounded-lg ${
+                        message.user
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200'
+                      }`}
+                    >
+                      <p className="text-sm">{message.text}</p>
+                    </div>
+                  </div>
+                ))}
+                {editLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Input Area */}
+              <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={editInput}
+                    onChange={(e) => setEditInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSendEditMessage()}
+                    placeholder="Ketik jawaban baru Anda..."
+                    className="flex-1 px-3 py-2 text-black border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                    disabled={editLoading}
+                  />
+                  <button
+                    onClick={handleSendEditMessage}
+                    disabled={!editInput.trim() || editLoading}
+                    className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Send size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </StyledBackground>
     );
   }
