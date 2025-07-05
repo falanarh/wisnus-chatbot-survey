@@ -2,13 +2,15 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SurveyCompletionPage from "@/components/survey/SurveyCompletionPage";
 import { useSurveyStatus } from "@/hooks/useSurveyStatus";
+import { useAnsweredQuestions } from "@/hooks/useAnsweredQuestions";
 import ChatLayout from "./ChatLayout";
 import Loader from "../other/Loader";
 import { useSurveyMessages } from "@/hooks/useSurveyMessages";
 import { CheckCircle, Circle, BarChart2 } from "lucide-react";
+import { getUserData } from "@/services/auth";
 
 // Reusable background component
 const StyledBackground = ({ children }: { children: React.ReactNode }) => (
@@ -84,9 +86,22 @@ const ErrorState = ({ error, refreshStatus }: { error: string, refreshStatus: ()
 );
 
 const SurveyChatbot: React.FC = () => {
-  const { isLoading: isLoadingSurveyStatus, error, sessionData, refreshStatus } = useSurveyStatus();
+  const { isLoading: isLoadingSurveyStatus, error, sessionData, refreshStatus, refreshStatusSilent } = useSurveyStatus();
   const { isLoading: isLoadingSurveyMessages, messages, addMessage, updateLastMessage } = useSurveyMessages();
+  const { data: answeredQuestions, isLoading: isLoadingAnsweredQuestions, refetch: refetchAnsweredQuestions } = useAnsweredQuestions();
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Debug: Cek userData dan activeSurveySessionId
+  const userData = getUserData();
+  console.log("userData:", userData);
+  console.log("activeSurveySessionId:", userData?.activeSurveySessionId);
+
+  // Fetch answered questions when session is in progress
+  useEffect(() => {
+    if (sessionData?.status === 'IN_PROGRESS') {
+      refetchAnsweredQuestions();
+    }
+  }, [sessionData?.status, refetchAnsweredQuestions]);
 
   // Selalu tampilkan LoadingState terlebih dahulu
   if (isLoadingSurveyStatus || isLoadingSurveyMessages) {
@@ -98,6 +113,8 @@ const SurveyChatbot: React.FC = () => {
     return <ErrorState error={error} refreshStatus={refreshStatus} />;
   }
 
+  console.log("sessionData", sessionData);
+
   // Show completion page if survey is completed
   if (sessionData?.status === 'COMPLETED') {
     return (
@@ -107,13 +124,16 @@ const SurveyChatbot: React.FC = () => {
     );
   } else if (sessionData?.status === 'IN_PROGRESS') {
     const progress = sessionData.progress;
-    const responses = sessionData.responses || [];
-    const answeredMap = new Map(responses.map(r => [r.question_code, r.valid_response]));
-    const allQuestionCodes = [
-      ...(progress.answered_question_codes || []),
-      ...(progress.current_question_code ? [progress.current_question_code] : [])
-    ];
-    const uniqueQuestionCodes = Array.from(new Set(allQuestionCodes));
+    const answeredQuestionsData = answeredQuestions || [];
+    
+    // Filter pertanyaan yang tidak memiliki jawaban "N/A" dan berikan urutan yang sesuai
+    const validAnsweredQuestions = answeredQuestionsData
+      .filter(question => question.answer !== "N/A" && question.answer !== "n/a")
+      .map((question, index) => ({
+        ...question,
+        displayNumber: index + 1 // Urutan tampilan yang sesuai
+      }));
+    
     return (
       <StyledBackground>
         {/* Floating Progress Button */}
@@ -144,12 +164,13 @@ const SurveyChatbot: React.FC = () => {
 
         {/* Drawer Panel */}
         <aside
-          className={`fixed top-0 right-0 h-full w-full sm:w-[420px] max-w-full z-50 bg-white dark:bg-gray-900 shadow-2xl border-l border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ${drawerOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          className={`fixed top-0 right-0 h-full w-full sm:w-[420px] max-w-full z-50 bg-white dark:bg-gray-900 shadow-2xl border-l border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ${drawerOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}
           role="dialog"
           aria-modal="true"
           aria-label="Progress Survei"
         >
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+          {/* Header - Fixed */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
             <h2 className="text-lg font-bold text-gray-800 dark:text-white tracking-tight">Progress Survei</h2>
             <button
               className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition"
@@ -159,42 +180,114 @@ const SurveyChatbot: React.FC = () => {
               <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
             </button>
           </div>
-          <div className="px-6 py-4">
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-300 font-medium">
-                  {progress.answered_questions} / {progress.total_questions} terjawab
-                </span>
-                <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
-                  {progress.progress_percentage.toFixed(0)}%
-                </span>
-              </div>
-              <div className="w-full h-4 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden relative shadow-inner">
-                <div
-                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500 ease-out rounded-full"
-                  style={{ width: `${progress.progress_percentage}%` }}
-                  aria-label={`Progress: ${progress.progress_percentage}%`}
-                ></div>
+
+          {/* Content - Scrollable */}
+          <div className="flex-1 overflow-hidden flex flex-col">
+            {/* Progress Bar - Fixed */}
+            <div className="px-6 py-4 flex-shrink-0">
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-300 font-medium">
+                    {validAnsweredQuestions.length} / {progress.total_questions} terjawab
+                  </span>
+                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                    {Math.round((validAnsweredQuestions.length / progress.total_questions) * 100)}%
+                  </span>
+                </div>
+                <div className="w-full h-4 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden relative shadow-inner">
+                  <div
+                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500 ease-out rounded-full"
+                    style={{ width: `${(validAnsweredQuestions.length / progress.total_questions) * 100}%` }}
+                    aria-label={`Progress: ${Math.round((validAnsweredQuestions.length / progress.total_questions) * 100)}%`}
+                  ></div>
+                </div>
               </div>
             </div>
-            <div className="bg-white/90 dark:bg-gray-900/80 rounded-xl shadow-xl p-3 sm:p-4 border border-gray-100 dark:border-gray-800">
-              <h3 className="text-base font-semibold mb-2 text-gray-700 dark:text-gray-200">Status Pertanyaan</h3>
-              <div className="flex flex-wrap gap-2 sm:gap-3 max-h-[40vh] overflow-y-auto hide-scrollbar">
-                {uniqueQuestionCodes.map((code, idx) => {
-                  const answered = answeredMap.has(code);
-                  return (
-                    <div
-                      key={code}
-                      className={`flex items-center gap-2 sm:gap-3 min-w-[140px] sm:min-w-0 p-2 sm:p-3 rounded-lg transition-all shadow-sm border group cursor-pointer ${answered ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700' : 'bg-gray-50 dark:bg-gray-800/40 border-gray-200 dark:border-gray-700'}`}
-                      tabIndex={0}
-                      aria-label={answered ? `Pertanyaan ${idx + 1} sudah dijawab` : `Pertanyaan ${idx + 1} belum dijawab`}
-                    >
-                      {answered ? <CheckCircle className="text-green-500" size={20} /> : <Circle className="text-gray-400" size={20} />}
-                      <span className={`font-medium truncate ${answered ? 'text-green-700 dark:text-green-300' : 'text-gray-700 dark:text-gray-300'}`}>Pertanyaan {idx + 1}</span>
-                      <span className="text-xs text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition" title={`Kode: ${code}`}>({code})</span>
+
+            {/* Questions List - Scrollable */}
+            <div className="flex-1 overflow-hidden">
+              <div className="h-full px-6 pb-6">
+                <div className="bg-white/90 dark:bg-gray-900/80 rounded-xl shadow-xl p-3 sm:p-4 border border-gray-100 dark:border-gray-800 h-full flex flex-col">
+                  <h3 className="text-base font-semibold mb-3 text-gray-700 dark:text-gray-200 flex-shrink-0">Daftar Pertanyaan Terjawab & Jawaban</h3>
+                  <div className="flex-1 overflow-y-auto hide-scrollbar py-4 pr-2">
+                    <div className="space-y-3">
+                      {isLoadingAnsweredQuestions ? (
+                        <div className="text-center py-6">
+                          <Loader />
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Memuat data pertanyaan...</p>
+                        </div>
+                      ) : validAnsweredQuestions.length > 0 ? (
+                        validAnsweredQuestions.map((question) => {
+                          const questionNumber = question.displayNumber;
+                          const isCurrentQuestion = progress.current_question_code === question.question_code;
+                          
+                          return (
+                            <div
+                              key={question.question_code}
+                              className={`p-3 rounded-lg border transition-all ${
+                                isCurrentQuestion 
+                                  ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700' 
+                                  : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700'
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className={`flex-shrink-0 p-1 rounded-full ${
+                                  isCurrentQuestion 
+                                    ? 'bg-blue-100 dark:bg-blue-800' 
+                                    : 'bg-green-100 dark:bg-green-800'
+                                }`}>
+                                  {isCurrentQuestion ? (
+                                    <div className="w-5 h-5 bg-blue-500 rounded-full animate-pulse"></div>
+                                  ) : (
+                                    <CheckCircle className="text-green-600 dark:text-green-400" size={20} />
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className={`font-semibold text-sm ${
+                                      isCurrentQuestion 
+                                        ? 'text-blue-700 dark:text-blue-300' 
+                                        : 'text-green-700 dark:text-green-300'
+                                    }`}>
+                                      Pertanyaan {questionNumber}
+                                    </span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
+                                      {question.question_code}
+                                    </span>
+                                    {isCurrentQuestion && (
+                                      <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900 px-2 py-0.5 rounded font-medium">
+                                        Sedang Berlangsung
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="mb-2">
+                                    <div className="text-sm text-gray-800 dark:text-gray-200 font-medium">
+                                      {question.question_text}
+                                    </div>
+                                  </div>
+                                  <div className="bg-white dark:bg-gray-800 rounded-md p-2 border border-gray-200 dark:border-gray-700">
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Jawaban Anda:</div>
+                                    <div className="text-sm text-gray-800 dark:text-gray-200 font-medium">
+                                      {question.answer}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                          <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                            <Circle className="text-gray-400" size={24} />
+                          </div>
+                          <p className="text-sm">Belum ada pertanyaan yang dijawab</p>
+                          <p className="text-xs mt-1">Mulai menjawab pertanyaan survei untuk melihat progress di sini</p>
+                        </div>
+                      )}
                     </div>
-                  );
-                })}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -202,7 +295,9 @@ const SurveyChatbot: React.FC = () => {
         <ChatLayout 
           messages={messages} 
           addMessage={addMessage} 
-          updateLastMessage={updateLastMessage} 
+          updateLastMessage={updateLastMessage}
+          refreshStatus={refreshStatusSilent}
+          refreshAnsweredQuestions={refetchAnsweredQuestions}
         />
       </StyledBackground>
     );
@@ -211,7 +306,7 @@ const SurveyChatbot: React.FC = () => {
   // Fallback loading state
   return (
     <StyledBackground>
-      <ChatLayout messages={messages} addMessage={addMessage} updateLastMessage={updateLastMessage} />
+      <ChatLayout messages={messages} addMessage={addMessage} updateLastMessage={updateLastMessage} refreshStatus={refreshStatusSilent} refreshAnsweredQuestions={refetchAnsweredQuestions} />
     </StyledBackground>
   );
 };

@@ -11,7 +11,7 @@ import ChatInputArea from "./ChatInputArea";
 import ChatMessageArea from "./ChatMessageArea";
 import ModeConfirmationPopup from "./ModeConfirmationPopup";
 import { queryRAG } from "@/services/survey/ragService";
-import { getToken, getUserData, UserData } from "@/services/auth";
+import { getToken, getUserData, UserData, updateUserProperty } from "@/services/auth";
 import { submitResponse } from "@/services/survey/surveyManagement";
 import { Question, SurveyMessageRequest } from "@/services/survey/types";
 import { addSurveyMessage } from "@/services/survey/surveyMessages";
@@ -23,12 +23,16 @@ interface ChatLayoutProps {
     messages: ChatMessage[];
     addMessage: (message: Partial<ChatMessage> & { text: string; user: boolean; mode: "survey" | "qa" }) => void;
     updateLastMessage: (text: string, user: boolean) => void;
+    refreshStatus: () => void;
+    refreshAnsweredQuestions: () => void;
 }
 
 const ChatLayout: React.FC<ChatLayoutProps> = ({
     messages,
     addMessage,
-    updateLastMessage
+    updateLastMessage,
+    refreshStatus,
+    refreshAnsweredQuestions
 }) => {
     // State
     const [input, setInput] = useState("");
@@ -361,6 +365,16 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
 
                     // Simpan ke state terlebih dahulu
                     setCurrentQuestion(current_question);
+                    
+                    // Simpan session_id jika ada dalam response
+                    if (response.data.session_id && !getUserData()?.activeSurveySessionId) {
+                        console.log("Menyimpan activeSurveySessionId dari handleSwitchToSurvey:", response.data.session_id);
+                        updateUserProperty('activeSurveySessionId', response.data.session_id);
+                        // Refresh status untuk memuat data survei terbaru (mulus tanpa reload halaman)
+                        setTimeout(() => {
+                            refreshStatus();
+                        }, 100);
+                    }
 
                     // Kirim ke database
                     const surveyMessage: SurveyMessageRequest = {
@@ -496,6 +510,17 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                     if (response.success && response.data?.current_question) {
                         const q = response.data.current_question;
                         setCurrentQuestion(q);
+                        
+                        // Simpan session_id jika ada dalam response
+                        if (response.data.session_id && !getUserData()?.activeSurveySessionId) {
+                            console.log("Menyimpan activeSurveySessionId dari getCurrentQuestion:", response.data.session_id);
+                            updateUserProperty('activeSurveySessionId', response.data.session_id);
+                            // Refresh status untuk memuat data survei terbaru (mulus tanpa reload halaman)
+                            setTimeout(() => {
+                                refreshStatus();
+                            }, 100);
+                        }
+                        
                         const questionMsgId = `q_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
                         addMessage({
                             id: questionMsgId,
@@ -597,6 +622,16 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             // Kirim permintaan ke API unified /api/survey/respond
             const response = await submitResponse(userMessage);
     
+            // Simpan session_id jika ada dalam response
+            if (response.session_id && !userData.activeSurveySessionId) {
+                console.log("Menyimpan activeSurveySessionId:", response.session_id);
+                updateUserProperty('activeSurveySessionId', response.session_id);
+                // Refresh status untuk memuat data survei terbaru (mulus tanpa reload halaman)
+                setTimeout(() => {
+                    refreshStatus();
+                }, 100);
+            }
+    
             // Format respons untuk ditampilkan ke user
             const botResponse = formatSurveyResponse(response);
     
@@ -650,6 +685,12 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                     }
                 });
             }
+            
+            // Refresh data progress setelah menjawab pertanyaan
+            setTimeout(() => {
+                refreshStatus();
+                refreshAnsweredQuestions();
+            }, 500);
     
         } catch (error) {
             console.error("Error dalam mode survei:", error);

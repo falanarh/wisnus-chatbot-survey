@@ -109,8 +109,39 @@ export function useSurveyStatus(forceRefresh = false) {
     }
   };
 
+  const refreshStatusSilent = () => {
+    if (isMounted.current) {
+      // Refresh tanpa mengubah loading state
+      const checkSurveyStatusSilent = async () => {
+        try {
+          const userData = getUserData();
+          if (!userData || !userData.activeSurveySessionId) {
+            return;
+          }
+
+          const surveySessionResponse = await getSurveyStatus(
+            userData.activeSurveySessionId
+          );
+
+          if (isMounted.current && surveySessionResponse.success && surveySessionResponse.data) {
+            setStatus({
+              isLoading: false,
+              error: null,
+              sessionData: surveySessionResponse.data,
+            });
+          }
+        } catch (err) {
+          console.error("Error in silent survey status check:", err);
+        }
+      };
+
+      checkSurveyStatusSilent();
+    }
+  };
+
   return {
     ...status,
     refreshStatus,
+    refreshStatusSilent,
   };
 }
