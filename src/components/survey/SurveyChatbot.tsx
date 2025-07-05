@@ -9,7 +9,7 @@ import { useAnsweredQuestions } from "@/hooks/useAnsweredQuestions";
 import ChatLayout from "./ChatLayout";
 import Loader from "../other/Loader";
 import { useSurveyMessages } from "@/hooks/useSurveyMessages";
-import { CheckCircle, Circle, BarChart2 } from "lucide-react";
+import { CheckCircle, Circle, BarChart2, Edit } from "lucide-react";
 import { getUserData } from "@/services/auth";
 
 // Reusable background component
@@ -164,7 +164,7 @@ const SurveyChatbot: React.FC = () => {
 
         {/* Drawer Panel */}
         <aside
-          className={`fixed top-0 right-0 h-full w-full sm:w-[420px] max-w-full z-50 bg-white dark:bg-gray-900 shadow-2xl border-l border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ${drawerOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}
+          className={`fixed top-0 right-0 h-full w-full sm:w-[520px] max-w-full z-50 bg-white dark:bg-gray-900 shadow-2xl border-l border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ${drawerOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}
           role="dialog"
           aria-modal="true"
           aria-label="Progress Survei"
@@ -243,31 +243,48 @@ const SurveyChatbot: React.FC = () => {
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <span className={`font-semibold text-sm ${
-                                      isCurrentQuestion 
-                                        ? 'text-blue-700 dark:text-blue-300' 
-                                        : 'text-green-700 dark:text-green-300'
-                                    }`}>
-                                      Pertanyaan {questionNumber}
-                                    </span>
-                                    <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
-                                      {question.question_code}
-                                    </span>
-                                    {isCurrentQuestion && (
-                                      <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900 px-2 py-0.5 rounded font-medium">
-                                        Sedang Berlangsung
+                                  <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className={`font-semibold text-sm ${
+                                        isCurrentQuestion 
+                                          ? 'text-blue-700 dark:text-blue-300' 
+                                          : 'text-green-700 dark:text-green-300'
+                                      }`}>
+                                        Pertanyaan {questionNumber}
                                       </span>
-                                    )}
+                                      <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
+                                        {question.question_code}
+                                      </span>
+                                      {isCurrentQuestion && (
+                                        <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900 px-2 py-0.5 rounded font-medium">
+                                          Sedang Berlangsung
+                                        </span>
+                                      )}
+                                    </div>
+                                    <button
+                                      className={`flex items-center gap-1.5 py-1.5 rounded-md transition-colors ${
+                                        isCurrentQuestion
+                                          ? 'text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/30'
+                                          : 'text-orange-600 hover:bg-green-100 dark:text-orange-400 dark:hover:bg-green-900/30'
+                                      }`}
+                                      onClick={() => {
+                                        console.log('Edit pertanyaan:', question.question_code);
+                                        // TODO: Implementasi edit pertanyaan
+                                      }}
+                                      aria-label={`Edit jawaban pertanyaan ${questionNumber}`}
+                                    >
+                                      <Edit size={16} />
+                                      <span className="text-xs font-medium">ubah</span>
+                                    </button>
                                   </div>
                                   <div className="mb-2">
-                                    <div className="text-sm text-gray-800 dark:text-gray-200 font-medium">
+                                    <div className="text-sm text-justify text-gray-800 dark:text-gray-200 font-medium">
                                       {question.question_text}
                                     </div>
                                   </div>
                                   <div className="bg-white dark:bg-gray-800 rounded-md p-2 border border-gray-200 dark:border-gray-700">
                                     <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Jawaban Anda:</div>
-                                    <div className="text-sm text-gray-800 dark:text-gray-200 font-medium">
+                                    <div className="text-sm text-justify text-gray-800 dark:text-gray-200 font-medium">
                                       {question.answer}
                                     </div>
                                   </div>
