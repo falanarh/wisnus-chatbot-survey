@@ -10,6 +10,7 @@ import ChatLayout from "./ChatLayout";
 import Loader from "../other/Loader";
 import { useSurveyMessages } from "@/hooks/useSurveyMessages";
 import { CheckCircle, Circle, BarChart2, Edit, X, Send } from "lucide-react";
+import { motion } from "framer-motion";
 import { getUserData } from "@/services/auth";
 
 // Reusable background component
@@ -503,26 +504,51 @@ const SurveyChatbot: React.FC = () => {
                 )}
               </div>
 
-              {/* Input Area */}
+              {/* Input Area - Using main chat input style */}
               <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-2">
+                <div className={`flex items-center gap-2 
+                  bg-gray-100/90 dark:bg-gray-700/90 
+                  rounded-full pl-5 pr-2 py-3 border 
+                  border-gray-300/60 dark:border-gray-600/60 
+                  focus-within:border-blue-400 dark:focus-within:border-blue-400 
+                  focus-within:ring-2 focus-within:ring-blue-200 dark:focus-within:ring-blue-500/30 
+                  backdrop-blur-md shadow-lg transition-all
+                  ${editLoading ? 'opacity-80' : 'opacity-100'}`}
+                >
                   <input
                     type="text"
                     value={editInput}
                     onChange={(e) => setEditInput(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSendEditMessage()}
-                    placeholder="Ketik jawaban baru Anda..."
-                    className="flex-1 px-3 py-2 text-black border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                    placeholder={editLoading ? "Memperbarui jawaban..." : "Ketik jawaban baru Anda..."}
+                    className="flex-1 bg-transparent outline-none text-sm text-gray-800 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                     disabled={editLoading}
                   />
-                  <button
+
+                  {/* Send Button */}
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    whileHover={!editLoading && editInput.trim() ? { scale: 1.1, rotate: 10 } : {}}
                     onClick={handleSendEditMessage}
                     disabled={!editInput.trim() || editLoading}
-                    className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className={`p-3 rounded-full backdrop-blur-sm ${!editLoading && editInput.trim()
+                      ? 'bg-blue-600 text-white border border-blue-500 hover:bg-blue-700 dark:bg-blue-500 dark:border-blue-400 dark:hover:bg-blue-600'
+                      : 'bg-gray-300 text-gray-500 border border-gray-400 dark:bg-gray-600 dark:text-gray-400 dark:border-gray-500'
+                    } transition-colors duration-200`}
+                    aria-label="Kirim jawaban baru"
                   >
-                    <Send size={18} />
-                  </button>
+                    <Send className="w-5 h-5" />
+                  </motion.button>
                 </div>
+
+                {/* Status indicator */}
+                {editLoading && (
+                  <div className="text-center mt-2">
+                    <p className="text-xs text-blue-600 dark:text-blue-300">
+                      Memperbarui jawaban...
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
