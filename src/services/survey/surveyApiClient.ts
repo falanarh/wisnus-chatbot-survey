@@ -90,3 +90,13 @@ export async function ragApiRequest<T>(
     throw error;
   }
 }
+
+/**
+ * Update answer for a specific survey question
+ */
+export async function updateSurveyAnswer(questionCode: string, answer: string) {
+  return surveyApiRequest(`/api/survey/answer/${questionCode}`, {
+    method: 'PUT',
+    body: JSON.stringify({ answer }),
+  });
+}

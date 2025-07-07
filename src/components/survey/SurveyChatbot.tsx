@@ -12,6 +12,7 @@ import { useSurveyMessages } from "@/hooks/useSurveyMessages";
 import { CheckCircle, Circle, BarChart2, Edit, X, Send } from "lucide-react";
 import { motion } from "framer-motion";
 import { getUserData } from "@/services/auth";
+import { updateSurveyAnswer } from "@/services/survey";
 
 // Reusable background component
 const StyledBackground = ({ children }: { children: React.ReactNode }) => (
@@ -157,19 +158,13 @@ const SurveyChatbot: React.FC = () => {
           text: question.question_text
         }
       },
-      // {
-      //   id: 'user-answer',
-      //   text: formatAnswer(question.answer),
-      //   user: true,
-      //   mode: 'survey'
-      // }
     ]);
     setEditPopupOpen(true);
   };
 
   // Handle send edit message
   const handleSendEditMessage = async () => {
-    if (!editInput.trim() || !editingQuestion) return;
+    if (!editInput.trim() || editLoading || !editingQuestion) return;
 
     const userMessage = {
       id: `edit-user-${Date.now()}`,
@@ -179,36 +174,108 @@ const SurveyChatbot: React.FC = () => {
     };
 
     setEditChatMessages(prev => [...prev, userMessage]);
-    setEditInput("");
     setEditLoading(true);
 
     try {
-      // Simulate API call to update answer
-      // TODO: Implement actual API call to update answer
-      console.log('Updating answer for question:', editingQuestion.question_code, 'with:', editInput);
-      
-      // Add system response
-      setTimeout(() => {
-        const systemResponse = {
-          id: `edit-system-${Date.now()}`,
-          text: "Jawaban Anda telah diperbarui.",
+      const data = await updateSurveyAnswer(editingQuestion.question_code, editInput);
+
+      // Type narrowing: hanya akses properti jika ada 'info' (SurveyResponseResult)
+      if ('info' in data && typeof data.info === 'string') {
+        if (data.info === 'answer_updated') {
+          setEditChatMessages(prev => [
+            ...prev,
+            {
+              id: `edit-system-success-${Date.now()}`,
+              text: 'improved_response' in data && typeof data.improved_response === 'string' ? data.improved_response : 'Jawaban berhasil diperbarui.',
+              user: false,
+              mode: 'survey' as const
+            },
+          ]);
+          setEditInput("");
+          setEditLoading(false);
+          // Refresh data utama
+          refetchAnsweredQuestions();
+          setTimeout(() => {
+            setEditPopupOpen(false);
+            setEditingQuestion(null);
+            setEditChatMessages([]);
+          }, 1200);
+        } else if (data.info === 'unexpected_answer_or_other') {
+          setEditChatMessages(prev => [
+            ...prev,
+            {
+              id: `edit-system-clarify-${Date.now()}`,
+              text: ((('clarification_reason' in data && typeof data.clarification_reason === 'string') ? data.clarification_reason : 'Jawaban memerlukan klarifikasi.') + ((('follow_up_question' in data && typeof data.follow_up_question === 'string') ? `\n${data.follow_up_question}` : ''))),
+              user: false,
+              mode: 'survey' as const
+            },
+          ]);
+          setEditInput(""); // Kosongkan input untuk klarifikasi lanjutan
+          setEditLoading(false);
+        } else if (data.info === 'question') {
+          setEditChatMessages(prev => [
+            ...prev,
+            {
+              id: `edit-system-rag-${Date.now()}`,
+              text: 'answer' in data && typeof data.answer === 'string' ? data.answer : 'Pertanyaan Anda telah dijawab.',
+              user: false,
+              mode: 'survey' as const
+            },
+          ]);
+          setEditInput("");
+          setEditLoading(false);
+          refetchAnsweredQuestions();
+          setTimeout(() => {
+            setEditPopupOpen(false);
+            setEditingQuestion(null);
+            setEditChatMessages([]);
+          }, 1200);
+        } else if (data.info === 'error') {
+          setEditChatMessages(prev => [
+            ...prev,
+            {
+              id: `edit-system-error2-${Date.now()}`,
+              text: 'additional_info' in data && typeof data.additional_info === 'string' ? data.additional_info : (data.message || 'Terjadi kesalahan.'),
+              user: false,
+              mode: 'survey' as const
+            },
+          ]);
+          setEditLoading(false);
+        } else {
+          setEditChatMessages(prev => [
+            ...prev,
+            {
+              id: `edit-system-unknown-${Date.now()}`,
+              text: data.message || 'Respon tidak dikenali.',
+              user: false,
+              mode: 'survey' as const
+            },
+          ]);
+          setEditLoading(false);
+        }
+      } else {
+        // Fallback jika bukan SurveyResponseResult
+        setEditChatMessages(prev => [
+          ...prev,
+          {
+            id: `edit-system-unknown2-${Date.now()}`,
+            text: data.message || 'Respon tidak dikenali.',
+            user: false,
+            mode: 'survey' as const
+          },
+        ]);
+        setEditLoading(false);
+      }
+    } catch {
+      setEditChatMessages(prev => [
+        ...prev,
+        {
+          id: `edit-system-catch-${Date.now()}`,
+          text: 'Terjadi kesalahan jaringan.',
           user: false,
           mode: 'survey' as const
-        };
-        setEditChatMessages(prev => [...prev, systemResponse]);
-        setEditLoading(false);
-        
-        // Close popup after a delay
-        setTimeout(() => {
-          setEditPopupOpen(false);
-          setEditingQuestion(null);
-          setEditChatMessages([]);
-          // Refresh data
-          refetchAnsweredQuestions();
-        }, 2000);
-      }, 1000);
-    } catch (error) {
-      console.error('Error updating answer:', error);
+        },
+      ]);
       setEditLoading(false);
     }
   };

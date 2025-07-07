@@ -22,3 +22,4 @@ export {
 
 // Tambahkan baris ini di bagian akhir file
 export { getCurrentQuestion } from "./currentQuestion";
+export { updateSurveyAnswer } from "./surveyApiClient";
