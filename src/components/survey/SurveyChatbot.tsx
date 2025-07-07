@@ -86,6 +86,20 @@ const ErrorState = ({ error, refreshStatus }: { error: string, refreshStatus: ()
   </StyledBackground>
 );
 
+// Utility function to format answer for display
+function formatAnswer(answer: unknown): string {
+  if (typeof answer === 'string') {
+    return answer.trim() !== '' ? answer : '(Belum diisi)';
+  }
+  if (typeof answer === 'number') {
+    return answer.toString();
+  }
+  if (Array.isArray(answer)) {
+    return answer.length > 0 ? answer.join(', ') : '(Belum diisi)';
+  }
+  return '(Belum diisi)';
+}
+
 const SurveyChatbot: React.FC = () => {
   const { isLoading: isLoadingSurveyStatus, error, sessionData, refreshStatus, refreshStatusSilent } = useSurveyStatus();
   const { isLoading: isLoadingSurveyMessages, messages, addMessage, updateLastMessage } = useSurveyMessages();
@@ -142,7 +156,13 @@ const SurveyChatbot: React.FC = () => {
           code: question.question_code,
           text: question.question_text
         }
-      }
+      },
+      // {
+      //   id: 'user-answer',
+      //   text: formatAnswer(question.answer),
+      //   user: true,
+      //   mode: 'survey'
+      // }
     ]);
     setEditPopupOpen(true);
   };
@@ -261,7 +281,8 @@ const SurveyChatbot: React.FC = () => {
       .sort((a, b) => sortQuestionCodes(a.question_code, b.question_code))
       .map((question, index) => ({
         ...question,
-        displayNumber: index + 1 // Urutan tampilan yang sesuai
+        displayNumber: index + 1, // Urutan tampilan yang sesuai
+        answer: formatAnswer(question.answer)
       }));
 
     console.log("validAnsweredQuestions:", validAnsweredQuestions)
@@ -408,13 +429,13 @@ const SurveyChatbot: React.FC = () => {
                                   </div>
                                   <div className="mb-2">
                                     <div className="text-sm text-justify text-gray-800 dark:text-gray-200 font-medium">
-                                      {question.question_text}
+                                      {formatAnswer(question.question_text)}
                                     </div>
                                   </div>
                                   <div className="bg-white dark:bg-gray-800 rounded-md p-2 border border-gray-200 dark:border-gray-700">
                                     <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Jawaban Anda:</div>
                                     <div className="text-sm text-justify text-gray-800 dark:text-gray-200 font-medium">
-                                      {question.answer}
+                                      {formatAnswer(question.answer)}
                                     </div>
                                   </div>
                                 </div>
