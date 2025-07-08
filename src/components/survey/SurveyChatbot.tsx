@@ -260,7 +260,7 @@ const SurveyChatbot: React.FC = () => {
     return (
       <StyledBackground>
         {/* Floating Progress Button */}
-        <FloatingProgressButton onClick={() => setDrawerOpen(true)} />
+        <FloatingProgressButton onClick={() => setDrawerOpen(true)} progress={Math.round((validAnsweredQuestions.length / progress.total_questions) * 100)} />
 
         {/* Drawer Overlay */}
         <SurveyDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="Progress Survei">
@@ -270,8 +270,8 @@ const SurveyChatbot: React.FC = () => {
             rightLabel={`${Math.round((validAnsweredQuestions.length / progress.total_questions) * 100)}%`}
             className="px-6 py-4 flex-shrink-0"
           />
-          <div className="flex-1 overflow-hidden">
-            <div className="h-full px-6 pb-6">
+            <div className="flex-1 overflow-hidden">
+              <div className="h-full px-6 pb-6">
               <AnsweredQuestionList
                 questions={validAnsweredQuestions}
                 progress={progress}
@@ -294,11 +294,11 @@ const SurveyChatbot: React.FC = () => {
           <EditAnswerPopup
             open={editPopupOpen}
             onClose={() => {
-              setEditPopupOpen(false);
-              setEditingQuestion(null);
-              setEditChatMessages([]);
-              setEditInput("");
-            }}
+                    setEditPopupOpen(false);
+                    setEditingQuestion(null);
+                    setEditChatMessages([]);
+                    setEditInput("");
+                  }}
             messages={editChatMessages}
             loading={editLoading}
             input={editInput}

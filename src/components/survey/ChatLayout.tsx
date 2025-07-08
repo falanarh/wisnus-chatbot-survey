@@ -210,24 +210,42 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     // Handle scroll detection
     useEffect(() => {
         const chatContainer = chatContainerRef.current;
+        const messagesEnd = messagesEndRef.current;
+        if (!chatContainer || !messagesEnd) return;
+
+        // Buat Intersection Observer untuk deteksi bottom visibility
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const isBottomVisible = entries[0].isIntersecting;
+                setShowScrollButton(!isBottomVisible);
+                if (isBottomVisible) {
+                    setUserHasScrolled(false);
+                }
+            },
+            {
+                root: chatContainer,
+                threshold: 1.0,
+                rootMargin: "20px"
+            }
+        );
+
+        // Observe messages end element
+        observer.observe(messagesEnd);
+
+        // Cleanup
+        return () => {
+            observer.disconnect();
+        };
+    }, []);
+
+    // Handle scroll untuk user interaction tracking
+    useEffect(() => {
+        const chatContainer = chatContainerRef.current;
         if (!chatContainer) return;
 
         const handleScroll = () => {
-            // Mark that user is scrolling
             isUserScrollingRef.current = true;
             setUserHasScrolled(true);
-
-            // Calculate scroll position
-            const { scrollTop, scrollHeight, clientHeight } = chatContainer;
-            const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-
-            // Reset userHasScrolled if near bottom
-            if (distanceFromBottom < 20) {
-                setUserHasScrolled(false);
-            }
-
-            // Show scroll button if not near bottom
-            setShowScrollButton(distanceFromBottom > 100);
 
             // Reset scroll flag after user finishes scrolling
             setTimeout(() => {

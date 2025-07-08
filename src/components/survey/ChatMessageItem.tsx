@@ -90,7 +90,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
             backgroundColor: bubbleColor,
             color: textColor,
           }}
-          className={`px-4 py-3 text-sm break-words whitespace-pre-wrap shadow-sm text-justify
+          className={`px-4 py-3 text-sm break-words whitespace-pre-wrap shadow-sm text-justify 
             ${message.user
               ? "rounded-t-2xl rounded-bl-2xl rounded-br-lg"
               : "rounded-t-2xl rounded-br-2xl rounded-bl-lg"

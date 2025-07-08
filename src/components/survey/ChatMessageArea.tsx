@@ -42,7 +42,7 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
         <EmptyStateMessage isDarkMode={isDarkMode} mode={mode} />
       ) : (
         <AnimatePresence>
-          <div className="max-w-4xl w-full px-6 md:px-4 overflow-x-hidden md:overflow-x-visible">
+          <div className="max-w-4xl w-full px-6 md:px-8 lg:px-10 overflow-x-hidden md:overflow-x-visible">
             {messages.map((msg, index) => {
               // Gunakan opsi dari visibleOptions jika pesan ini sedang dianimasikan
               const messageOptions = msg.id && visibleOptions[msg.id] 
