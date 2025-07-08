@@ -26,6 +26,7 @@ export interface UserData {
   email: string;
   activeSurveySessionId?: string;
   activeEvaluationSessionId?: string;
+  activeSurveyUniqueCode?: string; // Tambahkan properti ini
 }
 
 /**
