@@ -32,6 +32,7 @@ export function formatSurveyResponse(
     clarification_reason,
     follow_up_question,
     system_message,
+    answer
   } = response;
 
   let responseText = "";
@@ -69,8 +70,8 @@ export function formatSurveyResponse(
         break;
 
       case "question":
-        if (currentQuestion) {
-          responseText = currentQuestion.text || system_message || "Silakan jawab pertanyaan saat ini.";
+        if (answer && currentQuestion) {
+          responseText =  `${answer} \n\n Pertanyaan saat ini:\n\n ${currentQuestion.text}` || system_message || "Silakan jawab pertanyaan saat ini.";
           questionObject = currentQuestion;
         } else {
           responseText = system_message || "Silakan jawab pertanyaan saat ini.";

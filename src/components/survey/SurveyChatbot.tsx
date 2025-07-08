@@ -11,7 +11,7 @@ import Loader from "../other/Loader";
 import { useSurveyMessages } from "@/hooks/useSurveyMessages";
 import { CheckCircle, Circle, BarChart2, Edit, X, Send } from "lucide-react";
 import { motion } from "framer-motion";
-import { getUserData } from "@/services/auth";
+// import { getUserData } from "@/services/auth";
 import { updateSurveyAnswer } from "@/services/survey";
 
 // Reusable background component
@@ -125,11 +125,12 @@ const SurveyChatbot: React.FC = () => {
   }>>([]);
   const [editInput, setEditInput] = useState("");
   const [editLoading, setEditLoading] = useState(false);
+  const [showEditSuccessToast, setShowEditSuccessToast] = useState(false);
 
   // Debug: Cek userData dan activeSurveySessionId
-  const userData = getUserData();
-  console.log("userData:", userData);
-  console.log("activeSurveySessionId:", userData?.activeSurveySessionId);
+  // const userData = getUserData();
+  // console.log("userData:", userData);
+  // console.log("activeSurveySessionId:", userData?.activeSurveySessionId);
 
   // Fetch answered questions when session is in progress
   useEffect(() => {
@@ -179,6 +180,8 @@ const SurveyChatbot: React.FC = () => {
     try {
       const data = await updateSurveyAnswer(editingQuestion.question_code, editInput);
 
+      console.log("Data: ", data);
+
       // Type narrowing: hanya akses properti jika ada 'info' (SurveyResponseResult)
       if ('info' in data && typeof data.info === 'string') {
         if (data.info === 'answer_updated') {
@@ -199,6 +202,8 @@ const SurveyChatbot: React.FC = () => {
             setEditPopupOpen(false);
             setEditingQuestion(null);
             setEditChatMessages([]);
+            setShowEditSuccessToast(true);
+            setTimeout(() => setShowEditSuccessToast(false), 2500);
           }, 1200);
         } else if (data.info === 'unexpected_answer_or_other') {
           setEditChatMessages(prev => [
@@ -217,7 +222,7 @@ const SurveyChatbot: React.FC = () => {
             ...prev,
             {
               id: `edit-system-rag-${Date.now()}`,
-              text: 'answer' in data && typeof data.answer === 'string' ? data.answer : 'Pertanyaan Anda telah dijawab.',
+              text: 'answer' in data && typeof data.answer === 'string' ? `${data.answer} \n\nPertanyaan saat ini:\n\n ${data.currentQuestion?.text}` : 'Pertanyaan Anda telah dijawab.',
               user: false,
               mode: 'survey' as const
             },
@@ -225,11 +230,7 @@ const SurveyChatbot: React.FC = () => {
           setEditInput("");
           setEditLoading(false);
           refetchAnsweredQuestions();
-          setTimeout(() => {
-            setEditPopupOpen(false);
-            setEditingQuestion(null);
-            setEditChatMessages([]);
-          }, 1200);
+          // Tidak menutup popup otomatis
         } else if (data.info === 'error') {
           setEditChatMessages(prev => [
             ...prev,
@@ -290,7 +291,7 @@ const SurveyChatbot: React.FC = () => {
     return <ErrorState error={error} refreshStatus={refreshStatus} />;
   }
 
-  console.log("sessionData", sessionData);
+  // console.log("sessionData", sessionData);
 
   // Show completion page if survey is completed
   if (sessionData?.status === 'COMPLETED') {
@@ -352,7 +353,7 @@ const SurveyChatbot: React.FC = () => {
         answer: formatAnswer(question.answer)
       }));
 
-    console.log("validAnsweredQuestions:", validAnsweredQuestions)
+    // console.log("validAnsweredQuestions:", validAnsweredQuestions)
     
     return (
       <StyledBackground>
@@ -575,7 +576,7 @@ const SurveyChatbot: React.FC = () => {
                           : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200'
                       }`}
                     >
-                      <p className="text-sm">{message.text}</p>
+                      <p className="text-sm whitespace-pre-line">{message.text}</p>
                     </div>
                   </div>
                 ))}
@@ -639,6 +640,13 @@ const SurveyChatbot: React.FC = () => {
                 )}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Toast Success Edit Jawaban */}
+        {showEditSuccessToast && (
+          <div className="fixed bottom-8 left-1/2 z-[70] -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg text-sm font-semibold animate-fade-in-up">
+            Jawaban berhasil diubah!
           </div>
         )}
       </StyledBackground>
