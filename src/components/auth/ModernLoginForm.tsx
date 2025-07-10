@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock, LogIn, AlertTriangle } from "lucide-react";
 // import ModernSocialLoginButton from "./ModernSocialLoginButton";
 import { useAuth } from "@/context/AuthContext";
@@ -136,7 +135,7 @@ const ModernLoginForm: React.FC<LoginFormProps> = ({ isDarkMode }) => {
             }`}>
             Kata Sandi
           </label>
-          <Link
+          {/* <Link
             href="/forgot-password"
             className={`
               text-xs font-medium relative overflow-hidden group
@@ -147,7 +146,7 @@ const ModernLoginForm: React.FC<LoginFormProps> = ({ isDarkMode }) => {
               Lupa Kata Sandi?
             </span>
             <span className="absolute inset-0 bg-blue-500 dark:bg-blue-600 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300 rounded-sm"></span>
-          </Link>
+          </Link> */}
         </div>
         <motion.div
           variants={inputVariants}
@@ -210,7 +209,7 @@ const ModernLoginForm: React.FC<LoginFormProps> = ({ isDarkMode }) => {
       </div>
 
       {/* Remember Me Checkbox */}
-      <div className="flex items-center py-1">
+      {/* <div className="flex items-center py-1">
         <div className="relative flex items-center">
           <input
             id="remember-me"
@@ -235,7 +234,7 @@ const ModernLoginForm: React.FC<LoginFormProps> = ({ isDarkMode }) => {
           }`}>
           Ingat saya
         </label>
-      </div>
+      </div> */}
 
       {/* Login Button */}
       <div className="pt-2">

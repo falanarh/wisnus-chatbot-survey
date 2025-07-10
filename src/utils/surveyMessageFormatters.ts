@@ -71,7 +71,7 @@ export function formatSurveyResponse(
 
       case "question":
         if (answer && currentQuestion) {
-          responseText =  `${answer} \n\n Pertanyaan saat ini:\n\n ${currentQuestion.text}` || system_message || "Silakan jawab pertanyaan saat ini.";
+          responseText =  `${answer} \n\nPertanyaan saat ini:\n\n${currentQuestion.text}` || system_message || "Silakan jawab pertanyaan saat ini.";
           questionObject = currentQuestion;
         } else {
           responseText = system_message || "Silakan jawab pertanyaan saat ini.";

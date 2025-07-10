@@ -37,7 +37,7 @@ function formatAnswer(answer: unknown): string {
 const AnsweredQuestionList: React.FC<AnsweredQuestionListProps> = ({ questions, progress, isLoading, onEdit }) => {
   return (
     <div className="bg-white/90 dark:bg-gray-900/80 rounded-xl shadow-xl p-3 sm:p-4 border border-gray-100 dark:border-gray-800 h-full flex flex-col">
-      <h3 className="text-base font-semibold mb-3 text-gray-700 dark:text-gray-200 flex-shrink-0">Daftar Pertanyaan Terjawab & Jawaban</h3>
+      <h3 className="text-base font-semibold mb-3 text-gray-700 dark:text-gray-200 flex-shrink-0">Daftar Pertanyaan Terjawab</h3>
       <div className="flex-1 overflow-y-auto hide-scrollbar py-4 pr-2">
         <div className="space-y-3">
           {isLoading ? (

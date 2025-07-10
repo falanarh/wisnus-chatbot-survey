@@ -16,7 +16,7 @@ const EmptyStateMessage: React.FC<EmptyStateMessageProps> = ({ isDarkMode, mode 
       </div>
       <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
         {mode === 'survey'
-          ? 'Selamat datang di Survei Digital Wisatawan Nusantara'
+          ? 'Selamat datang di Survei Digital Wisnus'
           : 'Selamat datang di Layanan Tanya Jawab Survei Wisnus'}
       </p>
       <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>

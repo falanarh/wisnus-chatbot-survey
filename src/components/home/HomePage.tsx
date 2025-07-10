@@ -1,12 +1,13 @@
 "use client";
 
 import { Mulish } from 'next/font/google';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Footer from './Footer';
 import AboutSection from './AboutSection';
 import GuidesSection from './GuidesSection';
 import HomeSection from './HomeSection';
 import Header from './Header';
+import TutorialFlow from '../other/TutorialFlow';
 
 const mulish = Mulish({
     variable: "--font-mulish",
@@ -16,6 +17,7 @@ const mulish = Mulish({
 
 
 const HomePage: React.FC = () => {
+    const [tutorialDone, setTutorialDone] = useState(false);
     const homeRef = useRef<HTMLDivElement>(null);
     const guidesRef = useRef<HTMLDivElement>(null);
     const aboutRef = useRef<HTMLDivElement>(null);
@@ -49,6 +51,10 @@ const HomePage: React.FC = () => {
             targetRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     };
+
+    if (!tutorialDone) {
+        return <TutorialFlow onFinish={() => setTutorialDone(true)} />;
+    }
 
     return (
         <>

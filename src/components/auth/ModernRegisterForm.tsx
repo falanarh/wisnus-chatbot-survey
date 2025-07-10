@@ -348,7 +348,7 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
       </div>
 
       {/* Terms and Conditions Checkbox */}
-      <div className="flex items-start py-1">
+      {/* <div className="flex items-start py-1">
         <div className="relative flex items-center mt-0.5">
           <input
             id="terms"
@@ -374,7 +374,7 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
           }`}>
           Saya menyetujui <span className="text-blue-500 hover:underline cursor-pointer">Syarat dan Ketentuan</span> serta <span className="text-blue-500 hover:underline cursor-pointer">Kebijakan Privasi</span> yang berlaku
         </label>
-      </div>
+      </div> */}
 
       {/* Submit Button */}
       <div className="pt-2">

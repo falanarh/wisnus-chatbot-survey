@@ -164,7 +164,7 @@ const SurveyChatbot: React.FC = () => {
             ...prev,
             {
               id: `edit-system-rag-${Date.now()}`,
-              text: 'answer' in data && typeof data.answer === 'string' ? `${data.answer} \n\nPertanyaan saat ini:\n\n ${data.currentQuestion?.text}` : 'Pertanyaan Anda telah dijawab.',
+              text: 'answer' in data && typeof data.answer === 'string' ? `${data.answer} \n\nPertanyaan saat ini:\n\n${data.currentQuestion?.text}` : 'Pertanyaan Anda telah dijawab.',
               user: false,
               mode: 'survey' as const
             },
