@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthenticated(true);
       
       // Redirect to home page
-      window.location.href = '/';
+      // window.location.href = '/';
     } catch (err: unknown) {
       const errorMessage = err instanceof Error 
         ? err.message 
@@ -106,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthenticated(true);
       
       // Redirect to home page
-      window.location.href = '/';
+      // window.location.href = '/';
     } catch (err: unknown) {
       const errorMessage = err instanceof Error 
         ? err.message 

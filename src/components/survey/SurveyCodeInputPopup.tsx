@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import { getTutorialCompleted, setTutorialCompleted } from "@/utils/otherUtils";
+import TutorialFlow from "../other/TutorialFlow";
 
 interface SurveyCodeInputPopupProps {
   open: boolean;
@@ -20,6 +22,7 @@ const SurveyCodeInputPopup: React.FC<SurveyCodeInputPopupProps> = ({
   const [code, setCode] = useState("");
   const [touched, setTouched] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isTutorialComplete = getTutorialCompleted();
 
   useEffect(() => {
     if (open) {
@@ -46,6 +49,16 @@ const SurveyCodeInputPopup: React.FC<SurveyCodeInputPopupProps> = ({
       setTouched(true);
     }
   };
+
+  const handleTutorialFinish = () => {
+    setTutorialCompleted(true);
+  };
+
+  if (!isTutorialComplete) {
+    return (
+      <TutorialFlow onFinish={handleTutorialFinish} />
+    );
+  }
 
   const handleClose = () => {
     if (onClose) onClose();

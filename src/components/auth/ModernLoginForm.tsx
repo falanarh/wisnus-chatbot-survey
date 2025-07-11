@@ -4,6 +4,7 @@ import { Eye, EyeOff, Mail, Lock, LogIn, AlertTriangle } from "lucide-react";
 // import ModernSocialLoginButton from "./ModernSocialLoginButton";
 import { useAuth } from "@/context/AuthContext";
 import GoogleAuthButton from "./GoogleAuthButton";
+import { useRouter } from "next/navigation";
 
 interface LoginFormProps {
   isDarkMode: boolean;
@@ -23,6 +24,8 @@ const ModernLoginForm: React.FC<LoginFormProps> = ({ isDarkMode }) => {
 
   // Gunakan hook useAuth
   const { login, error } = useAuth();
+
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -46,6 +49,10 @@ const ModernLoginForm: React.FC<LoginFormProps> = ({ isDarkMode }) => {
 
       // Panggil fungsi login dari context
       await login(formData.email, formData.password);
+
+      setTimeout(() => {
+        router.push('/');
+      }, 1500);
     } catch (err) {
       // Error handling sudah dilakukan di AuthContext
       console.error("Login error:", err);

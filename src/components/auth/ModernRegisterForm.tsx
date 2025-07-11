@@ -100,7 +100,7 @@ const ModernRegisterForm: React.FC<RegisterFormProps> = ({ isDarkMode }) => {
 
       // Redirect ke halaman survey setelah 1.5 detik
       setTimeout(() => {
-        router.push('/survey');
+        router.push('/');
       }, 1500);
 
     } catch (err) {
