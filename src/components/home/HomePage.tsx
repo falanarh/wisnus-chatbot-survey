@@ -8,6 +8,9 @@ import GuidesSection from './GuidesSection';
 import HomeSection from './HomeSection';
 import Header from './Header';
 import TutorialFlow from '../other/TutorialFlow';
+import { useAuth } from '@/context/AuthContext';
+import Loader from '../other/Loader';
+import { getTutorialCompleted, setTutorialCompleted } from '@/utils/otherUtils';
 
 const mulish = Mulish({
     variable: "--font-mulish",
@@ -15,12 +18,18 @@ const mulish = Mulish({
     weight: ["400", "700"],
 });
 
-
 const HomePage: React.FC = () => {
-    const [tutorialDone, setTutorialDone] = useState(false);
+    const [tutorialDone, setTutorialDone] = useState<boolean | null>(null);
     const homeRef = useRef<HTMLDivElement>(null);
     const guidesRef = useRef<HTMLDivElement>(null);
     const aboutRef = useRef<HTMLDivElement>(null);
+    const { isAuthenticated, loading } = useAuth();
+
+    // Initialize tutorial state from localStorage
+    useEffect(() => {
+        const tutorialCompleted = getTutorialCompleted();
+        setTutorialDone(tutorialCompleted);
+    }, []);
 
     useEffect(() => {
         // Check if there's a hash in the URL when the page loads
@@ -52,8 +61,19 @@ const HomePage: React.FC = () => {
         }
     };
 
-    if (!tutorialDone) {
-        return <TutorialFlow onFinish={() => setTutorialDone(true)} />;
+    const handleTutorialFinish = () => {
+        setTutorialDone(true);
+        setTutorialCompleted(true);
+    };
+
+    // Show loading while checking authentication or tutorial state
+    if (loading || tutorialDone === null) {
+        return <Loader />;
+    }
+
+    // Show tutorial only if user is not authenticated and tutorial is not done
+    if (!isAuthenticated && !tutorialDone) {
+        return <TutorialFlow onFinish={handleTutorialFinish} />;
     }
 
     return (
