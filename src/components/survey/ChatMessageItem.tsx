@@ -8,8 +8,79 @@ import { WiMoonWaningCrescent4 } from "react-icons/wi";
 import MessageLoader from "./MessageLoader";
 import { ChatMessage } from "@/utils/surveyMessageFormatters";
 
+const SwitchedToSurveyMessage: React.FC<{ message: ChatMessage }> = ({ message }) => {
+  return (
+    <div>
+      <div className="bg-green-50 dark:bg-green-900/40 rounded-lg p-3 mb-3 border-l-4 border-green-400">
+        <div className="text-xs font-semibold text-green-700 dark:text-green-200 mb-1">Keterangan</div>
+        <div className="text-sm text-gray-800 dark:text-gray-100">{message.text}</div>
+      </div>
+      <div className="mt-2">
+        <div className="text-xs text-gray-400 mb-1">Pertanyaan saat ini:</div>
+        <div className="font-semibold text-base">{message.questionObject?.text || "Pertanyaan tidak ditemukan."}</div>
+      </div>
+    </div>
+  );
+};
+
+const QAMessage: React.FC<{ message: ChatMessageWithCustom }> = ({ message }) => {
+  return (
+    <div>
+      <div className="bg-purple-50 dark:bg-purple-900/40 rounded-lg p-3 mb-3 border-l-4 border-purple-400">
+        <div className="text-xs font-semibold text-purple-700 dark:text-purple-200 mb-1">Penjelasan</div>
+        <div className="text-sm text-gray-800 dark:text-gray-100">{message.infoText || message.text}</div>
+        {message.infoSource && (
+          <div className="text-xs text-gray-500 dark:text-gray-300 italic mt-2">{message.infoSource}</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const ExpectedAnswerMessage: React.FC<{ message: ChatMessageWithCustom }> = ({ message }) => {
+  return (
+    <div>
+      <div className="bg-orange-50 dark:bg-orange-900/40 rounded-lg p-3 mb-3 border-l-4 border-orange-400">
+        <div className="text-xs font-semibold text-orange-700 dark:text-orange-200 mb-1">Pertanyaan Berikutnya</div>
+        <div className="text-sm text-gray-800 dark:text-gray-100">{message.text}</div>
+      </div>
+      <div className="mt-2">
+        <div className="text-xs text-gray-500 dark:text-gray-300 italic">
+          Catatan: Silakan jawab pertanyaan di atas sesuai dengan format yang diminta.
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const InfoWithQuestion: React.FC<{ message: ChatMessageWithCustom }> = ({ message }) => {
+  return (
+    <div>
+      <div className="bg-blue-50 dark:bg-blue-900/40 rounded-lg p-3 mb-3 border-l-4 border-blue-400">
+        <div className="text-xs font-semibold text-blue-700 dark:text-blue-200 mb-1">Penjelasan</div>
+        <div className="text-sm text-gray-800 dark:text-gray-100">{message.infoText}</div>
+        {message.infoSource && (
+          <div className="text-xs text-gray-500 dark:text-gray-300 italic mt-2">{message.infoSource}</div>
+        )}
+      </div>
+      <div className="mt-2">
+        <div className="text-xs text-gray-400 mb-1">Pertanyaan saat ini:</div>
+        <div className="font-semibold text-base">{message.questionText}</div>
+      </div>
+    </div>
+  );
+};
+
+// Patch: Extend ChatMessage locally to include customComponent if not yet picked up by TS
+interface ChatMessageWithCustom extends ChatMessage {
+  customComponent?: 'SwitchedToSurveyMessage' | 'InfoWithQuestion' | 'QAMessage' | 'ExpectedAnswerMessage';
+  infoText?: string;
+  infoSource?: string;
+  questionText?: string;
+}
+
 interface ChatMessageItemProps {
-  message: ChatMessage;
+  message: ChatMessageWithCustom;
   isDarkMode: boolean;
   index: number;
   isAnimating?: boolean; // Flag untuk menunjukkan apakah pesan ini sedang dianimasikan
@@ -107,13 +178,23 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                   <ModeBadge mode={message.mode} />
                 </div>
               )}
-              <p className="break-words whitespace-pre-wrap">
-                {message.text}
-                {/* Show blinking cursor during token animation */}
-                {isTokenAnimating && showCursor && (
-                  <span className="inline-block w-2 h-4 bg-current animate-pulse ml-0.5"></span>
-                )}
-              </p>
+
+              {message.customComponent === 'InfoWithQuestion' ? (
+                <InfoWithQuestion message={message} />
+              ) : message.customComponent === 'SwitchedToSurveyMessage' ? (
+                <SwitchedToSurveyMessage message={message} />
+              ) : message.customComponent === 'QAMessage' ? (
+                <QAMessage message={message} />
+              ) : message.customComponent === 'ExpectedAnswerMessage' ? (
+                <ExpectedAnswerMessage message={message} />
+              ) : (
+                <p className="break-words whitespace-pre-wrap">
+                  {message.text}
+                  {isTokenAnimating && showCursor && (
+                    <span className="inline-block w-2 h-4 bg-current animate-pulse ml-0.5"></span>
+                  )}
+                </p>
+              )}
 
               {/* Display options if they should be shown */}
               {shouldShowOptions && message.questionCode === "KR004" && (

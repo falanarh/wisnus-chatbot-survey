@@ -13,7 +13,7 @@ import ModeConfirmationPopup from "./ModeConfirmationPopup";
 import { queryRAG } from "@/services/survey/ragService";
 import { getToken, getUserData, UserData, updateUserProperty } from "@/services/auth";
 import { submitResponse } from "@/services/survey/surveyManagement";
-import { Question, SurveyMessageRequest } from "@/services/survey/types";
+import { Question, SurveyMessageRequest, SurveyResponseData } from "@/services/survey/types";
 import { addSurveyMessage } from "@/services/survey/surveyMessages";
 import { getCurrentQuestion } from "@/services/survey";
 import { ChatMessage, formatSurveyResponse } from "@/utils/surveyMessageFormatters";
@@ -22,7 +22,8 @@ import { analyzeIntent } from "@/services/survey/intentAnalysis";
 interface ChatLayoutProps {
     messages: ChatMessage[];
     addMessage: (message: Partial<ChatMessage> & { text: string; user: boolean; mode: "survey" | "qa" }) => void;
-    updateLastMessage: (text: string, user: boolean) => void;
+    updateLastMessage: (text: string, user: boolean, customProps?: Partial<ChatMessage>) => void;
+    addUserAndSystemMessage: (userMessage: string, systemResponse: SurveyResponseData, mode?: 'survey' | 'qa') => void;
     refreshStatus: () => void;
     refreshAnsweredQuestions: () => void;
 }
@@ -31,6 +32,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     messages,
     addMessage,
     updateLastMessage,
+    addUserAndSystemMessage,
     refreshStatus,
     refreshAnsweredQuestions
 }) => {
@@ -109,7 +111,9 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 mode: 'survey',
                 questionObject: q,
                 questionCode: q.code,
-                options: q.options || []
+                options: q.options || [],
+                customComponent: 'InfoWithQuestion',
+                responseType: 'question'
               });
               // Persist to DB
               addSurveyMessage({
@@ -418,7 +422,9 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                         mode: 'survey',
                         questionObject: current_question,
                         questionCode: current_question.code,
-                        options: []
+                        options: [],
+                        customComponent: 'SwitchedToSurveyMessage',
+                        responseType: 'switched_to_survey'
                     });
 
                     // Animasi token dan kemudian opsi
@@ -486,7 +492,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         const userMessage = input.trim();
         setInput("");
 
-        // Tambahkan pesan pengguna ke daftar pesan
+        // Tambahkan pesan pengguna ke daftar pesan (tidak disimpan ke database otomatis)
         addMessage({
             id: `user_msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
             text: userMessage,
@@ -548,7 +554,9 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                             mode: "survey",
                             questionObject: q,
                             questionCode: q.code,
-                            options: q.options || []
+                            options: q.options || [],
+                            customComponent: 'InfoWithQuestion',
+                            responseType: 'question'
                         });
                         // Persist to DB
                         addSurveyMessage({
@@ -619,14 +627,39 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 return;
             }
 
-            const surveyMessage: SurveyMessageRequest = {
+            // DEBUG: Log data yang akan disimpan ke database untuk QA mode
+            console.log("🔍 DEBUG - QA Mode - Data yang akan disimpan ke database:", {
                 user_message: userMessage,
                 system_response: { answer: ragResponse.answer },
                 mode: 'qa'
-            };
-            await addSurveyMessage(surveyMessage);
+            });
+            
+            // Check if API already saved the message automatically
+            // For QA mode, we always save since RAG API doesn't save automatically
+            const apiAlreadySaved = false; // RAG API doesn't save messages automatically
+            console.log("🔍 DEBUG - QA Mode - API sudah menyimpan pesan:", apiAlreadySaved);
+            
+            // Only save to database if API didn't save it automatically
+            if (!apiAlreadySaved) {
+                console.log("🔍 DEBUG - QA Mode - Menyimpan pesan ke database");
+                await addUserAndSystemMessage(userMessage, { answer: ragResponse.answer }, 'qa');
+            } else {
+                console.log("🔍 DEBUG - QA Mode - Tidak menyimpan pesan ke database karena API sudah menyimpannya otomatis");
+            }
 
-            updateLastMessage(ragResponse.answer ?? "No response available", false);
+            // Format respons untuk ditampilkan ke user
+            const botResponse = formatSurveyResponse({ answer: ragResponse.answer });
+            
+            // Extract custom component properties from botResponse
+            const customProps: Partial<ChatMessage> = {
+                customComponent: botResponse.customComponent,
+                infoText: botResponse.infoText,
+                infoSource: botResponse.infoSource,
+                responseType: botResponse.responseType,
+                options: botResponse.options
+            };
+
+            updateLastMessage(ragResponse.answer ?? "No response available", false, customProps);
             animateTokenByToken(loadingMsgId, ragResponse.answer ?? "No response available");
         } catch (error) {
             setQaErrorToast({ open: true, message: error instanceof Error ? error.message : "Terjadi kesalahan saat memproses pesan Anda." });
@@ -640,6 +673,11 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         try {
             // Kirim permintaan ke API unified /api/survey/respond
             const response = await submitResponse(userMessage);
+            
+            // DEBUG: Log response untuk melihat apakah API sudah menyimpan pesan
+            console.log("🔍 DEBUG - Response dari submitResponse:", response);
+            console.log("🔍 DEBUG - Response memiliki success:", response.success);
+            console.log("🔍 DEBUG - Response memiliki session_id:", response.session_id);
     
             // Simpan session_id jika ada dalam response
             if (response.session_id && !userData.activeSurveySessionId) {
@@ -659,10 +697,46 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 setCurrentQuestion(botResponse.questionObject);
             }
     
+            // DEBUG: Log data yang akan disimpan ke database
+            console.log("🔍 DEBUG - Data yang akan disimpan ke database:", {
+                user_message: userMessage,
+                system_response: response,
+                mode: 'survey'
+            });
+            
+            // Check if API already saved the message automatically
+            // If response has success: true and session_id, it might have been saved automatically
+            const apiAlreadySaved = response.success === true && response.session_id;
+            console.log("🔍 DEBUG - API sudah menyimpan pesan:", apiAlreadySaved);
+            
+            // Only save to database if API didn't save it automatically
+            if (!apiAlreadySaved) {
+                console.log("🔍 DEBUG - Menyimpan pesan ke database karena API tidak menyimpannya otomatis");
+                addUserAndSystemMessage(userMessage, response, 'survey');
+            } else {
+                console.log("�� DEBUG - Tidak menyimpan pesan ke database karena API sudah menyimpannya otomatis");
+            }
+    
             // Important: Update the loading message right away to show content
             // This stops the loader from showing and displays the actual message
             if (!(botResponse.questionObject?.code === "KR004")) {
-                updateLastMessage(botResponse.text, false);
+                // Extract custom component properties from botResponse
+                const customProps: Partial<ChatMessage> = {
+                    customComponent: botResponse.customComponent,
+                    infoText: botResponse.infoText,
+                    infoSource: botResponse.infoSource,
+                    questionText: botResponse.questionText,
+                    responseType: botResponse.responseType,
+                    questionCode: botResponse.questionCode,
+                    questionObject: botResponse.questionObject,
+                    options: botResponse.options
+                };
+                
+                updateLastMessage(
+                    typeof botResponse.text === 'string' ? botResponse.text : String(botResponse.text), 
+                    false,
+                    customProps
+                );
             } else {
                 updateLastMessage("", false); // Clear the message for KR004
             }
@@ -677,7 +751,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 // Tambahkan pesan baru dengan teks awal
                 addMessage({
                     id: newMessageId,
-                    text: botResponse.text, // Add text immediately to prevent disappearing
+                    text: typeof botResponse.text === 'string' ? botResponse.text : String(botResponse.text), // Add text immediately to prevent disappearing
                     user: false,
                     mode: 'survey',
                     questionObject: botResponse.questionObject,
@@ -686,7 +760,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 });
     
                 // We still animate the text for a nice effect
-                animateTokenByToken(newMessageId, botResponse.text, () => {
+                animateTokenByToken(newMessageId, typeof botResponse.text === 'string' ? botResponse.text : String(botResponse.text), () => {
                     // We're adding options synchronously below, so no need for 
                     // additional animations here. This improves UX by showing options
                     // immediately
@@ -694,7 +768,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 });
             } else {
                 // For other questions, animate token by token but ensure text is displayed
-                animateTokenByToken(loadingMsgId, botResponse.text, () => {
+                animateTokenByToken(loadingMsgId, typeof botResponse.text === 'string' ? botResponse.text : String(botResponse.text), () => {
                     // If there are options, show them immediately 
                     if (botResponse.questionObject?.options?.length) {
                         setVisibleOptions(prev => ({

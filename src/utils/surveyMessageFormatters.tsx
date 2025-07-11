@@ -1,9 +1,10 @@
 import { Question, SurveyMessage, SurveyResponseData } from "@/services/survey";
+import React from "react";
 
 // Shared ChatMessage interface that both components will use
 export interface ChatMessage {
   id: string; // Tambahkan ID unik untuk setiap pesan
-  text: string;
+  text: string | React.ReactNode;
   user: boolean;
   mode: "survey" | "qa";
   loading?: boolean;
@@ -13,6 +14,10 @@ export interface ChatMessage {
   timestamp?: string;
   read?: boolean;
   options?: string[]; // Opsi yang ditampilkan untuk pesan ini
+  customComponent?: 'SwitchedToSurveyMessage' | 'InfoWithQuestion' | 'QAMessage' | 'ExpectedAnswerMessage';
+  infoText?: string;
+  infoSource?: string;
+  questionText?: string;
 }
 
 /**
@@ -35,7 +40,7 @@ export function formatSurveyResponse(
     answer
   } = response;
 
-  let responseText = "";
+  let responseText: string | React.ReactNode = "";
   let mode: "survey" | "qa" = "survey";
   let questionObject: Question | undefined = undefined;
   const questionCode = next_question?.code || currentQuestion?.code;
@@ -54,7 +59,23 @@ export function formatSurveyResponse(
           responseText = next_question.text || "Pertanyaan tidak ditemukan.";
           questionObject = next_question;
         }
-        break;
+        
+        return {
+          id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+          text: responseText,
+          user: false,
+          mode: "survey",
+          responseType: info,
+          questionCode: questionObject?.code,
+          questionObject: questionObject,
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          read: false,
+          options: questionObject?.options || [],
+          customComponent: 'ExpectedAnswerMessage'
+        };
 
       case "unexpected_answer_or_other":
         if (!currentQuestion || !clarification_reason || !follow_up_question) {
@@ -71,6 +92,76 @@ export function formatSurveyResponse(
 
       case "question":
         if (answer && currentQuestion) {
+          console.log("RAW ANSWER:", answer); // Logging untuk debug
+          const timestamp = new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          // Flexible regex: cari penjelasan, sumber (opsional), dan pertanyaan
+          const match = answer.match(/^(.*?)(\(Sumber:.*?\))?\.?\s*(Terima kasih.*)?\n*Pertanyaan saat ini:?\n*([\s\S]*)$/i);
+          if (match) {
+            // match[1]: infoText, match[2]: infoSource, match[4]: questionText
+            return {
+              id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+              text: `${match[1]?.trim() || ''}${match[4] ? '\n\n' + match[4]?.trim() : ''}`,
+              user: false,
+              mode: 'survey',
+              responseType: info,
+              questionCode: currentQuestion.code,
+              questionObject: currentQuestion,
+              timestamp,
+              read: false,
+              options: currentQuestion.options || [],
+              customComponent: 'InfoWithQuestion',
+              infoText: match[1]?.trim(),
+              infoSource: match[2]?.trim(),
+              questionText: match[4]?.trim(),
+            };
+          } else {
+            // Fallback: split dengan 'Pertanyaan saat ini:' jika ada
+            const splitIdx = answer.indexOf('Pertanyaan saat ini:');
+            if (splitIdx !== -1) {
+              const infoText = answer.slice(0, splitIdx).trim();
+              const questionText = answer.slice(splitIdx + 'Pertanyaan saat ini:'.length).trim();
+              return {
+                id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                text: `${infoText}${questionText ? '\n\n' + questionText : ''}`,
+                user: false,
+                mode: 'survey',
+                responseType: info,
+                questionCode: currentQuestion.code,
+                questionObject: currentQuestion,
+                timestamp,
+                read: false,
+                options: currentQuestion.options || [],
+                customComponent: 'InfoWithQuestion',
+                infoText,
+                questionText,
+              };
+            } else {
+              // Jika hanya penjelasan saja, tetap tampilkan info box
+              // Cek apakah ada sumber
+              const infoMatch = answer.match(/^(.*?)(\(Sumber:.*?\))?\.?\s*(Terima kasih.*)?$/i);
+              if (infoMatch) {
+                return {
+                  id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                  text: `${infoMatch[1]?.trim() || ''}${currentQuestion.text ? '\n\n' + currentQuestion.text : ''}`,
+                  user: false,
+                  mode: 'survey',
+                  responseType: info,
+                  questionCode: currentQuestion.code,
+                  questionObject: currentQuestion,
+                  timestamp,
+                  read: false,
+                  options: currentQuestion.options || [],
+                  customComponent: 'InfoWithQuestion',
+                  infoText: infoMatch[1]?.trim(),
+                  infoSource: infoMatch[2]?.trim(),
+                  questionText: currentQuestion.text,
+                };
+              }
+            }
+          }
           responseText =  `${answer} \n\nPertanyaan saat ini:\n\n${currentQuestion.text}` || system_message || "Silakan jawab pertanyaan saat ini.";
           questionObject = currentQuestion;
         } else {
@@ -98,10 +189,25 @@ export function formatSurveyResponse(
 
       case "switched_to_survey":
         responseText =
-          "Anda telah beralih ke mode survei. Silakan jawab pertanyaan survei.\n\nPertanyaan saat ini:\n\n" +
-          (currentQuestion?.text || "Pertanyaan tidak ditemukan.");
+          "Anda telah beralih ke mode survei. Silakan jawab pertanyaan survei.";
         questionObject = currentQuestion;
-        break;
+        
+        return {
+          id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+          text: responseText,
+          user: false,
+          mode: "survey",
+          responseType: info,
+          questionCode: questionObject?.code,
+          questionObject: questionObject,
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          read: false,
+          options: questionObject?.options || [],
+          customComponent: 'SwitchedToSurveyMessage'
+        };
 
       default:
         responseText = "Terjadi kesalahan jaringan. Pastikan jaringan internet Anda dapat berjalan dengan baik.";
@@ -110,6 +216,46 @@ export function formatSurveyResponse(
     // For QA-type responses
     responseText = response.answer;
     mode = "qa";
+    
+    // Extract source information from QA response
+    const responseTextStr = typeof responseText === 'string' ? responseText : String(responseText);
+    const sourceMatch = responseTextStr.match(/^(.*?)(\(Sumber:.*?\))?\.?\s*(Terima kasih.*)?$/i);
+    if (sourceMatch) {
+      const infoText = sourceMatch[1]?.trim();
+      const infoSource = sourceMatch[2]?.trim();
+      
+      return {
+        id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        text: responseText,
+        user: false,
+        mode: "qa",
+        responseType: "qa_response",
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        read: false,
+        options: [],
+        customComponent: 'QAMessage',
+        infoText: infoText,
+        infoSource: infoSource
+      };
+    }
+    
+    return {
+      id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      text: responseText,
+      user: false,
+      mode: "qa",
+      responseType: "qa_response",
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      read: false,
+      options: [],
+      customComponent: 'QAMessage'
+    };
   } else {
     // Fallback if no recognizable format
     responseText =

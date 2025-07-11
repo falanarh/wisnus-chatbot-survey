@@ -40,6 +40,9 @@ export async function addSurveyMessage(
   signal?: AbortSignal
 ): Promise<SurveyMessagesResult> {
   try {
+    // DEBUG: Log request yang akan dikirim ke API
+    console.log("🔍 DEBUG - addSurveyMessage dipanggil dengan data:", messageData);
+    
     const response = await surveyApiRequest(
       "/api/survey/messages",
       {
@@ -51,6 +54,9 @@ export async function addSurveyMessage(
       },
       signal
     ) as SurveyMessagesResult;
+
+    // DEBUG: Log response dari API
+    console.log("🔍 DEBUG - Response dari /api/survey/messages:", response);
 
     return response;
   } catch (error) {

@@ -2,13 +2,13 @@
 import { useState, useEffect } from "react";
 import { getSurveyMessages } from "@/services/survey";
 import { getUserData } from "@/services/auth";
-import {  
+import {
   ChatMessage,
   convertApiMessagesToChatMessages,
-  formatSurveyResponse 
 } from "@/utils/surveyMessageFormatters";
 import { addSurveyMessage } from "@/services/survey/surveyMessages";
-import { SurveyMessageRequest } from "@/services/survey/types";
+import { SurveyMessageRequest, SurveyResponseData } from "@/services/survey/types";
+import { v4 as uuidv4 } from 'uuid';
 
 // (localStorage chat history utilities removed as no longer used)
 
@@ -87,72 +87,59 @@ export function useSurveyMessages() {
   // }, [messages]);
 
   // Message management functions
-  const addMessage = (messageInput: Partial<ChatMessage> & { text: string; user: boolean; mode: "survey" | "qa" }) => {
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: messageInput.id || `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-        text: messageInput.text,
-        user: messageInput.user,
-        mode: messageInput.mode,
-        responseType: messageInput.responseType,
-        questionCode: messageInput.questionCode,
-        questionObject: messageInput.questionObject,
-        timestamp: messageInput.timestamp || new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        read: messageInput.user ? true : messageInput.read,
-        loading: messageInput.loading,
-        options: messageInput.options || []
-      },
-    ]);
-
-    // Persist the message to the database if this is a real (non-loading) message and has a valid system_response
-    if (!messageInput.loading) {
-      const payload: SurveyMessageRequest = {
-        user_message: messageInput.user ? messageInput.text : null,
-        system_response: messageInput.user ? {} : { system_message: messageInput.text },
-        mode: messageInput.mode,
-      };
-
-      const openingText = "Selamat datang! Survei ini bertujuan untuk mengumpulkan informasi tentang profil wisatawan nusantara, maksud perjalanan, akomodasi yang digunakan, lama perjalanan, dan rata-rata pengeluaran terkait perjalanan yang dilakukan oleh penduduk Indonesia di dalam wilayah teritorial Indonesia.\n\nSebelum memulai, apakah Anda sudah siap untuk mengikuti survei ini? Contoh: Saya sudah siap untuk mengikuti survei ini.";
-
-      const isOpeningMessage =
-        payload.user_message === null &&
-        payload.system_response &&
-        typeof payload.system_response === 'object' &&
-        'system_message' in payload.system_response &&
-        payload.system_response.system_message === openingText;
-
-      // Only save if:
-      // - user_message is NOT null AND system_response exists and not empty
-      // - OR user_message is null AND system_response.system_message is exactly the opening message
-      if (
-        (payload.user_message !== null && payload.system_response && Object.keys(payload.system_response).length > 0)
-        || isOpeningMessage
-      ) {
-        addSurveyMessage(payload).catch((err) => console.error("Failed to persist message:", err));
+  const updateLastMessage = (text: string, user: boolean, customProps?: Partial<ChatMessage>) => {
+    setMessages((prevMessages) => {
+      if (prevMessages.length === 0) {
+        return [{ 
+          id: uuidv4(), 
+          text, 
+          user, 
+          mode: 'survey', 
+          read: !user, 
+          options: [],
+          ...customProps
+        }];
       }
-    }
-  };
-
-  const updateLastMessage = (text: string, isUser: boolean) => {
-    setMessages((prev) => {
-      const newMessages = [...prev];
+      const newMessages = [...prevMessages];
       if (newMessages.length > 0) {
-        // Find the last message from the specified sender (user or bot)
         const lastIndex = newMessages.length - 1;
-        if (newMessages[lastIndex] && newMessages[lastIndex].user === isUser) {
+        if (newMessages[lastIndex] && newMessages[lastIndex].user === user) {
           newMessages[lastIndex] = {
             ...newMessages[lastIndex],
             text,
             loading: false,
+            ...customProps
           };
         }
       }
       return newMessages;
     });
+  };
+
+  const addMessage = (message: Partial<ChatMessage> & { text: string; user: boolean; mode: 'survey' | 'qa' }) => {
+    const newMessage: ChatMessage = {
+      id: message.id || uuidv4(),
+      text: message.text,
+      user: message.user,
+      mode: message.mode,
+      responseType: message.responseType,
+      questionCode: message.questionCode,
+      questionObject: message.questionObject,
+      timestamp: message.timestamp || new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      read: message.user ? true : message.read,
+      loading: message.loading,
+      options: message.options || []
+    };
+
+    setMessages((prev) => [
+      ...prev,
+      newMessage,
+    ]);
+
+    // Don't persist to database automatically - let the calling code handle it
   };
 
   const refreshMessages = async () => {
@@ -182,18 +169,52 @@ export function useSurveyMessages() {
     }
   };
 
+  const addSystemMessage = (systemResponse: SurveyResponseData, mode: 'survey' | 'qa' = 'survey') => {
+    const payload: SurveyMessageRequest = {
+      user_message: null,
+      system_response: systemResponse,
+      mode: mode,
+    };
+
+    return addSurveyMessage(payload)
+      .catch(err => console.error("Gagal menyimpan pesan sistem ke database:", err));
+  };
+
+  const addUserAndSystemMessage = (userMessage: string, systemResponse: SurveyResponseData, mode: 'survey' | 'qa' = 'survey') => {
+    const payload: SurveyMessageRequest = {
+      user_message: userMessage,
+      system_response: systemResponse,
+      mode: mode,
+    };
+
+    // DEBUG: Log payload yang akan dikirim ke API
+    console.log("🔍 DEBUG - addUserAndSystemMessage dipanggil dengan payload:", payload);
+
+    return addSurveyMessage(payload)
+      .then(result => {
+        // DEBUG: Log hasil dari addSurveyMessage
+        console.log("🔍 DEBUG - Hasil addSurveyMessage:", result);
+        return result;
+      })
+      .catch(err => {
+        console.error("Gagal menyimpan pesan user dan sistem ke database:", err);
+        throw err;
+      });
+  };
+
   const setActiveChatSession = () => {};
 
   return {
     messages,
     addMessage,
     updateLastMessage,
+    addSystemMessage,
+    addUserAndSystemMessage,
     refreshMessages,
     setActiveChatSession,
     isLoaded,
     isLoading,
     error,
     userId,
-    formatSurveyResponse,
   };
 }
