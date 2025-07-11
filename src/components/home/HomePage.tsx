@@ -23,7 +23,7 @@ const HomePage: React.FC = () => {
     const homeRef = useRef<HTMLDivElement>(null);
     const guidesRef = useRef<HTMLDivElement>(null);
     const aboutRef = useRef<HTMLDivElement>(null);
-    const { isAuthenticated, loading } = useAuth();
+    const { loading } = useAuth();
 
     // Initialize tutorial state from localStorage
     useEffect(() => {
@@ -71,8 +71,8 @@ const HomePage: React.FC = () => {
         return <Loader />;
     }
 
-    // Show tutorial only if user is not authenticated and tutorial is not done
-    if (!isAuthenticated && !tutorialDone) {
+    // Show tutorial if tutorial is not done (regardless of authentication status)
+    if (!tutorialDone) {
         return <TutorialFlow onFinish={handleTutorialFinish} />;
     }
 

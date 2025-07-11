@@ -1,9 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Book, FileText, CheckCircle, MessageCircleQuestion, ListChecks } from "lucide-react";
+import { Book, CheckCircle, MessageCircleQuestion, ListChecks, Play } from "lucide-react";
 import { Merriweather_Sans } from "next/font/google";
 import Image from "next/image";
+import { resetTutorialState } from '@/utils/otherUtils';
 
 const merriweatherSans = Merriweather_Sans({
   variable: "--font-merriweather-sans",
@@ -34,6 +35,13 @@ const GuidesSection: React.FC = () => {
       description: "Anda dapat bertanya terkait pertanyaan tertentu secara langsung dan pastikan Anda menjawab semua pertanyaan dengan baik."
     }
   ];
+
+  const handleStartTutorial = () => {
+    // Reset tutorial state to show tutorial again
+    resetTutorialState();
+    // Reload the page to trigger tutorial flow
+    window.location.href = '/';
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center py-20 relative" id="guides">
@@ -114,26 +122,27 @@ const GuidesSection: React.FC = () => {
             
             <div className="w-full md:w-2/3">
               <h3 className={`${merriweatherSans.className} text-xl font-bold text-blue-800 dark:text-blue-300 mb-3`}>
-                Unduh Panduan Lengkap
+                Lihat Tutorial Interaktif
               </h3>
               <p className="text-justify text-gray-700 dark:text-gray-300 text-sm mb-4">
-                Untuk informasi lebih detail, Anda dapat mengunduh panduan lengkap survei digital
-                wisatawan nusantara dalam format PDF.
+                Untuk pemahaman yang lebih baik, Anda dapat melihat tutorial interaktif yang akan 
+                menjelaskan setiap fitur dan cara menggunakan platform survei digital wisatawan nusantara.
               </p>
               <motion.button
+                onClick={handleStartTutorial}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
               >
-                <FileText className="w-4 h-4" />
-                Unduh Panduan PDF
+                <Play className="w-4 h-4" />
+                Mulai Tutorial
               </motion.button>
             </div>
           </div>
           
           {/* Decorative elements */}
           <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-blue-200 dark:bg-blue-700 rounded-full opacity-30 -z-10"></div>
-          <div className="absolute -left-6 -top-6 w-24 h-24 bg-indigo-200 dark:bg-indigo-700 rounded-full opacity-30 -z-10"></div>
+          <div className="absolute -left-6 -top-6 w-24 h-24 bg-indigo-200 dark:indigo-700 rounded-full opacity-30 -z-10"></div>
         </motion.div>
       </div>
     </div>
