@@ -216,5 +216,6 @@ export function useSurveyMessages() {
     isLoading,
     error,
     userId,
+    setMessages,
   };
 }

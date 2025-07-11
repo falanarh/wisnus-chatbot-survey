@@ -26,6 +26,7 @@ interface ChatLayoutProps {
     addUserAndSystemMessage: (userMessage: string, systemResponse: SurveyResponseData, mode?: 'survey' | 'qa') => void;
     refreshStatus: () => void;
     refreshAnsweredQuestions: () => void;
+    setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
 }
 
 const ChatLayout: React.FC<ChatLayoutProps> = ({
@@ -34,7 +35,8 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     updateLastMessage,
     addUserAndSystemMessage,
     refreshStatus,
-    refreshAnsweredQuestions
+    refreshAnsweredQuestions,
+    setMessages
 }) => {
     // State
     const [input, setInput] = useState("");
@@ -103,26 +105,45 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
           getCurrentQuestion().then(response => {
             if (response.success && response.data?.current_question) {
               const q = response.data.current_question;
+              
+              // Format response untuk mendapatkan custom component properties
+              const systemResponse = {
+                info: 'question',
+                currentQuestion: q,
+                system_message: q.text
+              };
+              const botResponse = formatSurveyResponse(systemResponse);
+              
               const questionMsgId = `q_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-              addMessage({
+              
+              // Buat final message dengan custom component properties
+              const finalMessage: ChatMessage = {
                 id: questionMsgId,
                 text: q.text,
                 user: false,
                 mode: 'survey',
+                loading: false,
                 questionObject: q,
                 questionCode: q.code,
                 options: q.options || [],
-                customComponent: 'InfoWithQuestion',
-                responseType: 'question'
-              });
+                customComponent: botResponse.customComponent,
+                responseType: botResponse.responseType,
+                infoText: botResponse.infoText,
+                questionText: botResponse.questionText,
+                timestamp: new Date().toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                }),
+                read: false
+              };
+              
+              // Tambahkan pesan dengan custom component properties
+              setMessages(prevMessages => [...prevMessages, finalMessage]);
+              
               // Persist to DB
               addSurveyMessage({
                 user_message: null,
-                system_response: {
-                  info: 'question',
-                  currentQuestion: q,
-                  system_message: q.text
-                },
+                system_response: systemResponse,
                 mode: 'survey'
               }).catch((err) => console.error('Failed to persist injected system question:', err));
               animateTokenByToken(questionMsgId, q.text, () => {
@@ -135,7 +156,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         }
       }
       _setMode(newMode);
-    }, [mode, messages, addMessage]);
+    }, [mode, messages, addMessage, setMessages]);
 
     // Wrapper to match Dispatch<SetStateAction<'survey' | 'qa'>> signature
     const setModeDispatch: React.Dispatch<React.SetStateAction<'survey' | 'qa'>> = (value) => {
@@ -399,14 +420,18 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                         }, 100);
                     }
 
+                    // Format response untuk mendapatkan custom component properties
+                    const systemResponse = {
+                        info: "switched_to_survey",
+                        currentQuestion: current_question,
+                        additional_info: "Anda telah beralih ke mode survei."
+                    };
+                    const botResponse = formatSurveyResponse(systemResponse);
+
                     // Kirim ke database
                     const surveyMessage: SurveyMessageRequest = {
                         user_message: null,
-                        system_response: {
-                            info: "switched_to_survey",
-                            currentQuestion: current_question,
-                            additional_info: "Anda telah beralih ke mode survei."
-                        },
+                        system_response: systemResponse,
                         mode: 'survey',
                     };
                     await addSurveyMessage(surveyMessage);
@@ -414,18 +439,29 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                     // Buat messageId unik
                     const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-                    // Tambahkan pesan kosong terlebih dahulu
-                    addMessage({
+                    // Buat final message dengan custom component properties
+                    const finalMessage: ChatMessage = {
                         id: messageId,
                         text: pesanTeks,
                         user: false,
                         mode: 'survey',
+                        loading: false,
                         questionObject: current_question,
                         questionCode: current_question.code,
                         options: [],
-                        customComponent: 'SwitchedToSurveyMessage',
-                        responseType: 'switched_to_survey'
-                    });
+                        customComponent: botResponse.customComponent,
+                        responseType: botResponse.responseType,
+                        infoText: botResponse.infoText,
+                        questionText: botResponse.questionText,
+                        timestamp: new Date().toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                        }),
+                        read: false
+                    };
+
+                    // Tambahkan pesan dengan custom component properties
+                    setMessages(prevMessages => [...prevMessages, finalMessage]);
 
                     // Animasi token dan kemudian opsi
                     animateTokenByToken(messageId, pesanTeks, () => {
@@ -546,26 +582,44 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                             }, 100);
                         }
                         
+                        // Format response untuk mendapatkan custom component properties
+                        const systemResponse = {
+                            info: 'question',
+                            currentQuestion: q,
+                            system_message: q.text
+                        };
+                        const botResponse = formatSurveyResponse(systemResponse);
+                        
                         const questionMsgId = `q_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-                        addMessage({
+                        
+                        // Buat final message dengan custom component properties
+                        const finalMessage: ChatMessage = {
                             id: questionMsgId,
                             text: q.text,
                             user: false,
                             mode: "survey",
+                            loading: false,
                             questionObject: q,
                             questionCode: q.code,
                             options: q.options || [],
-                            customComponent: 'InfoWithQuestion',
-                            responseType: 'question'
-                        });
+                            customComponent: botResponse.customComponent,
+                            responseType: botResponse.responseType,
+                            infoText: botResponse.infoText,
+                            questionText: botResponse.questionText,
+                            timestamp: new Date().toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                            }),
+                            read: false
+                        };
+                        
+                        // Tambahkan pesan dengan custom component properties
+                        setMessages(prevMessages => [...prevMessages, finalMessage]);
+                        
                         // Persist to DB
                         addSurveyMessage({
                           user_message: null,
-                          system_response: {
-                            info: 'question',
-                            currentQuestion: q,
-                            system_message: q.text
-                          },
+                          system_response: systemResponse,
                           mode: 'survey'
                         }).catch((err) => console.error('Failed to persist injected system question:', err));
                         animateTokenByToken(questionMsgId, q.text, () => {
@@ -714,31 +768,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 console.log("🔍 DEBUG - Menyimpan pesan ke database karena API tidak menyimpannya otomatis");
                 addUserAndSystemMessage(userMessage, response, 'survey');
             } else {
-                console.log("�� DEBUG - Tidak menyimpan pesan ke database karena API sudah menyimpannya otomatis");
-            }
-    
-            // Important: Update the loading message right away to show content
-            // This stops the loader from showing and displays the actual message
-            if (!(botResponse.questionObject?.code === "KR004")) {
-                // Extract custom component properties from botResponse
-                const customProps: Partial<ChatMessage> = {
-                    customComponent: botResponse.customComponent,
-                    infoText: botResponse.infoText,
-                    infoSource: botResponse.infoSource,
-                    questionText: botResponse.questionText,
-                    responseType: botResponse.responseType,
-                    questionCode: botResponse.questionCode,
-                    questionObject: botResponse.questionObject,
-                    options: botResponse.options
-                };
-                
-                updateLastMessage(
-                    typeof botResponse.text === 'string' ? botResponse.text : String(botResponse.text), 
-                    false,
-                    customProps
-                );
-            } else {
-                updateLastMessage("", false); // Clear the message for KR004
+                console.log("🔍 DEBUG - Tidak menyimpan pesan ke database karena API sudah menyimpannya otomatis");
             }
     
             // Perlakuan khusus untuk pertanyaan KR004
@@ -756,7 +786,11 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                     mode: 'survey',
                     questionObject: botResponse.questionObject,
                     questionCode: botResponse.questionObject.code,
-                    options: botResponse.questionObject.options // Add all options right away
+                    options: botResponse.questionObject.options, // Add all options right away
+                    customComponent: botResponse.customComponent,
+                    responseType: botResponse.responseType,
+                    infoText: botResponse.infoText,
+                    questionText: botResponse.questionText
                 });
     
                 // We still animate the text for a nice effect
@@ -767,7 +801,37 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                     setAnimatingMessageId(null);
                 });
             } else {
-                // For other questions, animate token by token but ensure text is displayed
+                // For other questions, replace the loading message with the formatted response
+                // This ensures custom components are applied immediately
+                const finalMessage: ChatMessage = {
+                    id: loadingMsgId,
+                    text: typeof botResponse.text === 'string' ? botResponse.text : String(botResponse.text),
+                    user: false,
+                    mode: 'survey',
+                    loading: false,
+                    customComponent: botResponse.customComponent,
+                    responseType: botResponse.responseType,
+                    questionCode: botResponse.questionCode,
+                    questionObject: botResponse.questionObject,
+                    infoText: botResponse.infoText,
+                    infoSource: botResponse.infoSource,
+                    questionText: botResponse.questionText,
+                    options: botResponse.options || [],
+                    timestamp: new Date().toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    }),
+                    read: false
+                };
+                
+                // Replace the loading message with the final message
+                setMessages(prevMessages => 
+                    prevMessages.map(msg => 
+                        msg.id === loadingMsgId ? finalMessage : msg
+                    )
+                );
+                
+                // Animate token by token
                 animateTokenByToken(loadingMsgId, typeof botResponse.text === 'string' ? botResponse.text : String(botResponse.text), () => {
                     // If there are options, show them immediately 
                     if (botResponse.questionObject?.options?.length) {

@@ -26,7 +26,7 @@ import { getValidAnsweredQuestions, sortQuestionCodes } from "@/utils/surveyUtil
 
 const SurveyChatbot: React.FC = () => {
   const { isLoading: isLoadingSurveyStatus, error, sessionData, refreshStatus, refreshStatusSilent } = useSurveyStatus();
-  const { isLoading: isLoadingSurveyMessages, messages, addMessage, updateLastMessage, addUserAndSystemMessage } = useSurveyMessages();
+  const { isLoading: isLoadingSurveyMessages, messages, addMessage, updateLastMessage, addUserAndSystemMessage, setMessages } = useSurveyMessages();
   const { data: answeredQuestions, isLoading: isLoadingAnsweredQuestions, refetch: refetchAnsweredQuestions } = useAnsweredQuestions();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editPopupOpen, setEditPopupOpen] = useState(false);
@@ -288,6 +288,7 @@ const SurveyChatbot: React.FC = () => {
           addUserAndSystemMessage={addUserAndSystemMessage}
           refreshStatus={refreshStatusSilent}
           refreshAnsweredQuestions={refetchAnsweredQuestions}
+          setMessages={setMessages}
         />
 
         {/* Edit Answer Popup */}
@@ -318,7 +319,7 @@ const SurveyChatbot: React.FC = () => {
   // Fallback loading state
   return (
     <StyledBackground>
-      <ChatLayout messages={messages} addMessage={addMessage} updateLastMessage={updateLastMessage} addUserAndSystemMessage={addUserAndSystemMessage} refreshStatus={refreshStatusSilent} refreshAnsweredQuestions={refetchAnsweredQuestions} />
+      <ChatLayout messages={messages} addMessage={addMessage} updateLastMessage={updateLastMessage} addUserAndSystemMessage={addUserAndSystemMessage} refreshStatus={refreshStatusSilent} refreshAnsweredQuestions={refetchAnsweredQuestions} setMessages={setMessages} />
     </StyledBackground>
   );
 };

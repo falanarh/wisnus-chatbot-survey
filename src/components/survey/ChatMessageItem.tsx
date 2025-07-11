@@ -13,11 +13,11 @@ const SwitchedToSurveyMessage: React.FC<{ message: ChatMessage }> = ({ message }
     <div>
       <div className="bg-green-50 dark:bg-green-900/40 rounded-lg p-3 mb-3 border-l-4 border-green-400">
         <div className="text-xs font-semibold text-green-700 dark:text-green-200 mb-1">Keterangan</div>
-        <div className="text-sm text-gray-800 dark:text-gray-100">{message.text}</div>
+        <div className="text-sm text-gray-800 dark:text-gray-100">Anda telah beralih ke mode survei. Silakan jawab pertanyaan survei.</div>
       </div>
       <div className="mt-2">
         <div className="text-xs text-gray-400 mb-1">Pertanyaan saat ini:</div>
-        <div className="font-semibold text-base">{message.questionObject?.text || "Pertanyaan tidak ditemukan."}</div>
+        <div className="font-semibold text-sm">{message.questionObject?.text || "Pertanyaan tidak ditemukan."}</div>
       </div>
     </div>
   );
