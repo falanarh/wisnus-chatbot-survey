@@ -112,7 +112,7 @@ const GuidesSection: React.FC = () => {
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="w-full md:w-1/3 relative">
               <Image
-                src="/guide-illustration.svg"
+                src="/hero_pict.svg"
                 alt="Panduan Survei"
                 width={250}
                 height={250}
