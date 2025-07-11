@@ -106,17 +106,16 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             if (response.success && response.data?.current_question) {
               const q = response.data.current_question;
               
-              // Format response untuk mendapatkan custom component properties
+              // Format response untuk auto-injected question
               const systemResponse = {
                 info: 'question',
                 currentQuestion: q,
                 system_message: q.text
               };
-              const botResponse = formatSurveyResponse(systemResponse);
               
               const questionMsgId = `q_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
               
-              // Buat final message dengan custom component properties
+              // Buat final message dengan custom component properties untuk auto-injected question
               const finalMessage: ChatMessage = {
                 id: questionMsgId,
                 text: q.text,
@@ -126,10 +125,10 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                 questionObject: q,
                 questionCode: q.code,
                 options: q.options || [],
-                customComponent: botResponse.customComponent,
-                responseType: botResponse.responseType,
-                infoText: botResponse.infoText,
-                questionText: botResponse.questionText,
+                customComponent: 'AutoInjectedQuestion',
+                responseType: 'auto_injected_question',
+                infoText: 'Melanjutkan pertanyaan terakhir. Jawablah pertanyaan berikut ini.',
+                questionText: q.text,
                 timestamp: new Date().toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",

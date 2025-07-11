@@ -23,6 +23,21 @@ const SwitchedToSurveyMessage: React.FC<{ message: ChatMessage }> = ({ message }
   );
 };
 
+const AutoInjectedQuestion: React.FC<{ message: ChatMessage }> = ({ message }) => {
+  return (
+    <div>
+      <div className="bg-indigo-50 dark:bg-indigo-900/40 rounded-lg p-3 mb-3 border-l-4 border-indigo-400">
+        <div className="text-xs font-semibold text-indigo-700 dark:text-indigo-200 mb-1">Keterangan</div>
+        <div className="text-sm text-gray-800 dark:text-gray-100">Melanjutkan pertanyaan terakhir. Jawablah pertanyaan berikut ini.</div>
+      </div>
+      <div className="mt-2">
+        <div className="text-xs text-gray-400 mb-1">Pertanyaan saat ini:</div>
+        <div className="font-semibold text-sm">{message.questionObject?.text || "Pertanyaan tidak ditemukan."}</div>
+      </div>
+    </div>
+  );
+};
+
 const QAMessage: React.FC<{ message: ChatMessageWithCustom }> = ({ message }) => {
   return (
     <div>
@@ -73,7 +88,7 @@ const InfoWithQuestion: React.FC<{ message: ChatMessageWithCustom }> = ({ messag
 
 // Patch: Extend ChatMessage locally to include customComponent if not yet picked up by TS
 interface ChatMessageWithCustom extends ChatMessage {
-  customComponent?: 'SwitchedToSurveyMessage' | 'InfoWithQuestion' | 'QAMessage' | 'ExpectedAnswerMessage';
+  customComponent?: 'SwitchedToSurveyMessage' | 'InfoWithQuestion' | 'QAMessage' | 'ExpectedAnswerMessage' | 'AutoInjectedQuestion';
   infoText?: string;
   infoSource?: string;
   questionText?: string;
@@ -187,6 +202,8 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                 <QAMessage message={message} />
               ) : message.customComponent === 'ExpectedAnswerMessage' ? (
                 <ExpectedAnswerMessage message={message} />
+              ) : message.customComponent === 'AutoInjectedQuestion' ? (
+                <AutoInjectedQuestion message={message} />
               ) : (
                 <p className="break-words whitespace-pre-wrap">
                   {message.text}

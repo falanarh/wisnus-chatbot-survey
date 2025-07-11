@@ -14,7 +14,7 @@ export interface ChatMessage {
   timestamp?: string;
   read?: boolean;
   options?: string[]; // Opsi yang ditampilkan untuk pesan ini
-  customComponent?: 'SwitchedToSurveyMessage' | 'InfoWithQuestion' | 'QAMessage' | 'ExpectedAnswerMessage';
+  customComponent?: 'SwitchedToSurveyMessage' | 'InfoWithQuestion' | 'QAMessage' | 'ExpectedAnswerMessage' | 'AutoInjectedQuestion';
   infoText?: string;
   infoSource?: string;
   questionText?: string;
@@ -164,6 +164,27 @@ export function formatSurveyResponse(
           }
           responseText =  `${answer} \n\nPertanyaan saat ini:\n\n${currentQuestion.text}` || system_message || "Silakan jawab pertanyaan saat ini.";
           questionObject = currentQuestion;
+        } else if (currentQuestion && system_message) {
+          // Handle auto-injected questions (from setModeAsync)
+          const timestamp = new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          return {
+            id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+            text: currentQuestion.text,
+            user: false,
+            mode: 'survey',
+            responseType: 'auto_injected_question',
+            questionCode: currentQuestion.code,
+            questionObject: currentQuestion,
+            timestamp,
+            read: false,
+            options: currentQuestion.options || [],
+            customComponent: 'AutoInjectedQuestion',
+            infoText: 'Melanjutkan pertanyaan terakhir. Jawablah pertanyaan berikut ini.',
+            questionText: currentQuestion.text,
+          };
         } else {
           responseText = system_message || "Silakan jawab pertanyaan saat ini.";
         }
