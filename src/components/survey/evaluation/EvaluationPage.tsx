@@ -8,17 +8,12 @@ import QuestionHeader from "./QuestionHeader";
 import ProgressBar from "./ProgressBar";
 import QuestionCard from "./QuestionCard";
 import Footer from "./Footer";
-import { getUserData } from "@/services/auth";
 import { useEvaluation } from "@/hooks/useEvaluation";
 import { useSurveyStatus } from "@/hooks/useSurveyStatus";
 import Loader from "@/components/other/Loader";
 
 const EvaluationPage: React.FC = () => {
   const router = useRouter();
-  // Get session ID from user data if available
-  const userData = getUserData();
-  const sessionId = userData?.activeSurveySessionId;
-  
   // Use the survey status hook to check if survey is completed
   const { isLoading: isStatusLoading, sessionData } = useSurveyStatus(true);
   
@@ -26,9 +21,24 @@ const EvaluationPage: React.FC = () => {
   const [countdown, setCountdown] = useState(10);
   const [showRedirectPopup, setShowRedirectPopup] = useState(false);
 
+  const {
+    currentQuestion,
+    currentQuestionIndex,
+    isLoading: isEvaluationLoading,
+    isSubmitting,
+    error,
+    isComplete,
+    questions,
+    submitQuestionAnswer,
+    goToPreviousQuestion
+  } = useEvaluation();
+
+  // Combine loading states
+  const isLoading = isStatusLoading || isEvaluationLoading;
+
   // Check if survey is completed and setup redirect timer if needed
   useEffect(() => {
-    if (!isStatusLoading) {
+    if (!isLoading) {
       const shouldRedirect = !sessionData || sessionData.status !== "COMPLETED";
       setShowRedirectPopup(shouldRedirect);
       
@@ -38,7 +48,6 @@ const EvaluationPage: React.FC = () => {
           setCountdown(prev => {
             if (prev <= 1) {
               clearInterval(timer);
-              // Move the navigation outside the state update function
               return 0;
             }
             return prev - 1;
@@ -50,29 +59,14 @@ const EvaluationPage: React.FC = () => {
         if (timer) clearInterval(timer);
       };
     }
-  }, [isStatusLoading, sessionData]);
-  
+  }, [isLoading, sessionData]);
+
   // Separate effect to handle the navigation
   useEffect(() => {
     if (countdown === 0 && showRedirectPopup) {
       router.push("/survey");
     }
   }, [countdown, router, showRedirectPopup]);
-
-  const {
-    currentQuestion,
-    currentQuestionIndex,
-    isLoading,
-    isSubmitting,
-    error,
-    isComplete,
-    questions,
-    submitQuestionAnswer,
-    goToPreviousQuestion
-  } = useEvaluation({ sessionId });
-
-  const isLastQuestion = currentQuestionIndex === questions.length - 1;
-  const isFirstQuestion = currentQuestionIndex === 0;
 
   // Keep track of currently selected value before submitting
   const [selectedValue, setSelectedValue] = useState<number | string | undefined>(undefined);
@@ -104,7 +98,8 @@ const EvaluationPage: React.FC = () => {
     router.push("/survey");
   };
 
-  if (isStatusLoading || isLoading) {
+  // Show loading state while any data is being fetched
+  if (isLoading) {
     return (
       <div className="flex min-h-screen relative">
         {/* Background Layer */}
@@ -139,16 +134,20 @@ const EvaluationPage: React.FC = () => {
 
         {/* Centered Loader */}
         <div className="fixed inset-0 flex items-center justify-center z-10">
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center space-y-4">
             <Loader />
-            <p className="mt-4 text-gray-700 dark:text-gray-300 font-medium">Sedang memuat...</p>
+            <p className="text-gray-700 dark:text-gray-300 font-medium text-center">
+              Sedang memuat data evaluasi...<br/>
+              <span className="text-sm text-gray-500 dark:text-gray-400">Mohon tunggu sebentar</span>
+            </p>
           </div>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  // Only show error after loading is complete
+  if (!isLoading && error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 dark:from-gray-900 dark:via-purple-900 dark:to-blue-900">
         <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full">
@@ -172,6 +171,9 @@ const EvaluationPage: React.FC = () => {
   if (!currentQuestion) {
     return null; // Or a better fallback UI
   }
+
+  const isLastQuestion = currentQuestionIndex === questions.length - 1;
+  const isFirstQuestion = currentQuestionIndex === 0;
 
   return (
     <div className="min-h-screen relative">

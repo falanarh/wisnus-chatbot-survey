@@ -14,33 +14,36 @@ interface SurveyCompletionPageProps {
 const SurveyCompletionPage: React.FC<SurveyCompletionPageProps> = ({ sessionData }) => {
     const router = useRouter();
     const [showPopup, setShowPopup] = useState(false);
+    const [secondsLeft, setSecondsLeft] = useState(10);
 
     // Format the completion date if available
     const completionDate = sessionData ? formatDate(new Date(sessionData.updated_at)) : "N/A";
-
     const surveyDuration = sessionData
         ? calculateDurationInMinutes(new Date(sessionData.started_at), new Date(sessionData.updated_at))
         : "N/A";
-
-    // Get survey duration if available
     const surveyDurationStr = typeof surveyDuration === 'number' ? formatDuration(surveyDuration) : "N/A";
 
     // Show popup after a short delay to let the user see the completion screen first
     useEffect(() => {
         const timer = setTimeout(() => {
             setShowPopup(true);
-        }, 2000);
-        
+        }, 5000);
         return () => clearTimeout(timer);
     }, []);
 
-    const handleStay = () => {
-        setShowPopup(false);
-    };
+    // Countdown and auto-navigate logic
+    useEffect(() => {
+        if (!showPopup) return;
+        if (secondsLeft <= 0) {
+            router.push('/survey/evaluation');
+            return;
+        }
+        const timer = setTimeout(() => setSecondsLeft(s => s - 1), 1000);
+        return () => clearTimeout(timer);
+    }, [showPopup, secondsLeft, router]);
 
-    const handleNavigate = () => {
-        router.push('/survey/evaluation');
-    };
+    const handleStay = () => setShowPopup(false);
+    const handleNavigate = () => router.push('/survey/evaluation');
 
     return (
         <div className="min-h-screen relative">
@@ -181,8 +184,8 @@ const SurveyCompletionPage: React.FC<SurveyCompletionPageProps> = ({ sessionData
             
             {/* Auto-navigate Popup */}
             {showPopup && (
-                <AutoNavigatePopup 
-                    countdownSeconds={5}
+                <AutoNavigatePopup
+                    secondsLeft={secondsLeft}
                     onStay={handleStay}
                     onNavigate={handleNavigate}
                 />

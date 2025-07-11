@@ -11,7 +11,7 @@ import { evaluationQuestions } from "@/components/survey/evaluation/constants";
 import { useSurveyStatus } from "./useSurveyStatus";
 
 export function useEvaluation() {
-  const { sessionData } = useSurveyStatus();
+  const { sessionData, isLoading: isSurveyLoading } = useSurveyStatus();
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questions, setQuestions] = useState<EvaluationQuestionItem[]>([]);
@@ -30,7 +30,7 @@ export function useEvaluation() {
     let isMounted = true;
 
     async function loadOrInitializeEvaluation() {
-      if (!isMounted) return;
+      if (!isMounted || isSurveyLoading) return;
 
       setIsLoading(true);
       setError(null);
