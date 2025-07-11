@@ -20,7 +20,7 @@ import ProgressBar from "./ProgressBar";
 import AnsweredQuestionList from "./AnsweredQuestionList";
 import SuccessToast from "./SuccessToast";
 import StyledBackground from "./StyledBackground";
-import LoadingState from "./LoadingState";
+import LoadingState from "../other/LoadingState";
 import ErrorState from "./ErrorState";
 import { getValidAnsweredQuestions, sortQuestionCodes } from "@/utils/surveyUtils";
 
@@ -225,7 +225,7 @@ const SurveyChatbot: React.FC = () => {
 
   // Selalu tampilkan LoadingState terlebih dahulu
   if (isLoadingSurveyStatus || isLoadingSurveyMessages) {
-    return <LoadingState />;
+    return <LoadingState message="Sedang memuat data survei..." />;
   }
 
   // Tampilkan popup kode unik jika perlu

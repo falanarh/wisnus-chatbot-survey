@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { getTutorialCompleted, setTutorialCompleted } from "@/utils/otherUtils";
 import TutorialFlow from "../other/TutorialFlow";
+// import Loader from "../other/Loader";
 
 interface SurveyCodeInputPopupProps {
   open: boolean;
-  onSubmit: (code: string) => void;
+  onSubmit: (code: string) => Promise<void> | void;
   onClose?: () => void;
   errorMessage?: string;
 }
@@ -22,12 +23,16 @@ const SurveyCodeInputPopup: React.FC<SurveyCodeInputPopupProps> = ({
   const [code, setCode] = useState("");
   const [touched, setTouched] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const isTutorialComplete = getTutorialCompleted();
+  const [isTutorialCompleteState, setIsTutorialCompleteState] = useState(
+    getTutorialCompleted()
+  );
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (open) {
       setCode("");
       setTouched(false);
+      setIsLoading(false);
       setTimeout(() => {
         inputRef.current?.focus();
       }, 200);
@@ -41,10 +46,15 @@ const SurveyCodeInputPopup: React.FC<SurveyCodeInputPopupProps> = ({
     setTouched(true);
   };
 
-  const handleSubmit = (e?: React.FormEvent) => {
+  const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (code.length === CODE_LENGTH) {
-      onSubmit(code);
+      setIsLoading(true);
+      try {
+        await onSubmit(code);
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       setTouched(true);
     }
@@ -52,12 +62,11 @@ const SurveyCodeInputPopup: React.FC<SurveyCodeInputPopupProps> = ({
 
   const handleTutorialFinish = () => {
     setTutorialCompleted(true);
+    setIsTutorialCompleteState(true);
   };
 
-  if (!isTutorialComplete) {
-    return (
-      <TutorialFlow onFinish={handleTutorialFinish} />
-    );
+  if (!isTutorialCompleteState) {
+    return <TutorialFlow onFinish={handleTutorialFinish} />;
   }
 
   const handleClose = () => {
@@ -117,10 +126,13 @@ const SurveyCodeInputPopup: React.FC<SurveyCodeInputPopupProps> = ({
                 autoFocus
                 aria-label="Kode Survei"
                 onBlur={() => setTouched(true)}
+                disabled={isLoading}
               />
               <div className="h-5 mb-2">
                 {errorMessage ? (
-                  <span className="text-xs text-red-600 dark:text-red-400 block text-center">{errorMessage}</span>
+                  <span className="text-xs text-red-600 dark:text-red-400 block text-center">
+                    {errorMessage}
+                  </span>
                 ) : touched && !isValid && code.length > 0 ? (
                   <span className="text-xs text-yellow-600 dark:text-yellow-400 block text-center">
                     Kode harus 5 karakter (A-Z, 0-9)
@@ -129,14 +141,38 @@ const SurveyCodeInputPopup: React.FC<SurveyCodeInputPopupProps> = ({
               </div>
               <button
                 type="submit"
-                className={`w-full py-2.5 rounded-lg font-semibold text-white transition-all text-base mt-1 ${
-                  isValid
+                className={`w-full py-2.5 rounded-lg font-semibold text-white transition-all text-base mt-1 flex items-center justify-center gap-2 ${
+                  isValid && !isLoading
                     ? "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
                     : "bg-gray-400 cursor-not-allowed"
                 }`}
-                disabled={!isValid}
+                disabled={!isValid || isLoading}
               >
-                Mulai Survei
+                {isLoading && (
+                  <div className="flex items-center">
+                    <svg
+                      className="animate-spin h-5 w-5 text-white mr-2"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                  </div>
+                )}
+                {isLoading ? "Memproses..." : "Mulai Survei"}
               </button>
             </form>
           </motion.div>
@@ -146,4 +182,4 @@ const SurveyCodeInputPopup: React.FC<SurveyCodeInputPopupProps> = ({
   );
 };
 
-export default SurveyCodeInputPopup; 
+export default SurveyCodeInputPopup;

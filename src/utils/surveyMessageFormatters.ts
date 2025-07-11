@@ -104,7 +104,7 @@ export function formatSurveyResponse(
         break;
 
       default:
-        responseText = "Silakan lanjutkan menjawab pertanyaan survei.";
+        responseText = "Terjadi kesalahan jaringan. Pastikan jaringan internet Anda dapat berjalan dengan baik.";
     }
   } else if (response.answer) {
     // For QA-type responses

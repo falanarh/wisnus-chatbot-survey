@@ -9,8 +9,8 @@ import HomeSection from './HomeSection';
 import Header from './Header';
 import TutorialFlow from '../other/TutorialFlow';
 import { useAuth } from '@/context/AuthContext';
-import Loader from '../other/Loader';
 import { getTutorialCompleted, setTutorialCompleted } from '@/utils/otherUtils';
+import LoadingState from '../other/LoadingState';
 
 const mulish = Mulish({
     variable: "--font-mulish",
@@ -68,7 +68,7 @@ const HomePage: React.FC = () => {
 
     // Show loading while checking authentication or tutorial state
     if (loading || tutorialDone === null) {
-        return <Loader />;
+        return <LoadingState message="Sedang memuat halaman utama..." />;
     }
 
     // Show tutorial if tutorial is not done (regardless of authentication status)

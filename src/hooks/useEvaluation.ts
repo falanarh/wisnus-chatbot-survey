@@ -32,6 +32,7 @@ export function useEvaluation() {
     async function loadOrInitializeEvaluation() {
       if (!isMounted || isSurveyLoading) return;
 
+      console.log("Running loadOrInitializeEvaluation...");
       setIsLoading(true);
       setError(null);
       const sessionId = sessionData?.session_id;
@@ -124,7 +125,7 @@ export function useEvaluation() {
     return () => {
       isMounted = false;
     };
-  }, [sessionData?.session_id]);
+  }, [isSurveyLoading, sessionData?.session_id]);
 
   // Update questions with current values - FIXED to prevent infinite loop
   useEffect(() => {

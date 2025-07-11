@@ -56,7 +56,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     // Mode confirmation popup state
     const [showModePopup, setShowModePopup] = useState(false);
     const qaTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const qaTimeoutDuration = 120; // 120 seconds in QA mode before showing popup
+    const qaTimeoutDuration = 30; // 120 seconds in QA mode before showing popup
     const popupCountdown = 10; // 10 seconds countdown in the popup
 
     // Ganti nama state untuk toast
@@ -343,7 +343,8 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
 
     // Fungsi untuk beralih dari mode QA ke mode survei
     const handleSwitchToSurvey = async () => {
-        setModeDispatch('survey');
+        // setModeDispatch('survey');
+        _setMode('survey');
         setShowModePopup(false);
 
         // Membersihkan timer mode QA

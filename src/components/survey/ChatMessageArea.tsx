@@ -80,7 +80,7 @@ const ChatMessageArea: React.FC<ChatMessageAreaProps> = ({
                     />
                   )}
                   {index === messages.length - 1 && (
-                    <div className="h-20" key={`spacer-bottom-${index}`}></div>
+                    <div className="h-40" key={`spacer-bottom-${index}`}></div>
                   )}
                 </div>
               );
