@@ -14,7 +14,7 @@ export interface ChatMessage {
   timestamp?: string;
   read?: boolean;
   options?: string[]; // Opsi yang ditampilkan untuk pesan ini
-  customComponent?: 'SwitchedToSurveyMessage' | 'InfoWithQuestion' | 'QAMessage' | 'ExpectedAnswerMessage' | 'AutoInjectedQuestion';
+  customComponent?: 'SwitchedToSurveyMessage' | 'InfoWithQuestion' | 'QAMessage' | 'ExpectedAnswerMessage' | 'AutoInjectedQuestion' | 'UnexpectedAnswerMessage' | 'NotReadyForSurveyMessage' | 'SurveyStartedMessage' | 'WelcomeMessage';
   infoText?: string;
   infoSource?: string;
   questionText?: string;
@@ -52,6 +52,25 @@ export function formatSurveyResponse(
         responseText = additional_info || "Survei telah selesai.";
         break;
 
+      case "welcome":
+        responseText = system_message || "Selamat datang! Survei ini bertujuan untuk mengumpulkan informasi tentang profil wisatawan nusantara, maksud perjalanan, akomodasi yang digunakan, lama perjalanan, dan rata-rata pengeluaran terkait perjalanan yang dilakukan oleh penduduk Indonesia di dalam wilayah teritorial Indonesia.\n\nSebelum memulai, apakah Anda sudah siap untuk mengikuti survei ini? Contoh: Saya sudah siap untuk mengikuti survei ini.";
+        
+        // Return custom component for welcome message
+        return {
+          id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+          text: responseText,
+          user: false,
+          mode: "survey",
+          responseType: info,
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          read: false,
+          options: [],
+          customComponent: 'WelcomeMessage'
+        };
+
       case "expected_answer":
         if (!next_question) {
           responseText = "Pertanyaan berikutnya tidak tersedia.";
@@ -88,7 +107,24 @@ export function formatSurveyResponse(
           }
           questionObject = currentQuestion;
         }
-        break;
+        
+        // Return custom component for unexpected answer
+        return {
+          id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+          text: responseText,
+          user: false,
+          mode: "survey",
+          responseType: info,
+          questionCode: questionObject?.code,
+          questionObject: questionObject,
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          read: false,
+          options: questionObject?.options || [],
+          customComponent: 'UnexpectedAnswerMessage'
+        };
 
       case "question":
         if (answer && currentQuestion) {
@@ -195,13 +231,45 @@ export function formatSurveyResponse(
         if (next_question) {
           responseText += `\n\n${next_question.text}`;
         }
-        break;
+        
+        // Return custom component for survey started
+        return {
+          id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+          text: responseText,
+          user: false,
+          mode: "survey",
+          responseType: info,
+          questionCode: next_question?.code,
+          questionObject: next_question,
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          read: false,
+          options: next_question?.options || [],
+          customComponent: 'SurveyStartedMessage'
+        };
 
       case "not_ready_for_survey":
         responseText =
           system_message ||
           "Sepertinya Anda belum siap untuk memulai survei. Silakan kirim pesan kapan saja jika Anda ingin memulai.";
-        break;
+        
+        // Return custom component for not ready for survey
+        return {
+          id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+          text: responseText,
+          user: false,
+          mode: "survey",
+          responseType: info,
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          read: false,
+          options: [],
+          customComponent: 'NotReadyForSurveyMessage'
+        };
 
       case "error":
         responseText =
@@ -360,4 +428,204 @@ export function convertApiMessagesToChatMessages(
   // Remove the temporary __sortTime property before returning
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   return chatMessages.map(({ __sortTime, ...rest }) => rest);
+}
+
+/**
+ * Splits message text into an array of sentences
+ * @param text The text to split into sentences
+ * @returns Array of sentences
+ */
+export function splitTextIntoSentences(text: string): string[] {
+  if (!text || typeof text !== 'string') {
+    return [];
+  }
+
+  // Remove extra whitespace and normalize line breaks
+  const normalizedText = text
+    .replace(/\s+/g, ' ')
+    .replace(/\n+/g, ' ')
+    .trim();
+
+  if (!normalizedText) {
+    return [];
+  }
+
+  // Split by sentence endings (., !, ?) followed by space or end of string
+  // This regex handles various sentence endings including multiple punctuation marks
+  const sentences = normalizedText
+    .split(/(?<=[.!?])\s+/)
+    .map(sentence => sentence.trim())
+    .filter(sentence => sentence.length > 0);
+
+  // If no sentences found with punctuation, split by line breaks or periods
+  if (sentences.length === 0) {
+    return normalizedText
+      .split(/\n+|\./)
+      .map(sentence => sentence.trim())
+      .filter(sentence => sentence.length > 0);
+  }
+
+  return sentences;
+}
+
+/**
+ * Splits message text into an array of words
+ * @param text The text to split into words
+ * @returns Array of words
+ */
+export function splitTextIntoWords(text: string): string[] {
+  if (!text || typeof text !== 'string') {
+    return [];
+  }
+
+  // Remove extra whitespace and normalize
+  const normalizedText = text
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!normalizedText) {
+    return [];
+  }
+
+  // Split by spaces and filter out empty strings
+  return normalizedText
+    .split(/\s+/)
+    .map(word => word.trim())
+    .filter(word => word.length > 0);
+}
+
+/**
+ * Splits message text into an array of characters
+ * @param text The text to split into characters
+ * @returns Array of characters
+ */
+export function splitTextIntoCharacters(text: string): string[] {
+  if (!text || typeof text !== 'string') {
+    return [];
+  }
+
+  // Split into individual characters, preserving spaces and punctuation
+  return text.split('');
+}
+
+/**
+ * Splits message text into chunks of specified size
+ * @param text The text to split into chunks
+ * @param chunkSize The size of each chunk
+ * @returns Array of text chunks
+ */
+export function splitTextIntoChunks(text: string, chunkSize: number): string[] {
+  if (!text || typeof text !== 'string' || chunkSize <= 0) {
+    return [];
+  }
+
+  const chunks: string[] = [];
+  for (let i = 0; i < text.length; i += chunkSize) {
+    chunks.push(text.slice(i, i + chunkSize));
+  }
+
+  return chunks;
+}
+
+/**
+ * Gets the first sentence from a text
+ * @param text The text to extract the first sentence from
+ * @returns The first sentence or empty string
+ */
+export function getFirstSentence(text: string): string {
+  const sentences = splitTextIntoSentences(text);
+  return sentences.length > 0 ? sentences[0] : '';
+}
+
+/**
+ * Gets the last sentence from a text
+ * @param text The text to extract the last sentence from
+ * @returns The last sentence or empty string
+ */
+export function getLastSentence(text: string): string {
+  const sentences = splitTextIntoSentences(text);
+  return sentences.length > 0 ? sentences[sentences.length - 1] : '';
+}
+
+/**
+ * Counts the number of sentences in a text
+ * @param text The text to count sentences in
+ * @returns Number of sentences
+ */
+export function countSentences(text: string): number {
+  return splitTextIntoSentences(text).length;
+}
+
+/**
+ * Counts the number of words in a text
+ * @param text The text to count words in
+ * @returns Number of words
+ */
+export function countWords(text: string): number {
+  return splitTextIntoWords(text).length;
+}
+
+/**
+ * Counts the number of characters in a text (excluding spaces)
+ * @param text The text to count characters in
+ * @returns Number of characters
+ */
+export function countCharacters(text: string): number {
+  if (!text || typeof text !== 'string') {
+    return 0;
+  }
+  return text.replace(/\s/g, '').length;
+}
+
+/**
+ * Truncates text to a specified number of sentences
+ * @param text The text to truncate
+ * @param maxSentences Maximum number of sentences to keep
+ * @returns Truncated text
+ */
+export function truncateToSentences(text: string, maxSentences: number): string {
+  const sentences = splitTextIntoSentences(text);
+  if (sentences.length <= maxSentences) {
+    return text;
+  }
+  return sentences.slice(0, maxSentences).join('. ') + '.';
+}
+
+/**
+ * Truncates text to a specified number of words
+ * @param text The text to truncate
+ * @param maxWords Maximum number of words to keep
+ * @returns Truncated text
+ */
+export function truncateToWords(text: string, maxWords: number): string {
+  const words = splitTextIntoWords(text);
+  if (words.length <= maxWords) {
+    return text;
+  }
+  return words.slice(0, maxWords).join(' ') + '...';
+}
+
+/**
+ * Extracts sentences containing specific keywords
+ * @param text The text to search in
+ * @param keywords Array of keywords to search for
+ * @returns Array of sentences containing keywords
+ */
+export function extractSentencesWithKeywords(text: string, keywords: string[]): string[] {
+  const sentences = splitTextIntoSentences(text);
+  return sentences.filter(sentence => 
+    keywords.some(keyword => 
+      sentence.toLowerCase().includes(keyword.toLowerCase())
+    )
+  );
+}
+
+/**
+ * Formats text for display by adding line breaks between sentences
+ * @param text The text to format
+ * @returns Formatted text with line breaks
+ */
+export function formatTextWithLineBreaks(text: string): string {
+  const sentences = splitTextIntoSentences(text);
+  return sentences.join('\n\n');
 }

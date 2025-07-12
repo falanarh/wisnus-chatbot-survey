@@ -6,81 +6,219 @@ import ModeBadge from "./ModeBadge";
 import { useEffect, useState } from "react";
 import { WiMoonWaningCrescent4 } from "react-icons/wi";
 import MessageLoader from "./MessageLoader";
-import { ChatMessage } from "@/utils/surveyMessageFormatters";
+import {
+  ChatMessage,
+  splitTextIntoSentences,
+} from "@/utils/surveyMessageFormatters";
 
-const SwitchedToSurveyMessage: React.FC<{ message: ChatMessage }> = ({ message }) => {
+const SwitchedToSurveyMessage: React.FC<{ message: ChatMessage }> = ({
+  message,
+}) => {
   return (
     <div>
       <div className="bg-green-50 dark:bg-green-900/40 rounded-lg p-3 mb-3 border-l-4 border-green-400">
-        <div className="text-xs font-semibold text-green-700 dark:text-green-200 mb-1">Keterangan</div>
-        <div className="text-sm text-gray-800 dark:text-gray-100">Anda telah beralih ke mode survei. Silakan jawab pertanyaan survei.</div>
+        <div className="text-xs font-semibold text-green-700 dark:text-green-200 mb-1">
+          Keterangan
+        </div>
+        <div className="text-sm text-gray-800 dark:text-gray-100">
+          Anda telah beralih ke mode survei. Silakan jawab pertanyaan survei.
+        </div>
       </div>
       <div className="mt-2">
         <div className="text-xs text-gray-400 mb-1">Pertanyaan saat ini:</div>
-        <div className="font-semibold text-sm">{message.questionObject?.text || "Pertanyaan tidak ditemukan."}</div>
-      </div>
-    </div>
-  );
-};
-
-const AutoInjectedQuestion: React.FC<{ message: ChatMessage }> = ({ message }) => {
-  return (
-    <div>
-      <div className="bg-indigo-50 dark:bg-indigo-900/40 rounded-lg p-3 mb-3 border-l-4 border-indigo-400">
-        <div className="text-xs font-semibold text-indigo-700 dark:text-indigo-200 mb-1">Keterangan</div>
-        <div className="text-sm text-gray-800 dark:text-gray-100">Melanjutkan pertanyaan terakhir. Jawablah pertanyaan berikut ini.</div>
-      </div>
-      <div className="mt-2">
-        <div className="text-xs text-gray-400 mb-1">Pertanyaan saat ini:</div>
-        <div className="font-semibold text-sm">{message.questionObject?.text || "Pertanyaan tidak ditemukan."}</div>
-      </div>
-    </div>
-  );
-};
-
-const QAMessage: React.FC<{ message: ChatMessageWithCustom }> = ({ message }) => {
-  return (
-    <div>
-      <div className="bg-purple-50 dark:bg-purple-900/40 rounded-lg p-3 mb-3 border-l-4 border-purple-400">
-        <div className="text-xs font-semibold text-purple-700 dark:text-purple-200 mb-1">Penjelasan</div>
-        <div className="text-sm text-gray-800 dark:text-gray-100">{message.infoText || message.text}</div>
-        {message.infoSource && (
-          <div className="text-xs text-gray-500 dark:text-gray-300 italic mt-2">{message.infoSource}</div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const ExpectedAnswerMessage: React.FC<{ message: ChatMessageWithCustom }> = ({ message }) => {
-  return (
-    <div>
-      <div className="bg-orange-50 dark:bg-orange-900/40 rounded-lg p-3 mb-3 border-l-4 border-orange-400">
-        <div className="text-xs font-semibold text-orange-700 dark:text-orange-200 mb-1">Pertanyaan Berikutnya</div>
-        <div className="text-sm text-gray-800 dark:text-gray-100">{message.text}</div>
-      </div>
-      <div className="mt-2">
-        <div className="text-xs text-gray-500 dark:text-gray-300 italic">
-          Catatan: Silakan jawab pertanyaan di atas sesuai dengan format yang diminta.
+        <div className="font-semibold text-sm">
+          {message.questionObject?.text || "Pertanyaan tidak ditemukan."}
         </div>
       </div>
     </div>
   );
 };
 
-const InfoWithQuestion: React.FC<{ message: ChatMessageWithCustom }> = ({ message }) => {
+const AutoInjectedQuestion: React.FC<{ message: ChatMessage }> = ({
+  message,
+}) => {
+  return (
+    <div>
+      <div className="bg-indigo-50 dark:bg-indigo-900/40 rounded-lg p-3 mb-3 border-l-4 border-indigo-400">
+        <div className="text-xs font-semibold text-indigo-700 dark:text-indigo-200 mb-1">
+          Pertanyaan Otomatis
+        </div>
+        <div className="text-sm text-gray-800 dark:text-gray-100">
+          Pertanyaan berikutnya telah dimuat secara otomatis.
+        </div>
+      </div>
+      <div className="mt-2">
+        <div className="text-xs text-gray-400 mb-1">Pertanyaan saat ini:</div>
+        <div className="font-semibold text-sm">
+          {message.questionObject?.text || "Pertanyaan tidak ditemukan."}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const UnexpectedAnswerMessage: React.FC<{ message: ChatMessage }> = ({
+  message,
+}) => {
+  return (
+    <div>
+      <div className="bg-amber-50 dark:bg-amber-900/40 rounded-lg p-3 mb-3 border-l-4 border-amber-400">
+        <div className="text-xs font-semibold text-amber-700 dark:text-amber-200 mb-1">
+          Klarifikasi Diperlukan
+        </div>
+        <div className="text-sm text-gray-800 dark:text-gray-100">
+          {message.text}
+        </div>
+      </div>
+      <div className="mt-2">
+        <div className="text-xs text-gray-500 dark:text-gray-300 italic">
+          Catatan: Mohon berikan jawaban yang sesuai dengan konteks pertanyaan.
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const NotReadyForSurveyMessage: React.FC<{ message: ChatMessage }> = ({
+  message,
+}) => {
+  return (
+    <div>
+      <div className="bg-yellow-50 dark:bg-yellow-900/40 rounded-lg p-3 mb-3 border-l-4 border-yellow-400">
+        <div className="text-xs font-semibold text-yellow-700 dark:text-yellow-200 mb-1">
+          Belum Siap
+        </div>
+        <div className="text-sm text-gray-800 dark:text-gray-100">
+          {message.text}
+        </div>
+      </div>
+      <div className="mt-2">
+        <div className="text-xs text-gray-500 dark:text-gray-300 italic">
+          Catatan: Silakan kirim pesan kapan saja jika Anda sudah siap untuk
+          memulai survei.
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SurveyStartedMessage: React.FC<{ message: ChatMessage }> = ({
+  message,
+}) => {
+  const text = typeof message.text === "string" ? message.text : "";
+  const sentences = splitTextIntoSentences(text);
+
+  return (
+    <div>
+      <div className="bg-emerald-50 dark:bg-emerald-900/40 rounded-lg p-3 mb-3 border-l-4 border-emerald-400">
+        <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-200 mb-1">
+          Survei Dimulai
+        </div>
+        <div className="text-sm text-gray-800 dark:text-gray-100">
+          {sentences[0] + " " + sentences[1]}
+        </div>
+      </div>
+      <div className="mt-2">
+        <div className="font-semibold text-sm">{sentences[2]}</div>
+        <div className="text-xs text-gray-500 dark:text-gray-300 italic mt-2">
+          Catatan: Survei telah berhasil dimulai. Silakan jawab pertanyaan
+          dengan teliti.
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const WelcomeMessage: React.FC<{ message: ChatMessage }> = ({ message }) => {
+  const text = typeof message.text === "string" ? message.text : "";
+  const sentences = splitTextIntoSentences(text);
+
+  return (
+    <div>
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/40 dark:to-purple-900/40 rounded-lg p-3 mb-3 border-l-4 border-blue-400">
+        {/* <div className="text-xs font-semibold text-blue-700 dark:text-blue-200 mb-1">Selamat Datang</div> */}
+        <div className="text-sm text-gray-800 dark:text-gray-100">
+          {sentences[0] + " " + sentences[1]}
+        </div>
+      </div>
+      {/* <div className="mt-2">
+          <div className="text-xs text-gray-400 mb-1">Pertanyaan saat ini:</div>
+        </div> */}
+      <div className="mt-2">
+        <div className="font-semibold text-sm">{sentences[2]}</div>
+        <div className="text-xs text-gray-500 dark:text-gray-300 italic mt-2">
+          {sentences[3]}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const QAMessage: React.FC<{ message: ChatMessageWithCustom }> = ({
+  message,
+}) => {
+  return (
+    <div>
+      <div className="bg-purple-50 dark:bg-purple-900/40 rounded-lg p-3 mb-3 border-l-4 border-purple-400">
+        <div className="text-xs font-semibold text-purple-700 dark:text-purple-200 mb-1">
+          Penjelasan
+        </div>
+        <div className="text-sm text-gray-800 dark:text-gray-100">
+          {message.infoText || message.text}
+        </div>
+        {message.infoSource && (
+          <div className="text-xs text-gray-500 dark:text-gray-300 italic mt-2">
+            {message.infoSource}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const ExpectedAnswerMessage: React.FC<{ message: ChatMessageWithCustom }> = ({
+  message,
+}) => {
+  return (
+    <div>
+      <div className="bg-orange-50 dark:bg-orange-900/40 rounded-lg p-3 mb-3 border-l-4 border-orange-400">
+        <div className="text-xs font-semibold text-orange-700 dark:text-orange-200 mb-1">
+          Pertanyaan Berikutnya
+        </div>
+        <div className="text-sm text-gray-800 dark:text-gray-100 font-semibold">
+          {message.text}
+        </div>
+      </div>
+      <div className="mt-2">
+        <div className="text-xs text-gray-500 dark:text-gray-300 italic">
+          Catatan: Apabila Anda merasa bingung, silakan bertanya atau jawab &ldquo;tidak tahu&rdquo; atau &ldquo;tidak ingin menjawab&rdquo; jika keberatan menjawab.
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const InfoWithQuestion: React.FC<{ message: ChatMessageWithCustom }> = ({
+  message,
+}) => {
   return (
     <div>
       <div className="bg-blue-50 dark:bg-blue-900/40 rounded-lg p-3 mb-3 border-l-4 border-blue-400">
-        <div className="text-xs font-semibold text-blue-700 dark:text-blue-200 mb-1">Penjelasan</div>
-        <div className="text-sm text-gray-800 dark:text-gray-100">{message.infoText}</div>
+        <div className="text-xs font-semibold text-blue-700 dark:text-blue-200 mb-1">
+          Penjelasan
+        </div>
+        <div className="text-sm text-gray-800 dark:text-gray-100">
+          {message.infoText}
+        </div>
         {message.infoSource && (
-          <div className="text-xs text-gray-500 dark:text-gray-300 italic mt-2">{message.infoSource}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-300 italic mt-2">
+            {message.infoSource}
+          </div>
         )}
       </div>
       <div className="mt-2">
         <div className="text-xs text-gray-400 mb-1">Pertanyaan saat ini:</div>
-        <div className="font-semibold text-base">{message.questionText}</div>
+        <div className="font-semibold text-sm">{message.questionText}</div>
       </div>
     </div>
   );
@@ -88,7 +226,16 @@ const InfoWithQuestion: React.FC<{ message: ChatMessageWithCustom }> = ({ messag
 
 // Patch: Extend ChatMessage locally to include customComponent if not yet picked up by TS
 interface ChatMessageWithCustom extends ChatMessage {
-  customComponent?: 'SwitchedToSurveyMessage' | 'InfoWithQuestion' | 'QAMessage' | 'ExpectedAnswerMessage' | 'AutoInjectedQuestion';
+  customComponent?:
+    | "SwitchedToSurveyMessage"
+    | "InfoWithQuestion"
+    | "QAMessage"
+    | "ExpectedAnswerMessage"
+    | "AutoInjectedQuestion"
+    | "UnexpectedAnswerMessage"
+    | "NotReadyForSurveyMessage"
+    | "SurveyStartedMessage"
+    | "WelcomeMessage";
   infoText?: string;
   infoSource?: string;
   questionText?: string;
@@ -109,7 +256,8 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   isTokenAnimating = false,
 }) => {
   const [timestamp, setTimestamp] = useState<string>(
-    message.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    message.timestamp ||
+      new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   );
 
   // Cursor blinking effect for token animation
@@ -118,7 +266,12 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   // Set timestamp on first render if not already present
   useEffect(() => {
     if (!message.timestamp) {
-      setTimestamp(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      setTimestamp(
+        new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      );
     }
   }, [message.timestamp]);
 
@@ -126,7 +279,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   useEffect(() => {
     if (isTokenAnimating) {
       const interval = setInterval(() => {
-        setShowCursor(prev => !prev);
+        setShowCursor((prev) => !prev);
       }, 500);
       return () => clearInterval(interval);
     } else {
@@ -140,25 +293,22 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
       ? "#1D76F2" // iOS blue in dark mode
       : "#1A8AEF" // iOS blue in light mode
     : isDarkMode
-      ? "#383838" // Dark gray for dark mode
-      : "#FFFFFF"; // Light gray for light mode
+    ? "#383838" // Dark gray for dark mode
+    : "#FFFFFF"; // Light gray for light mode
 
-  const textColor = message.user || isDarkMode
-    ? "white"
-    : "#000000";
+  const textColor = message.user || isDarkMode ? "white" : "#000000";
 
   const timestampColor = message.user
     ? isDarkMode
       ? "rgba(255, 255, 255, 0.7)"
       : "rgba(0, 0, 0, 0.5)"
     : isDarkMode
-      ? "rgba(255, 255, 255, 0.5)"
-      : "rgba(0, 0, 0, 0.5)";
+    ? "rgba(255, 255, 255, 0.5)"
+    : "rgba(0, 0, 0, 0.5)";
 
   // Determine which options to display
-  const shouldShowOptions = !message.user &&
-    message.options &&
-    message.options.length > 0;
+  const shouldShowOptions =
+    !message.user && message.options && message.options.length > 0;
 
   return (
     <motion.div
@@ -166,10 +316,16 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className={`flex items-start gap-1.5 my-1.5 mx-2 ${message.user ? "justify-end" : "justify-start"}`}
+      className={`flex items-start gap-1.5 my-1.5 mx-2 ${
+        message.user ? "justify-end" : "justify-start"
+      }`}
     >
       {/* Message container */}
-      <div className={`flex flex-col ${message.user ? "items-end" : "items-start"} md:max-w-[75%]`}>
+      <div
+        className={`flex flex-col ${
+          message.user ? "items-end" : "items-start"
+        } md:max-w-[75%]`}
+      >
         {/* Chat bubble */}
         <div
           style={{
@@ -177,9 +333,10 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
             color: textColor,
           }}
           className={`px-4 py-3 text-sm break-words whitespace-pre-wrap shadow-sm text-justify 
-            ${message.user
-              ? "rounded-t-2xl rounded-bl-2xl rounded-br-lg"
-              : "rounded-t-2xl rounded-br-2xl rounded-bl-lg"
+            ${
+              message.user
+                ? "rounded-t-2xl rounded-bl-2xl rounded-br-lg"
+                : "rounded-t-2xl rounded-br-2xl rounded-bl-lg"
             } relative`}
         >
           {message.loading ? (
@@ -194,16 +351,24 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                 </div>
               )}
 
-              {message.customComponent === 'InfoWithQuestion' ? (
+              {message.customComponent === "WelcomeMessage" ? (
+                <WelcomeMessage message={message} />
+              ) : message.customComponent === "InfoWithQuestion" ? (
                 <InfoWithQuestion message={message} />
-              ) : message.customComponent === 'SwitchedToSurveyMessage' ? (
+              ) : message.customComponent === "SwitchedToSurveyMessage" ? (
                 <SwitchedToSurveyMessage message={message} />
-              ) : message.customComponent === 'QAMessage' ? (
+              ) : message.customComponent === "QAMessage" ? (
                 <QAMessage message={message} />
-              ) : message.customComponent === 'ExpectedAnswerMessage' ? (
+              ) : message.customComponent === "ExpectedAnswerMessage" ? (
                 <ExpectedAnswerMessage message={message} />
-              ) : message.customComponent === 'AutoInjectedQuestion' ? (
+              ) : message.customComponent === "AutoInjectedQuestion" ? (
                 <AutoInjectedQuestion message={message} />
+              ) : message.customComponent === "UnexpectedAnswerMessage" ? (
+                <UnexpectedAnswerMessage message={message} />
+              ) : message.customComponent === "NotReadyForSurveyMessage" ? (
+                <NotReadyForSurveyMessage message={message} />
+              ) : message.customComponent === "SurveyStartedMessage" ? (
+                <SurveyStartedMessage message={message} />
               ) : (
                 <p className="break-words whitespace-pre-wrap">
                   {message.text}
@@ -227,7 +392,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                         animate={{ opacity: 1, y: 0 }}
                         transition={{
                           duration: 0.3,
-                          delay: isAnimating ? index * 0.15 : 0 // Animasi hanya saat isAnimating = true
+                          delay: isAnimating ? index * 0.15 : 0, // Animasi hanya saat isAnimating = true
                         }}
                         className="flex items-start group rounded-lg p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200"
                       >
@@ -240,7 +405,11 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
               )}
             </>
           )}
-          <div className={`absolute -bottom-0 -right-[35px] ${message.user ? "block" : "hidden"}`}>
+          <div
+            className={`absolute -bottom-0 -right-[35px] ${
+              message.user ? "block" : "hidden"
+            }`}
+          >
             <div className="relative w-[50px] h-[25px] overflow-hidden">
               <WiMoonWaningCrescent4
                 color={isDarkMode ? `#1D76F2` : `#1A8AEF`}
@@ -250,7 +419,11 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
               />
             </div>
           </div>
-          <div className={`absolute -bottom-0 -left-[35px] ${message.user ? "hidden" : "block"}`}>
+          <div
+            className={`absolute -bottom-0 -left-[35px] ${
+              message.user ? "hidden" : "block"
+            }`}
+          >
             <div className="relative w-[50px] h-[25px] overflow-hidden">
               <WiMoonWaningCrescent4
                 color={isDarkMode ? `#383838` : `#FFFFFF`}
@@ -270,7 +443,10 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
           >
             <span>{timestamp}</span>
             {message.user && (
-              <CheckCheck className="w-3 h-3 ml-1" style={{ color: timestampColor }} />
+              <CheckCheck
+                className="w-3 h-3 ml-1"
+                style={{ color: timestampColor }}
+              />
             )}
           </div>
         )}

@@ -5,6 +5,7 @@ import { getUserData } from "@/services/auth";
 import {
   ChatMessage,
   convertApiMessagesToChatMessages,
+  formatSurveyResponse,
 } from "@/utils/surveyMessageFormatters";
 import { addSurveyMessage } from "@/services/survey/surveyMessages";
 import { SurveyMessageRequest, SurveyResponseData } from "@/services/survey/types";
@@ -44,19 +45,20 @@ export function useSurveyMessages() {
           if (convertedMessages.length === 0) {
             // Add and persist opening message if chat is empty
             const openingText = "Selamat datang! Survei ini bertujuan untuk mengumpulkan informasi tentang profil wisatawan nusantara, maksud perjalanan, akomodasi yang digunakan, lama perjalanan, dan rata-rata pengeluaran terkait perjalanan yang dilakukan oleh penduduk Indonesia di dalam wilayah teritorial Indonesia.\n\nSebelum memulai, apakah Anda sudah siap untuk mengikuti survei ini? Contoh: Saya sudah siap untuk mengikuti survei ini.";
-            const openingMessage: ChatMessage = {
-              id: `opening_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-              text: openingText,
-              user: false,
-              mode: 'survey',
-              options: [],
-              timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+            
+            // Use formatSurveyResponse to get proper custom component formatting
+            const systemResponse = {
+              info: 'welcome',
+              system_message: openingText
             };
+            
+            const openingMessage = formatSurveyResponse(systemResponse);
             setMessages([openingMessage]);
+            
             // Persist to DB
             addSurveyMessage({
               user_message: null,
-              system_response: { system_message: openingText },
+              system_response: systemResponse,
               mode: 'survey'
             }).catch((err) => console.error("Failed to persist opening message:", err));
           } else {
