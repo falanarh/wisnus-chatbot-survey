@@ -92,29 +92,24 @@ export const TypewriterText: React.FC<TypewriterTextProps> = ({
   onComplete
 }) => {
   const [displayText, setDisplayText] = useState('');
-  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     if (!text) {
       setDisplayText('');
-      setCurrentIndex(0);
       return;
     }
 
-    setCurrentIndex(0);
     setDisplayText('');
+    let currentIndex = 0;
 
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => {
-        if (prev < text.length) {
-          setDisplayText(text.slice(0, prev + 1));
-          return prev + 1;
-        } else {
-          clearInterval(interval);
-          onComplete?.();
-          return prev;
-        }
-      });
+      if (currentIndex < text.length) {
+        setDisplayText(text.slice(0, currentIndex + 1));
+        currentIndex++;
+      } else {
+        clearInterval(interval);
+        onComplete?.();
+      }
     }, speed);
 
     return () => clearInterval(interval);
@@ -146,42 +141,35 @@ export const ProgressiveText: React.FC<ProgressiveTextProps> = ({
   onComplete
 }) => {
   const [displayText, setDisplayText] = useState('');
-  const [currentStep, setCurrentStep] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
     if (!text) {
       setDisplayText('');
-      setCurrentStep(0);
       setIsComplete(false);
       return;
     }
 
-    setCurrentStep(0);
     setDisplayText('');
     setIsComplete(false);
 
     const sentences = text.split(/(?<=[.!?])\s+/).filter(s => s.trim());
     const totalSteps = Math.ceil(sentences.length / sentencesPerStep);
+    let currentStep = 0;
 
     const interval = setInterval(() => {
-      setCurrentStep((prev) => {
-        const nextStep = prev + 1;
-        const endIndex = Math.min(nextStep * sentencesPerStep, sentences.length);
-        const currentSentences = sentences.slice(0, endIndex);
-        
-        setDisplayText(currentSentences.join(' '));
-        onStepComplete?.(nextStep, totalSteps);
+      currentStep += 1;
+      const endIndex = Math.min(currentStep * sentencesPerStep, sentences.length);
+      const currentSentences = sentences.slice(0, endIndex);
+      
+      setDisplayText(currentSentences.join(' '));
+      onStepComplete?.(currentStep, totalSteps);
 
-        if (endIndex >= sentences.length) {
-          clearInterval(interval);
-          setIsComplete(true);
-          onComplete?.();
-          return prev;
-        }
-
-        return nextStep;
-      });
+      if (endIndex >= sentences.length) {
+        clearInterval(interval);
+        setIsComplete(true);
+        onComplete?.();
+      }
     }, delay);
 
     return () => clearInterval(interval);
