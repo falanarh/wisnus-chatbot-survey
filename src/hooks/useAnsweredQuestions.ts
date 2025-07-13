@@ -4,7 +4,7 @@ import { apiRequest } from "@/utils/authConfig";
 export interface AnsweredQuestion {
   question_code: string;
   question_text: string;
-  answer: string;
+  answer: string | number | string[];
 }
 
 export function useAnsweredQuestions() {

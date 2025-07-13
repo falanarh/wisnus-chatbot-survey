@@ -5,7 +5,7 @@ import Loader from "../other/Loader";
 interface AnsweredQuestion {
   question_code: string;
   question_text: string;
-  answer: string;
+  answer: string | number | string[];
   displayNumber: number;
 }
 

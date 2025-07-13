@@ -33,7 +33,7 @@ const SurveyChatbot: React.FC = () => {
   const [editingQuestion, setEditingQuestion] = useState<{
     question_code: string;
     question_text: string;
-    answer: string;
+    answer: string | number | string[];
     displayNumber: number;
   } | null>(null);
   const [editChatMessages, setEditChatMessages] = useState<Array<{
@@ -85,7 +85,7 @@ const SurveyChatbot: React.FC = () => {
   const handleEditQuestion = (question: {
     question_code: string;
     question_text: string;
-    answer: string;
+    answer: string | number | string[];
     displayNumber: number;
   }) => {
     setEditingQuestion(question);
@@ -254,8 +254,23 @@ const SurveyChatbot: React.FC = () => {
     const progress = sessionData.progress;
     const answeredQuestionsData = answeredQuestions || [];
     
+    // Debug logging
+    console.log("Raw answeredQuestionsData:", answeredQuestionsData);
+    console.log("Total questions from API:", answeredQuestionsData.length);
+    
     // Ganti logika validAnsweredQuestions:
     const validAnsweredQuestions = getValidAnsweredQuestions(answeredQuestionsData, sortQuestionCodes);
+
+    console.log("validAnsweredQuestions: ", validAnsweredQuestions);
+    console.log("Total valid questions:", validAnsweredQuestions.length);
+    
+    // Check if S019 exists in raw data
+    const s019Question = answeredQuestionsData.find(q => q.question_code === 'S019');
+    console.log("S019 question in raw data:", s019Question);
+    
+    // Check if S019 exists in valid questions
+    const s019ValidQuestion = validAnsweredQuestions.find(q => q.question_code === 'S019');
+    console.log("S019 question in valid data:", s019ValidQuestion);
     
     return (
       <StyledBackground>
