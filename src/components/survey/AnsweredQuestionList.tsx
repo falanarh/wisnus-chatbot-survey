@@ -35,7 +35,23 @@ function formatAnswer(answer: unknown): string {
 }
 
 function replacePlaceholders(text: string, questions: AnsweredQuestion[]): string {
-  return text.replace(/\$\{([^}]+)\}/g, (match, placeholder) => {
+  // First replace currentMonth placeholder
+  const processedText = text.replace(/\$\{currentMonth\}/g, () => {
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    const currentMonth = new Date().getMonth();
+    return months[currentMonth];
+  });
+
+  // Then replace question code placeholders
+  return processedText.replace(/\$\{([^}]+)\}/g, (match, placeholder) => {
+    // Skip if it's currentMonth as it's already handled
+    if (placeholder === 'currentMonth') {
+      return match;
+    }
+    
     const question = questions.find(q => q.question_code === placeholder);
     if (question) {
       return formatAnswer(question.answer);
