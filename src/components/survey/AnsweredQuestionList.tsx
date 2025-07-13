@@ -34,6 +34,16 @@ function formatAnswer(answer: unknown): string {
   return '(Belum diisi)';
 }
 
+function replacePlaceholders(text: string, questions: AnsweredQuestion[]): string {
+  return text.replace(/\$\{([^}]+)\}/g, (match, placeholder) => {
+    const question = questions.find(q => q.question_code === placeholder);
+    if (question) {
+      return formatAnswer(question.answer);
+    }
+    return match; // Return original placeholder if not found
+  });
+}
+
 const AnsweredQuestionList: React.FC<AnsweredQuestionListProps> = ({ questions, progress, isLoading, onEdit }) => {
   return (
     <div className="bg-white/90 dark:bg-gray-900/80 rounded-xl shadow-xl p-3 sm:p-4 border border-gray-100 dark:border-gray-800 h-full flex flex-col">
@@ -104,7 +114,7 @@ const AnsweredQuestionList: React.FC<AnsweredQuestionListProps> = ({ questions, 
                       </div>
                       <div className="mb-2">
                         <div className="text-sm text-justify text-gray-800 dark:text-gray-200 font-medium">
-                          {formatAnswer(question.question_text)}
+                          {replacePlaceholders(formatAnswer(question.question_text), questions)}
                         </div>
                       </div>
                       <div className="bg-white dark:bg-gray-800 rounded-md p-2 border border-gray-200 dark:border-gray-700">
