@@ -14,10 +14,10 @@ export function getValidAnsweredQuestions(answeredQuestionsData: AnsweredQuestio
   const sortedQuestions = filteredQuestions.sort((a, b) => sortQuestionCodes(a.question_code, b.question_code));
   
   const result = sortedQuestions.map((question, index) => ({
-    ...question,
-    displayNumber: index + 1, // Urutan tampilan yang sesuai
-    answer: formatAnswer(question.answer)
-  }));
+      ...question,
+      displayNumber: index + 1, // Urutan tampilan yang sesuai
+      answer: formatAnswer(question.answer)
+    }));
   
   return result;
 }
@@ -45,7 +45,7 @@ export function sortQuestionCodes(a: string, b: string): number {
         prefix: match[1],
         number: parseInt(match[2]),
         suffix: match[3] || ''
-      };
+  };
     }
     // Fallback for codes that don't match the pattern
     return {

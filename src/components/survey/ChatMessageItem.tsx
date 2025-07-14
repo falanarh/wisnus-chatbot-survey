@@ -400,7 +400,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                 <SurveyCompletedMessage message={message} />
               ) : (
                 <p className="break-words whitespace-pre-wrap">
-                  {message.text}
+                  {message.text ?? ""}
                   {isTokenAnimating && showCursor && (
                     <span className="inline-block w-2 h-4 bg-current animate-pulse ml-0.5"></span>
                   )}

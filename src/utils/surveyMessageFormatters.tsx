@@ -14,7 +14,17 @@ export interface ChatMessage {
   timestamp?: string;
   read?: boolean;
   options?: string[]; // Opsi yang ditampilkan untuk pesan ini
-  customComponent?: 'SwitchedToSurveyMessage' | 'InfoWithQuestion' | 'QAMessage' | 'ExpectedAnswerMessage' | 'AutoInjectedQuestion' | 'UnexpectedAnswerMessage' | 'NotReadyForSurveyMessage' | 'SurveyStartedMessage' | 'WelcomeMessage' | 'SurveyCompletedMessage';
+  customComponent?:
+    | "SwitchedToSurveyMessage"
+    | "InfoWithQuestion"
+    | "QAMessage"
+    | "ExpectedAnswerMessage"
+    | "AutoInjectedQuestion"
+    | "UnexpectedAnswerMessage"
+    | "NotReadyForSurveyMessage"
+    | "SurveyStartedMessage"
+    | "WelcomeMessage"
+    | "SurveyCompletedMessage";
   infoText?: string;
   infoSource?: string;
   questionText?: string;
@@ -37,7 +47,7 @@ export function formatSurveyResponse(
     clarification_reason,
     follow_up_question,
     system_message,
-    answer
+    answer,
   } = response;
 
   let responseText: string | React.ReactNode = "";
@@ -49,8 +59,9 @@ export function formatSurveyResponse(
   if (info) {
     switch (info) {
       case "survey_completed":
-        responseText = "Survei selesai!🎉 Terima kasih banyak telah berpartisipasi dalam survei ini. Data Anda berhasil disimpan😊.";
-        
+        responseText =
+          "Survei selesai!🎉 Terima kasih banyak telah berpartisipasi dalam survei ini. Data Anda berhasil disimpan😊.";
+
         // Return custom component for survey completed message
         return {
           id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
@@ -64,12 +75,13 @@ export function formatSurveyResponse(
           }),
           read: false,
           options: [],
-          customComponent: 'SurveyCompletedMessage'
+          customComponent: "SurveyCompletedMessage",
         };
 
       case "welcome":
-        responseText = "Selamat datang! Survei ini bertujuan untuk mengumpulkan informasi tentang profil wisatawan nusantara, maksud perjalanan, akomodasi yang digunakan, lama perjalanan, dan rata-rata pengeluaran terkait perjalanan yang dilakukan oleh penduduk Indonesia di dalam wilayah teritorial Indonesia.\n\nSebelum memulai, apakah Anda sudah siap untuk mengikuti survei ini? Contoh: Saya sudah siap untuk mengikuti survei ini.";
-        
+        responseText =
+          "Selamat datang! Survei ini bertujuan untuk mengumpulkan informasi tentang profil wisatawan nusantara, maksud perjalanan, akomodasi yang digunakan, lama perjalanan, dan rata-rata pengeluaran terkait perjalanan yang dilakukan oleh penduduk Indonesia di dalam wilayah teritorial Indonesia.\n\nSebelum memulai, apakah Anda sudah siap untuk mengikuti survei ini? Contoh: Saya sudah siap untuk mengikuti survei ini.";
+
         // Return custom component for welcome message
         return {
           id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
@@ -83,7 +95,7 @@ export function formatSurveyResponse(
           }),
           read: false,
           options: [],
-          customComponent: 'WelcomeMessage'
+          customComponent: "WelcomeMessage",
         };
 
       case "expected_answer":
@@ -93,7 +105,7 @@ export function formatSurveyResponse(
           responseText = next_question.text || "Pertanyaan tidak ditemukan.";
           questionObject = next_question;
         }
-        
+
         return {
           id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
           text: responseText,
@@ -108,21 +120,24 @@ export function formatSurveyResponse(
           }),
           read: false,
           options: questionObject?.options || [],
-          customComponent: 'ExpectedAnswerMessage'
+          customComponent: "ExpectedAnswerMessage",
         };
 
       case "unexpected_answer_or_other":
         if (!currentQuestion || !clarification_reason || !follow_up_question) {
           responseText = "Mohon berikan jawaban yang sesuai dengan pertanyaan.";
         } else {
-          if (currentQuestion.code === "S003" || currentQuestion.code === "S005") {
+          if (
+            currentQuestion.code === "S003" ||
+            currentQuestion.code === "S005"
+          ) {
             responseText = `${clarification_reason} ${follow_up_question}`;
           } else {
             responseText = `${clarification_reason} ${follow_up_question}`;
           }
           questionObject = currentQuestion;
         }
-        
+
         // Return custom component for unexpected answer
         return {
           id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
@@ -138,7 +153,7 @@ export function formatSurveyResponse(
           }),
           read: false,
           options: questionObject?.options || [],
-          customComponent: 'UnexpectedAnswerMessage'
+          customComponent: "UnexpectedAnswerMessage",
         };
 
       case "question":
@@ -149,63 +164,79 @@ export function formatSurveyResponse(
             minute: "2-digit",
           });
           // Flexible regex: cari penjelasan, sumber (opsional), dan pertanyaan
-          const match = answer.match(/^(.*?)(\(Sumber:.*?\))?\.?\s*(Terima kasih.*)?\n*Pertanyaan saat ini:?\n*([\s\S]*)$/i);
+          const match = answer.match(
+            /^(.*?)(\(Sumber:.*?\))?\.?\s*(Terima kasih.*)?\n*Pertanyaan saat ini:?\n*([\s\S]*)$/i
+          );
           if (match) {
             // match[1]: infoText, match[2]: infoSource, match[4]: questionText
             return {
-              id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-              text: `${match[1]?.trim() || ''}${match[4] ? '\n\n' + match[4]?.trim() : ''}`,
+              id: `msg_${Date.now()}_${Math.random()
+                .toString(36)
+                .substring(2, 9)}`,
+              text: `${match[1]?.trim() || ""}${
+                match[4] ? "\n\n" + match[4]?.trim() : ""
+              }`,
               user: false,
-              mode: 'survey',
+              mode: "survey",
               responseType: info,
               questionCode: currentQuestion.code,
               questionObject: currentQuestion,
               timestamp,
               read: false,
               options: currentQuestion.options || [],
-              customComponent: 'InfoWithQuestion',
+              customComponent: "InfoWithQuestion",
               infoText: match[1]?.trim(),
               infoSource: match[2]?.trim(),
               questionText: match[4]?.trim(),
             };
           } else {
             // Fallback: split dengan 'Pertanyaan saat ini:' jika ada
-            const splitIdx = answer.indexOf('Pertanyaan saat ini:');
+            const splitIdx = answer.indexOf("Pertanyaan saat ini:");
             if (splitIdx !== -1) {
               const infoText = answer.slice(0, splitIdx).trim();
-              const questionText = answer.slice(splitIdx + 'Pertanyaan saat ini:'.length).trim();
+              const questionText = answer
+                .slice(splitIdx + "Pertanyaan saat ini:".length)
+                .trim();
               return {
-                id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-                text: `${infoText}${questionText ? '\n\n' + questionText : ''}`,
+                id: `msg_${Date.now()}_${Math.random()
+                  .toString(36)
+                  .substring(2, 9)}`,
+                text: `${infoText}${questionText ? "\n\n" + questionText : ""}`,
                 user: false,
-                mode: 'survey',
+                mode: "survey",
                 responseType: info,
                 questionCode: currentQuestion.code,
                 questionObject: currentQuestion,
                 timestamp,
                 read: false,
                 options: currentQuestion.options || [],
-                customComponent: 'InfoWithQuestion',
+                customComponent: "InfoWithQuestion",
                 infoText,
                 questionText,
               };
             } else {
               // Jika hanya penjelasan saja, tetap tampilkan info box
               // Cek apakah ada sumber
-              const infoMatch = answer.match(/^(.*?)(\(Sumber:.*?\))?\.?\s*(Terima kasih.*)?$/i);
+              const infoMatch = answer.match(
+                /^(.*?)(\(Sumber:.*?\))?\.?\s*(Terima kasih.*)?$/i
+              );
               if (infoMatch) {
                 return {
-                  id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-                  text: `${infoMatch[1]?.trim() || ''}${currentQuestion.text ? '\n\n' + currentQuestion.text : ''}`,
+                  id: `msg_${Date.now()}_${Math.random()
+                    .toString(36)
+                    .substring(2, 9)}`,
+                  text: `${infoMatch[1]?.trim() || ""}${
+                    currentQuestion.text ? "\n\n" + currentQuestion.text : ""
+                  }`,
                   user: false,
-                  mode: 'survey',
+                  mode: "survey",
                   responseType: info,
                   questionCode: currentQuestion.code,
                   questionObject: currentQuestion,
                   timestamp,
                   read: false,
                   options: currentQuestion.options || [],
-                  customComponent: 'InfoWithQuestion',
+                  customComponent: "InfoWithQuestion",
                   infoText: infoMatch[1]?.trim(),
                   infoSource: infoMatch[2]?.trim(),
                   questionText: currentQuestion.text,
@@ -213,7 +244,10 @@ export function formatSurveyResponse(
               }
             }
           }
-          responseText =  `${answer} \n\nPertanyaan saat ini:\n\n${currentQuestion.text}` || system_message || "Silakan jawab pertanyaan saat ini.";
+          responseText =
+            `${answer} \n\nPertanyaan saat ini:\n\n${currentQuestion.text}` ||
+            system_message ||
+            "Silakan jawab pertanyaan saat ini.";
           questionObject = currentQuestion;
         } else if (currentQuestion && system_message) {
           // Handle auto-injected questions (from setModeAsync)
@@ -222,18 +256,21 @@ export function formatSurveyResponse(
             minute: "2-digit",
           });
           return {
-            id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+            id: `msg_${Date.now()}_${Math.random()
+              .toString(36)
+              .substring(2, 9)}`,
             text: currentQuestion.text,
             user: false,
-            mode: 'survey',
-            responseType: 'auto_injected_question',
+            mode: "survey",
+            responseType: "auto_injected_question",
             questionCode: currentQuestion.code,
             questionObject: currentQuestion,
             timestamp,
             read: false,
             options: currentQuestion.options || [],
-            customComponent: 'AutoInjectedQuestion',
-            infoText: 'Melanjutkan pertanyaan terakhir. Jawablah pertanyaan berikut ini.',
+            customComponent: "AutoInjectedQuestion",
+            infoText:
+              "Melanjutkan pertanyaan terakhir. Jawablah pertanyaan berikut ini.",
             questionText: currentQuestion.text,
           };
         } else {
@@ -242,11 +279,20 @@ export function formatSurveyResponse(
         break;
 
       case "survey_started":
-        responseText = additional_info || "Survei telah dimulai.";
-        if (next_question) {
+        responseText =
+          additional_info && additional_info !== "undefined"
+            ? additional_info
+            : "Survei telah dimulai.";
+
+        if (
+          next_question &&
+          typeof next_question.text === "string" &&
+          next_question.text.trim() !== "" &&
+          next_question.text !== "undefined"
+        ) {
           responseText += `\n\n${next_question.text}`;
         }
-        
+
         // Return custom component for survey started
         return {
           id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
@@ -262,14 +308,14 @@ export function formatSurveyResponse(
           }),
           read: false,
           options: next_question?.options || [],
-          customComponent: 'SurveyStartedMessage'
+          customComponent: "SurveyStartedMessage",
         };
 
       case "not_ready_for_survey":
         responseText =
           system_message ||
           "Sepertinya Anda belum siap untuk memulai survei. Silakan kirim pesan kapan saja jika Anda ingin memulai.";
-        
+
         // Return custom component for not ready for survey
         return {
           id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
@@ -283,7 +329,7 @@ export function formatSurveyResponse(
           }),
           read: false,
           options: [],
-          customComponent: 'NotReadyForSurveyMessage'
+          customComponent: "NotReadyForSurveyMessage",
         };
 
       case "error":
@@ -295,7 +341,7 @@ export function formatSurveyResponse(
         responseText =
           "Anda telah beralih ke mode survei. Silakan jawab pertanyaan survei.";
         questionObject = currentQuestion;
-        
+
         return {
           id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
           text: responseText,
@@ -310,24 +356,28 @@ export function formatSurveyResponse(
           }),
           read: false,
           options: questionObject?.options || [],
-          customComponent: 'SwitchedToSurveyMessage'
+          customComponent: "SwitchedToSurveyMessage",
         };
 
       default:
-        responseText = "Terjadi kesalahan jaringan. Pastikan jaringan internet Anda dapat berjalan dengan baik.";
+        responseText =
+          "Terjadi kesalahan jaringan. Pastikan jaringan internet Anda dapat berjalan dengan baik.";
     }
   } else if (response.answer) {
     // For QA-type responses
     responseText = response.answer;
     mode = "qa";
-    
+
     // Extract source information from QA response
-    const responseTextStr = typeof responseText === 'string' ? responseText : String(responseText);
-    const sourceMatch = responseTextStr.match(/^(.*?)(\(Sumber:.*?\))?\.?\s*(Terima kasih.*)?$/i);
+    const responseTextStr =
+      typeof responseText === "string" ? responseText : String(responseText);
+    const sourceMatch = responseTextStr.match(
+      /^(.*?)(\(Sumber:.*?\))?\.?\s*(Terima kasih.*)?$/i
+    );
     if (sourceMatch) {
       const infoText = sourceMatch[1]?.trim();
       const infoSource = sourceMatch[2]?.trim();
-      
+
       return {
         id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
         text: responseText,
@@ -340,12 +390,12 @@ export function formatSurveyResponse(
         }),
         read: false,
         options: [],
-        customComponent: 'QAMessage',
+        customComponent: "QAMessage",
         infoText: infoText,
-        infoSource: infoSource
+        infoSource: infoSource,
       };
     }
-    
+
     return {
       id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       text: responseText,
@@ -358,12 +408,14 @@ export function formatSurveyResponse(
       }),
       read: false,
       options: [],
-      customComponent: 'QAMessage'
+      customComponent: "QAMessage",
     };
   } else {
     // Fallback if no recognizable format
     responseText =
-      system_message || additional_info || "System response (could not be displayed)";
+      system_message ||
+      additional_info ||
+      "System response (could not be displayed)";
   }
 
   // Create timestamp for the current time
@@ -382,7 +434,7 @@ export function formatSurveyResponse(
     questionObject: questionObject,
     timestamp,
     read: false,
-    options: questionObject?.options || [] // Tambahkan options dari questionObject jika ada
+    options: questionObject?.options || [], // Tambahkan options dari questionObject jika ada
   };
 }
 
@@ -405,16 +457,18 @@ export function convertApiMessagesToChatMessages(
     // Format the timestamp from API or create a new one
     const rawTimestamp = apiMessage.timestamp || new Date().toISOString();
     const timestamp = new Date(rawTimestamp).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
     const numericTime = new Date(rawTimestamp).getTime();
 
     // Hanya tambahkan pesan user jika user_message ada isinya
     if (apiMessage.user_message && apiMessage.user_message.trim() !== "") {
       chatMessages.push({
-        id: `user_msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        id: `user_msg_${Date.now()}_${Math.random()
+          .toString(36)
+          .substring(2, 9)}`,
         text: apiMessage.user_message,
         user: true,
         mode: apiMessage.mode,
@@ -426,8 +480,13 @@ export function convertApiMessagesToChatMessages(
     }
 
     // Hanya tambahkan pesan sistem jika system_response ada isinya (bukan null/undefined/empty object)
-    if (apiMessage.system_response && Object.keys(apiMessage.system_response).length > 0) {
-      const systemResponse = formatSurveyResponse(apiMessage.system_response) as ChatMessage;
+    if (
+      apiMessage.system_response &&
+      Object.keys(apiMessage.system_response).length > 0
+    ) {
+      const systemResponse = formatSurveyResponse(
+        apiMessage.system_response
+      ) as ChatMessage;
       systemResponse.timestamp = timestamp;
       console.log("systemResponse:", systemResponse);
       chatMessages.push({
@@ -451,15 +510,12 @@ export function convertApiMessagesToChatMessages(
  * @returns Array of sentences
  */
 export function splitTextIntoSentences(text: string): string[] {
-  if (!text || typeof text !== 'string') {
+  if (!text || typeof text !== "string") {
     return [];
   }
 
   // Remove extra whitespace and normalize line breaks
-  const normalizedText = text
-    .replace(/\s+/g, ' ')
-    .replace(/\n+/g, ' ')
-    .trim();
+  const normalizedText = text.replace(/\s+/g, " ").replace(/\n+/g, " ").trim();
 
   if (!normalizedText) {
     return [];
@@ -469,15 +525,15 @@ export function splitTextIntoSentences(text: string): string[] {
   // This regex handles various sentence endings including multiple punctuation marks
   const sentences = normalizedText
     .split(/(?<=[.!?])\s+/)
-    .map(sentence => sentence.trim())
-    .filter(sentence => sentence.length > 0);
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence.length > 0);
 
   // If no sentences found with punctuation, split by line breaks or periods
   if (sentences.length === 0) {
     return normalizedText
       .split(/\n+|\./)
-      .map(sentence => sentence.trim())
-      .filter(sentence => sentence.length > 0);
+      .map((sentence) => sentence.trim())
+      .filter((sentence) => sentence.length > 0);
   }
 
   return sentences;
@@ -489,14 +545,12 @@ export function splitTextIntoSentences(text: string): string[] {
  * @returns Array of words
  */
 export function splitTextIntoWords(text: string): string[] {
-  if (!text || typeof text !== 'string') {
+  if (!text || typeof text !== "string") {
     return [];
   }
 
   // Remove extra whitespace and normalize
-  const normalizedText = text
-    .replace(/\s+/g, ' ')
-    .trim();
+  const normalizedText = text.replace(/\s+/g, " ").trim();
 
   if (!normalizedText) {
     return [];
@@ -505,8 +559,8 @@ export function splitTextIntoWords(text: string): string[] {
   // Split by spaces and filter out empty strings
   return normalizedText
     .split(/\s+/)
-    .map(word => word.trim())
-    .filter(word => word.length > 0);
+    .map((word) => word.trim())
+    .filter((word) => word.length > 0);
 }
 
 /**
@@ -515,12 +569,12 @@ export function splitTextIntoWords(text: string): string[] {
  * @returns Array of characters
  */
 export function splitTextIntoCharacters(text: string): string[] {
-  if (!text || typeof text !== 'string') {
+  if (!text || typeof text !== "string") {
     return [];
   }
 
   // Split into individual characters, preserving spaces and punctuation
-  return text.split('');
+  return text.split("");
 }
 
 /**
@@ -530,7 +584,7 @@ export function splitTextIntoCharacters(text: string): string[] {
  * @returns Array of text chunks
  */
 export function splitTextIntoChunks(text: string, chunkSize: number): string[] {
-  if (!text || typeof text !== 'string' || chunkSize <= 0) {
+  if (!text || typeof text !== "string" || chunkSize <= 0) {
     return [];
   }
 
@@ -549,7 +603,7 @@ export function splitTextIntoChunks(text: string, chunkSize: number): string[] {
  */
 export function getFirstSentence(text: string): string {
   const sentences = splitTextIntoSentences(text);
-  return sentences.length > 0 ? sentences[0] : '';
+  return sentences.length > 0 ? sentences[0] : "";
 }
 
 /**
@@ -559,7 +613,7 @@ export function getFirstSentence(text: string): string {
  */
 export function getLastSentence(text: string): string {
   const sentences = splitTextIntoSentences(text);
-  return sentences.length > 0 ? sentences[sentences.length - 1] : '';
+  return sentences.length > 0 ? sentences[sentences.length - 1] : "";
 }
 
 /**
@@ -586,10 +640,10 @@ export function countWords(text: string): number {
  * @returns Number of characters
  */
 export function countCharacters(text: string): number {
-  if (!text || typeof text !== 'string') {
+  if (!text || typeof text !== "string") {
     return 0;
   }
-  return text.replace(/\s/g, '').length;
+  return text.replace(/\s/g, "").length;
 }
 
 /**
@@ -598,12 +652,15 @@ export function countCharacters(text: string): number {
  * @param maxSentences Maximum number of sentences to keep
  * @returns Truncated text
  */
-export function truncateToSentences(text: string, maxSentences: number): string {
+export function truncateToSentences(
+  text: string,
+  maxSentences: number
+): string {
   const sentences = splitTextIntoSentences(text);
   if (sentences.length <= maxSentences) {
     return text;
   }
-  return sentences.slice(0, maxSentences).join('. ') + '.';
+  return sentences.slice(0, maxSentences).join(". ") + ".";
 }
 
 /**
@@ -617,7 +674,7 @@ export function truncateToWords(text: string, maxWords: number): string {
   if (words.length <= maxWords) {
     return text;
   }
-  return words.slice(0, maxWords).join(' ') + '...';
+  return words.slice(0, maxWords).join(" ") + "...";
 }
 
 /**
@@ -626,10 +683,13 @@ export function truncateToWords(text: string, maxWords: number): string {
  * @param keywords Array of keywords to search for
  * @returns Array of sentences containing keywords
  */
-export function extractSentencesWithKeywords(text: string, keywords: string[]): string[] {
+export function extractSentencesWithKeywords(
+  text: string,
+  keywords: string[]
+): string[] {
   const sentences = splitTextIntoSentences(text);
-  return sentences.filter(sentence => 
-    keywords.some(keyword => 
+  return sentences.filter((sentence) =>
+    keywords.some((keyword) =>
       sentence.toLowerCase().includes(keyword.toLowerCase())
     )
   );
@@ -642,5 +702,5 @@ export function extractSentencesWithKeywords(text: string, keywords: string[]): 
  */
 export function formatTextWithLineBreaks(text: string): string {
   const sentences = splitTextIntoSentences(text);
-  return sentences.join('\n\n');
+  return sentences.join("\n\n");
 }

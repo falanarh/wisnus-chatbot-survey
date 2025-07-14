@@ -62,7 +62,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     // Mode confirmation popup state
     const [showModePopup, setShowModePopup] = useState(false);
     const qaTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const qaTimeoutDuration = 30; // 120 seconds in QA mode before showing popup
+    const qaTimeoutDuration = 180; // 120 seconds in QA mode before showing popup
     const popupCountdown = 10; // 10 seconds countdown in the popup
 
     // Ganti nama state untuk toast
@@ -739,11 +739,11 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             if (response.session_id && !userData.activeSurveySessionId) {
                 console.log("Menyimpan activeSurveySessionId:", response.session_id);
                 updateUserProperty('activeSurveySessionId', response.session_id);
-                                        // Refresh status untuk memuat data survei terbaru (mulus tanpa reload halaman)
-                        setTimeout(() => {
-                            refreshStatus();
+                // Refresh status untuk memuat data survei terbaru (mulus tanpa reload halaman)
+                setTimeout(() => {
+                    refreshStatus();
                             refreshProgressSilent();
-                        }, 100);
+                }, 100);
             }
     
             // Format respons untuk ditampilkan ke user
@@ -777,27 +777,37 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             // Perlakuan khusus untuk pertanyaan KR004
             if (botResponse.questionObject?.code === "KR004" && botResponse.questionObject?.options?.length) {
                 console.log("Terdeteksi pertanyaan KR004 - menampilkan dengan opsi lengkap");
-    
-                // Buat ID pesan baru
-                const newMessageId = `kr004_msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    
-                // Tambahkan pesan baru dengan teks awal
-                addMessage({
-                    id: newMessageId,
-                    text: typeof botResponse.text === 'string' ? botResponse.text : String(botResponse.text), // Add text immediately to prevent disappearing
+
+                // Buat final message dengan custom component properties (REPLACE loading message, jangan tambah baru)
+                const finalMessage: ChatMessage = {
+                    id: loadingMsgId,
+                    text: typeof botResponse.text === 'string' ? botResponse.text : String(botResponse.text),
                     user: false,
                     mode: 'survey',
-                    questionObject: botResponse.questionObject,
-                    questionCode: botResponse.questionObject.code,
-                    options: botResponse.questionObject.options, // Add all options right away
+                    loading: false,
                     customComponent: botResponse.customComponent,
                     responseType: botResponse.responseType,
+                    questionCode: botResponse.questionCode,
+                    questionObject: botResponse.questionObject,
                     infoText: botResponse.infoText,
-                    questionText: botResponse.questionText
-                });
-    
+                    questionText: botResponse.questionText,
+                    options: botResponse.options || [],
+                    timestamp: new Date().toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    }),
+                    read: false
+                };
+
+                // Replace the loading message with the final message (bukan menambah baru)
+                setMessages(prevMessages => 
+                    prevMessages.map(msg => 
+                        msg.id === loadingMsgId ? finalMessage : msg
+                    )
+                );
+
                 // We still animate the text for a nice effect
-                animateTokenByToken(newMessageId, typeof botResponse.text === 'string' ? botResponse.text : String(botResponse.text), () => {
+                animateTokenByToken(loadingMsgId, typeof botResponse.text === 'string' ? botResponse.text : String(botResponse.text), () => {
                     // We're adding options synchronously below, so no need for 
                     // additional animations here. This improves UX by showing options
                     // immediately
