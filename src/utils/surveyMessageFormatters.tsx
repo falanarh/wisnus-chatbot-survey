@@ -14,7 +14,7 @@ export interface ChatMessage {
   timestamp?: string;
   read?: boolean;
   options?: string[]; // Opsi yang ditampilkan untuk pesan ini
-  customComponent?: 'SwitchedToSurveyMessage' | 'InfoWithQuestion' | 'QAMessage' | 'ExpectedAnswerMessage' | 'AutoInjectedQuestion' | 'UnexpectedAnswerMessage' | 'NotReadyForSurveyMessage' | 'SurveyStartedMessage' | 'WelcomeMessage';
+  customComponent?: 'SwitchedToSurveyMessage' | 'InfoWithQuestion' | 'QAMessage' | 'ExpectedAnswerMessage' | 'AutoInjectedQuestion' | 'UnexpectedAnswerMessage' | 'NotReadyForSurveyMessage' | 'SurveyStartedMessage' | 'WelcomeMessage' | 'SurveyCompletedMessage';
   infoText?: string;
   infoSource?: string;
   questionText?: string;
@@ -49,8 +49,23 @@ export function formatSurveyResponse(
   if (info) {
     switch (info) {
       case "survey_completed":
-        responseText = additional_info || "Survei telah selesai.";
-        break;
+        responseText = "Survei selesai!🎉 Terima kasih banyak telah berpartisipasi dalam survei ini. Data Anda berhasil disimpan😊.";
+        
+        // Return custom component for survey completed message
+        return {
+          id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+          text: responseText,
+          user: false,
+          mode: "survey",
+          responseType: info,
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          read: false,
+          options: [],
+          customComponent: 'SurveyCompletedMessage'
+        };
 
       case "welcome":
         responseText = system_message || "Selamat datang! Survei ini bertujuan untuk mengumpulkan informasi tentang profil wisatawan nusantara, maksud perjalanan, akomodasi yang digunakan, lama perjalanan, dan rata-rata pengeluaran terkait perjalanan yang dilakukan oleh penduduk Indonesia di dalam wilayah teritorial Indonesia.\n\nSebelum memulai, apakah Anda sudah siap untuk mengikuti survei ini? Contoh: Saya sudah siap untuk mengikuti survei ini.";

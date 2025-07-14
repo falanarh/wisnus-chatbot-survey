@@ -26,6 +26,7 @@ interface ChatLayoutProps {
     addUserAndSystemMessage: (userMessage: string, systemResponse: SurveyResponseData, mode?: 'survey' | 'qa') => void;
     refreshStatus: () => void;
     refreshAnsweredQuestions: () => void;
+    refreshProgressSilent: () => void;
     setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
 }
 
@@ -36,6 +37,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     addUserAndSystemMessage,
     refreshStatus,
     refreshAnsweredQuestions,
+    refreshProgressSilent,
     setMessages
 }) => {
     // State
@@ -578,6 +580,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                             // Refresh status untuk memuat data survei terbaru (mulus tanpa reload halaman)
                             setTimeout(() => {
                                 refreshStatus();
+                                refreshProgressSilent();
                             }, 100);
                         }
                         
@@ -736,10 +739,11 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             if (response.session_id && !userData.activeSurveySessionId) {
                 console.log("Menyimpan activeSurveySessionId:", response.session_id);
                 updateUserProperty('activeSurveySessionId', response.session_id);
-                // Refresh status untuk memuat data survei terbaru (mulus tanpa reload halaman)
-                setTimeout(() => {
-                    refreshStatus();
-                }, 100);
+                                        // Refresh status untuk memuat data survei terbaru (mulus tanpa reload halaman)
+                        setTimeout(() => {
+                            refreshStatus();
+                            refreshProgressSilent();
+                        }, 100);
             }
     
             // Format respons untuk ditampilkan ke user
@@ -846,6 +850,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             setTimeout(() => {
                 refreshStatus();
                 refreshAnsweredQuestions();
+                refreshProgressSilent();
             }, 500);
     
         } catch (error) {

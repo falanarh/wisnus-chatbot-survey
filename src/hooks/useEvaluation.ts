@@ -17,7 +17,7 @@ export function useEvaluation() {
   const [questions, setQuestions] = useState<EvaluationQuestionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorEvaluation, setErrorEvaluation] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
 
   // Load evaluation questions once on mount
@@ -34,51 +34,69 @@ export function useEvaluation() {
 
       console.log("Running loadOrInitializeEvaluation...");
       setIsLoading(true);
-      setError(null);
+      setErrorEvaluation(null);
       const sessionId = sessionData?.session_id;
 
       try {
-        // Pastikan sessionId valid
-        if (!sessionId) {
-          setError("Session ID tidak ditemukan.");
-          setIsLoading(false);
-          return;
-        }
-
-        // First check if user has an active evaluation
-        const latestResponse = await getUserLatestEvaluation();
+        // Pastikan sessionId valid - hanya tampilkan error jika tidak sedang loading
+        // if (!sessionId) {
+        //   // Jangan tampilkan error jika masih loading survey status
+        //   if (!isSurveyLoading) {
+        //     setError("Session ID tidak ditemukan.");
+        //   }
+        //   setIsLoading(false);
+        //   return;
+        // }
 
         if (!isMounted) return;
 
-        if (
-          latestResponse.success &&
-          latestResponse.data &&
-          !latestResponse.data.completed
-        ) {
-          // User has an incomplete evaluation, use it
-          const existingEvaluation = latestResponse.data;
-          setEvaluation(existingEvaluation);
+        // First check if user has an active evaluation
+        // const latestResponse = await getUserLatestEvaluation();
 
-          // Figure out which question we're on
-          const completedCount = existingEvaluation.answers
-            ? Object.keys(existingEvaluation.answers).length
-            : 0;
-          setCurrentQuestionIndex(completedCount);
+        // if (
+        //   latestResponse.success &&
+        //   latestResponse.data &&
+        //   !latestResponse.data.completed
+        // ) {
+        //   // User has an incomplete evaluation, use it
+        //   const existingEvaluation = latestResponse.data;
+        //   setEvaluation(existingEvaluation);
+
+        //   // Figure out which question we're on
+        //   const completedCount = existingEvaluation.answers
+        //     ? Object.keys(existingEvaluation.answers).length
+        //     : 0;
+        //   setCurrentQuestionIndex(completedCount);
+        // } else {
+        //   // Initialize a new evaluation
+        //   const response = await getUserLatestEvaluation();
+
+        //   if (!isMounted) return;
+
+        //   if (response.success && response.data) {
+        //     setEvaluation(response.data);
+        //     setIsComplete(response.data.completed);
+        //     setCurrentQuestionIndex(0);
+        //   } else {
+        //     throw new Error(
+        //       response.message || "Failed to initialize evaluation"
+        //     );
+        //   }
+        // }
+        if (!isMounted) return;
+
+        if (!sessionData?.session_id) return;
+
+        const response = await getUserLatestEvaluation();
+
+        if (response.success && response.data) {
+          setEvaluation(response.data);
+          setIsComplete(response.data.completed);
+          setCurrentQuestionIndex(0);
         } else {
-          // Initialize a new evaluation
-          const response = await getUserLatestEvaluation();
-
-          if (!isMounted) return;
-
-          if (response.success && response.data) {
-            setEvaluation(response.data);
-            setIsComplete(response.data.completed);
-            setCurrentQuestionIndex(0);
-          } else {
-            throw new Error(
-              response.message || "Failed to initialize evaluation"
-            );
-          }
+          throw new Error(
+            response.message || "Failed to initialize evaluation"
+          );
         }
       } catch (err) {
         if (
@@ -109,7 +127,7 @@ export function useEvaluation() {
           err instanceof Error &&
           err.message !== "No evaluation found for this user"
         ) {
-          setError(
+          setErrorEvaluation(
             err instanceof Error ? err.message : "Failed to load evaluation"
           );
         }
@@ -130,9 +148,6 @@ export function useEvaluation() {
   // Update questions with current values - FIXED to prevent infinite loop
   useEffect(() => {
     if (evaluation && evaluation.answers) {
-      // Create a deep copy of questions to compare
-      const currentQuestionsJSON = JSON.stringify(questions);
-
       // Create updated questions with values from evaluation
       const updatedQuestions = evaluationQuestions.map((q) => ({
         ...q,
@@ -140,11 +155,45 @@ export function useEvaluation() {
       }));
 
       // Only update state if questions have actually changed
-      if (JSON.stringify(updatedQuestions) !== currentQuestionsJSON) {
-        setQuestions(updatedQuestions);
-      }
+      setQuestions((prevQuestions) => {
+        const prevQuestionsJSON = JSON.stringify(prevQuestions);
+        const updatedQuestionsJSON = JSON.stringify(updatedQuestions);
+
+        if (updatedQuestionsJSON !== prevQuestionsJSON) {
+          return updatedQuestions;
+        }
+        return prevQuestions;
+      });
     }
   }, [evaluation]); // Only depends on evaluation, not questions
+
+  // Finalize the evaluation
+  const finalizeEvaluation = useCallback(async () => {
+    if (!evaluation) return;
+
+    setIsSubmitting(true);
+    setErrorEvaluation(null);
+
+    try {
+      const response = await completeEvaluation({
+        evaluation_id: evaluation._id,
+      });
+
+      if (response.success && response.data) {
+        setEvaluation(response.data);
+        setIsComplete(true);
+      } else {
+        throw new Error(response.message || "Failed to complete evaluation");
+      }
+    } catch (err) {
+      console.error("Error completing evaluation:", err);
+      setErrorEvaluation(
+        err instanceof Error ? err.message : "Failed to complete evaluation"
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [evaluation]);
 
   // Submit answer to current question
   const submitQuestionAnswer = useCallback(
@@ -152,7 +201,7 @@ export function useEvaluation() {
       if (!evaluation) return;
 
       setIsSubmitting(true);
-      setError(null);
+      setErrorEvaluation(null);
 
       try {
         const response = await submitAnswer({
@@ -176,43 +225,15 @@ export function useEvaluation() {
         }
       } catch (err) {
         console.error("Error submitting answer:", err);
-        setError(
+        setErrorEvaluation(
           err instanceof Error ? err.message : "Failed to submit answer"
         );
       } finally {
         setIsSubmitting(false);
       }
     },
-    [currentQuestionIndex, evaluation]
+    [currentQuestionIndex, evaluation, finalizeEvaluation]
   );
-
-  // Finalize the evaluation
-  const finalizeEvaluation = useCallback(async () => {
-    if (!evaluation) return;
-
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      const response = await completeEvaluation({
-        evaluation_id: evaluation._id,
-      });
-
-      if (response.success && response.data) {
-        setEvaluation(response.data);
-        setIsComplete(true);
-      } else {
-        throw new Error(response.message || "Failed to complete evaluation");
-      }
-    } catch (err) {
-      console.error("Error completing evaluation:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to complete evaluation"
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [evaluation]);
 
   // Navigate to previous question
   const goToPreviousQuestion = useCallback(() => {
@@ -244,7 +265,7 @@ export function useEvaluation() {
     currentQuestionIndex,
     isLoading,
     isSubmitting,
-    error,
+    errorEvaluation,
     isComplete,
     progress,
     submitQuestionAnswer,

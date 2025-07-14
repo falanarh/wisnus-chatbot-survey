@@ -6,20 +6,12 @@ export interface AnsweredQuestion {
 }
 
 export function getValidAnsweredQuestions(answeredQuestionsData: AnsweredQuestion[], sortQuestionCodes: (a: string, b: string) => number) {
-  console.log("getValidAnsweredQuestions input:", answeredQuestionsData);
-  
   const filteredQuestions = answeredQuestionsData.filter(question => {
     const isValid = question.answer !== "N/A" && question.answer !== "n/a";
-    if (!isValid) {
-      console.log(`Filtered out question ${question.question_code} with answer:`, question.answer);
-    }
     return isValid;
   });
   
-  console.log("After filtering:", filteredQuestions);
-  
   const sortedQuestions = filteredQuestions.sort((a, b) => sortQuestionCodes(a.question_code, b.question_code));
-  console.log("After sorting:", sortedQuestions.map(q => q.question_code));
   
   const result = sortedQuestions.map((question, index) => ({
     ...question,
@@ -27,7 +19,6 @@ export function getValidAnsweredQuestions(answeredQuestionsData: AnsweredQuestio
     answer: formatAnswer(question.answer)
   }));
   
-  console.log("Final result:", result);
   return result;
 }
 
@@ -66,11 +57,6 @@ export function sortQuestionCodes(a: string, b: string): number {
 
   const parsedA = parseCode(a);
   const parsedB = parseCode(b);
-  
-  // Debug logging for sorting
-  console.log(`Sorting: ${a} vs ${b}`);
-  console.log(`  ${a}: prefix=${parsedA.prefix}, number=${parsedA.number}, suffix=${parsedA.suffix}`);
-  console.log(`  ${b}: prefix=${parsedB.prefix}, number=${parsedB.number}, suffix=${parsedB.suffix}`);
 
   // Define priority order for prefixes
   const prefixPriority = {
@@ -83,35 +69,25 @@ export function sortQuestionCodes(a: string, b: string): number {
 
   // Sort by priority first
   if (priorityA !== priorityB) {
-    const result = priorityA - priorityB;
-    console.log(`  Result: ${result < 0 ? a : b} comes first (priority)`);
-    return result;
+    return priorityA - priorityB;
   }
 
   // If same prefix, sort by numeric part
   if (parsedA.number !== parsedB.number) {
-    const result = parsedA.number - parsedB.number;
-    console.log(`  Result: ${result < 0 ? a : b} comes first (numeric)`);
-    return result;
+    return parsedA.number - parsedB.number;
   }
 
   // If same number, sort by suffix (empty suffix comes first)
   if (parsedA.suffix !== parsedB.suffix) {
     if (parsedA.suffix === '') {
-      console.log(`  Result: ${a} comes before ${b} (empty suffix)`);
       return -1;
     }
     if (parsedB.suffix === '') {
-      console.log(`  Result: ${b} comes before ${a} (empty suffix)`);
       return 1;
     }
-    const result = parsedA.suffix.localeCompare(parsedB.suffix);
-    console.log(`  Result: ${result < 0 ? a : b} comes first (suffix comparison)`);
-    return result;
+    return parsedA.suffix.localeCompare(parsedB.suffix);
   }
 
   // If everything is the same, sort alphabetically by full code
-  const result = a.localeCompare(b);
-  console.log(`  Result: ${result < 0 ? a : b} comes first (alphabetical)`);
-  return result;
+  return a.localeCompare(b);
 } 

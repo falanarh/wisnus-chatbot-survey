@@ -97,7 +97,6 @@ const Footer: React.FC = () => {
           }}
         />
       </div>
-
       {/* Smaller, Subtle Wave Top Decoration */}
       <div className="absolute top-0 left-0 w-full overflow-hidden translate-y-[-1px]">
         <svg 
@@ -117,7 +116,6 @@ const Footer: React.FC = () => {
           ></path>
         </svg>
       </div>
-
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
@@ -174,10 +172,9 @@ const Footer: React.FC = () => {
                 <ul className="space-y-2">
                   {column.links.map((link, linkIndex) => (
                     <li key={linkIndex}>
-                      <Link 
+                      <Link
                         href={link.href}
-                        className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1 group"
-                      >
+                        className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1 group">
                         <span>{link.name}</span>
                         <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </Link>
@@ -275,7 +272,6 @@ const Footer: React.FC = () => {
           </div>
         </div>
       </div>
-
       {/* Scroll to Top Button */}
       <motion.button
         className={`fixed right-6 bottom-6 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg z-50 ${showScrollButton ? 'visible' : 'invisible opacity-0'}`}

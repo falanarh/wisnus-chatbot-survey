@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { useSurveyStatus } from "@/hooks/useSurveyStatus";
+import { useAccurateProgress } from "@/hooks/useAccurateProgress";
 import {
   LogOut,
   ClipboardList,
@@ -33,6 +34,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
   });
   const menuRef = useRef<HTMLDivElement>(null);
   const { sessionData } = useSurveyStatus();
+  const { data: accurateProgressData } = useAccurateProgress();
   const { isComplete: isEvaluationComplete, evaluation } = useEvaluation();
   const pathname = usePathname();
 
@@ -53,7 +55,9 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
           surveyProgressPercentage = 0; // If sessionData is null, survey progress is 0%
         } else {
           isSurveyActive = sessionData.status === "IN_PROGRESS" ? true : false;
-          surveyProgressPercentage = sessionData.progress?.progress_percentage || 0;
+          // Use accurate progress data if available, fallback to session data
+          surveyProgressPercentage = accurateProgressData?.accurate_progress_percentage ?? 
+            sessionData.progress?.progress_percentage ?? 0;
         }
 
         // Check Evaluation Status and calculate progress based on answered questions
@@ -98,7 +102,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
     };
 
     checkSurveyStatus();
-  }, [user, sessionData, isEvaluationComplete, evaluation]);
+  }, [user, sessionData, accurateProgressData, isEvaluationComplete, evaluation]);
 
   // Close menu when clicking outside (only for desktop dropdown)
   useEffect(() => {
@@ -201,7 +205,6 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
             </div>
           </div>
         </div>
-
         {/* Stats */}
         <div className="grid grid-cols-2 bg-white dark:bg-gray-800 rounded-lg mb-3 overflow-hidden">
           <div className="px-3 py-3 text-center border-r border-gray-100 dark:border-gray-700">
@@ -213,7 +216,6 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
             <div className="text-xs text-gray-500 dark:text-gray-400">Penyelesaian</div>
           </div>
         </div>
-
         {/* Menu items */}
         <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
           <div
@@ -246,8 +248,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
                       <Link
                         href="/survey"
                         className={`flex items-center pl-11 pr-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${pathname === '/survey' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-200'}`}
-                        onClick={handleLinkClick}
-                      >
+                        onClick={handleLinkClick}>
                         <Plane className={`w-5 h-5 mr-2 ${pathname === '/survey' ? 'text-blue-600 dark:text-blue-400' : 'text-blue-500 dark:text-blue-400'}`} />
                         <span>Wisatawan Nusantara</span>
                       </Link>
@@ -256,8 +257,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
                       <Link
                         href="/survey/evaluation"
                         className={`flex items-center pl-11 pr-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${pathname === '/survey/evaluation' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-gray-700 dark:text-gray-200'}`}
-                        onClick={handleLinkClick}
-                      >
+                        onClick={handleLinkClick}>
                         <ShieldUser className={`w-5 h-5 mr-2 ${pathname === '/survey/evaluation' ? 'text-green-600 dark:text-green-400' : 'text-green-500 dark:text-green-400'}`} />
                         <span>Persepsi Pengguna</span>
                       </Link>
@@ -300,8 +300,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
                         <Link
                           href="/survey"
                           className="flex items-center pl-11 pr-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                          onClick={handleLinkClick}
-                        >
+                          onClick={handleLinkClick}>
                           <Plane className="w-5 h-5 mr-2 text-blue-500 dark:text-blue-400" />
                           <span>Wisatawan Nusantara</span>
                         </Link>
@@ -310,8 +309,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
                         <Link
                           href="/survey/evaluation"
                           className="flex items-center pl-11 pr-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                          onClick={handleLinkClick}
-                        >
+                          onClick={handleLinkClick}>
                           <ShieldUser className="w-5 h-5 mr-2 text-green-500 dark:text-green-400" />
                           <span>Persepsi Pengguna</span>
                         </Link>
@@ -346,7 +344,6 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
           <div className="absolute inset-0 rounded-full border-2 border-transparent group-hover:border-blue-200 dark:group-hover:border-blue-800 transition-colors" />
         </div>
       </button>
-
       {/* Desktop Dropdown menu */}
       <AnimatePresence>
         {isMenuOpen && (
@@ -438,8 +435,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
                             <Link
                               href="/survey"
                               className="flex items-center pl-11 pr-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                              onClick={handleLinkClick}
-                            >
+                              onClick={handleLinkClick}>
                               <Plane className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" />
                               <span>Wisatawan Nusantara</span>
                             </Link>
@@ -448,8 +444,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
                             <Link
                               href="/survey/evaluation"
                               className="flex items-center pl-11 pr-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                              onClick={handleLinkClick}
-                            >
+                              onClick={handleLinkClick}>
                               <ShieldUser className="w-5 h-5 mr-2 text-green-600 dark:text-green-400" />
                               <span>Persepsi Pengguna</span>
                             </Link>
@@ -493,8 +488,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
                             <Link
                               href="/survey"
                               className="flex items-center pl-11 pr-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                              onClick={handleLinkClick}
-                            >
+                              onClick={handleLinkClick}>
                               <Plane className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" />
                               <span>Wisatawan Nusantara</span>
                             </Link>
@@ -503,8 +497,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ inMobileMenu = false }) => {
                             <Link
                               href="/survey/evaluation"
                               className="flex items-center pl-11 pr-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                              onClick={handleLinkClick}
-                            >
+                              onClick={handleLinkClick}>
                               <ShieldUser className="w-5 h-5 mr-2 text-green-600 dark:text-green-400" />
                               <span>Persepsi Pengguna</span>
                             </Link>

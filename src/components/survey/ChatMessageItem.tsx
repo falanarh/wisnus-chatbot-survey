@@ -224,6 +224,32 @@ const InfoWithQuestion: React.FC<{ message: ChatMessageWithCustom }> = ({
   );
 };
 
+const SurveyCompletedMessage: React.FC<{ message: ChatMessage }> = ({
+  message,
+}) => {
+  const text = typeof message.text === "string" ? message.text : "";
+  const sentences = splitTextIntoSentences(text);
+
+  return (
+    <div>
+      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/40 dark:to-teal-900/40 rounded-lg p-3 mb-3 border-l-4 border-emerald-400">
+        <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-200 mb-1">
+          Survei Selesai
+        </div>
+        <div className="text-sm text-gray-800 dark:text-gray-100">
+          {sentences[0] + " " + sentences[1]}
+        </div>
+      </div>
+      <div className="mt-2">
+        <div className="font-semibold text-sm">{sentences[2]}</div>
+        <div className="text-xs text-gray-500 dark:text-gray-300 italic mt-2">
+          Catatan: Terima kasih telah menyelesaikan survei. Data Anda telah berhasil disimpan.
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Patch: Extend ChatMessage locally to include customComponent if not yet picked up by TS
 interface ChatMessageWithCustom extends ChatMessage {
   customComponent?:
@@ -235,7 +261,8 @@ interface ChatMessageWithCustom extends ChatMessage {
     | "UnexpectedAnswerMessage"
     | "NotReadyForSurveyMessage"
     | "SurveyStartedMessage"
-    | "WelcomeMessage";
+    | "WelcomeMessage"
+    | "SurveyCompletedMessage";
   infoText?: string;
   infoSource?: string;
   questionText?: string;
@@ -369,6 +396,8 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                 <NotReadyForSurveyMessage message={message} />
               ) : message.customComponent === "SurveyStartedMessage" ? (
                 <SurveyStartedMessage message={message} />
+              ) : message.customComponent === "SurveyCompletedMessage" ? (
+                <SurveyCompletedMessage message={message} />
               ) : (
                 <p className="break-words whitespace-pre-wrap">
                   {message.text}

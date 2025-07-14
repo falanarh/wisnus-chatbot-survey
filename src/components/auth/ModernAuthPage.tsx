@@ -71,7 +71,6 @@ const ModernAuthPage: React.FC<AuthPageProps> = ({ initialTab = "login" }) => {
       ${isDarkMode
         ? 'bg-gradient-to-br from-gray-900 via-purple-900/80 to-blue-900'
         : 'bg-gradient-to-br from-blue-50 via-indigo-50/80 to-purple-100'}`}>
-
       {/* Background Pattern and Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Dynamic wave background */}
@@ -104,7 +103,6 @@ const ModernAuthPage: React.FC<AuthPageProps> = ({ initialTab = "login" }) => {
           }}
         />
       </div>
-
       {/* Top Navigation */}
       <div className="w-full py-4 px-4 sm:px-6 md:px-24 lg:36 xl:px-48 flex justify-between items-center relative z-10">
         <Link href="/" className="group flex items-center gap-2">
@@ -132,8 +130,8 @@ const ModernAuthPage: React.FC<AuthPageProps> = ({ initialTab = "login" }) => {
         
         <div className="flex items-center gap-3">
           {/* Back to Home Button */}
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className={`
               hidden sm:flex items-center gap-1.5 text-sm 
               py-1.5 px-3 rounded-full transition-all duration-300
@@ -141,8 +139,7 @@ const ModernAuthPage: React.FC<AuthPageProps> = ({ initialTab = "login" }) => {
                 ? 'text-gray-300 hover:text-white hover:bg-gray-800' 
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }
-            `}
-          >
+            `}>
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Kembali</span>
           </Link>
@@ -155,7 +152,6 @@ const ModernAuthPage: React.FC<AuthPageProps> = ({ initialTab = "login" }) => {
           />
         </div>
       </div>
-
       {/* Main Content */}
       <div className="flex-grow flex items-center justify-center px-4 py-6">
         <motion.div
@@ -270,7 +266,6 @@ const ModernAuthPage: React.FC<AuthPageProps> = ({ initialTab = "login" }) => {
           </div>
         </motion.div>
       </div>
-
       {/* Footer */}
       <div className="py-4 px-6 text-center">
         <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>

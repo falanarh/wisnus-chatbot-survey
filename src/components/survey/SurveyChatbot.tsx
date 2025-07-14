@@ -6,6 +6,7 @@ import React, { useState, useEffect } from "react";
 import SurveyCompletionPage from "@/components/survey/SurveyCompletionPage";
 import { useSurveyStatus } from "@/hooks/useSurveyStatus";
 import { useAnsweredQuestions } from "@/hooks/useAnsweredQuestions";
+import { useAccurateProgress } from "@/hooks/useAccurateProgress";
 import ChatLayout from "./ChatLayout";
 import { useSurveyMessages } from "@/hooks/useSurveyMessages";
 // import { getUserData } from "@/services/auth";
@@ -28,6 +29,7 @@ const SurveyChatbot: React.FC = () => {
   const { isLoading: isLoadingSurveyStatus, error, sessionData, refreshStatus, refreshStatusSilent } = useSurveyStatus();
   const { isLoading: isLoadingSurveyMessages, messages, addMessage, updateLastMessage, addUserAndSystemMessage, setMessages } = useSurveyMessages();
   const { data: answeredQuestions, isLoading: isLoadingAnsweredQuestions, refetch: refetchAnsweredQuestions } = useAnsweredQuestions();
+  const { data: accurateProgressData, refreshProgressSilent } = useAccurateProgress();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editPopupOpen, setEditPopupOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<{
@@ -74,12 +76,13 @@ const SurveyChatbot: React.FC = () => {
     }
   };
 
-  // Fetch answered questions when session is in progress
+  // Fetch answered questions and accurate progress when session is in progress
   useEffect(() => {
     if (sessionData?.status === 'IN_PROGRESS') {
       refetchAnsweredQuestions();
+      refreshProgressSilent();
     }
-  }, [sessionData?.status, refetchAnsweredQuestions]);
+  }, [sessionData?.status, refetchAnsweredQuestions, refreshProgressSilent]);
 
   // Handle edit question
   const handleEditQuestion = (question: {
@@ -140,6 +143,7 @@ const SurveyChatbot: React.FC = () => {
           setEditLoading(false);
           // Refresh data utama
           refetchAnsweredQuestions();
+          refreshProgressSilent();
           setTimeout(() => {
             setEditPopupOpen(false);
             setEditingQuestion(null);
@@ -172,6 +176,7 @@ const SurveyChatbot: React.FC = () => {
           setEditInput("");
           setEditLoading(false);
           refetchAnsweredQuestions();
+          refreshProgressSilent();
           // Tidak menutup popup otomatis
         } else if (data.info === 'error') {
           setEditChatMessages(prev => [
@@ -254,35 +259,27 @@ const SurveyChatbot: React.FC = () => {
     const progress = sessionData.progress;
     const answeredQuestionsData = answeredQuestions || [];
     
-    // Debug logging
-    console.log("Raw answeredQuestionsData:", answeredQuestionsData);
-    console.log("Total questions from API:", answeredQuestionsData.length);
-    
     // Ganti logika validAnsweredQuestions:
     const validAnsweredQuestions = getValidAnsweredQuestions(answeredQuestionsData, sortQuestionCodes);
-
-    console.log("validAnsweredQuestions: ", validAnsweredQuestions);
-    console.log("Total valid questions:", validAnsweredQuestions.length);
     
-    // Check if S019 exists in raw data
-    const s019Question = answeredQuestionsData.find(q => q.question_code === 'S019');
-    console.log("S019 question in raw data:", s019Question);
+    // Use accurate progress data if available, fallback to calculated progress
+    const progressPercentage = accurateProgressData?.accurate_progress_percentage ?? 
+      Math.round((validAnsweredQuestions.length / progress.total_questions) * 100);
     
-    // Check if S019 exists in valid questions
-    const s019ValidQuestion = validAnsweredQuestions.find(q => q.question_code === 'S019');
-    console.log("S019 question in valid data:", s019ValidQuestion);
+    const totalQuestions = accurateProgressData?.total_applicable_questions ?? progress.total_questions;
+    const answeredCount = accurateProgressData?.actually_answered_questions ?? validAnsweredQuestions.length;
     
     return (
       <StyledBackground>
         {/* Floating Progress Button */}
-        <FloatingProgressButton onClick={() => setDrawerOpen(true)} progress={Math.round((validAnsweredQuestions.length / progress.total_questions) * 100)} />
+        <FloatingProgressButton onClick={() => setDrawerOpen(true)} progress={progressPercentage} />
 
         {/* Drawer Overlay */}
         <SurveyDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="Progress Survei">
           <ProgressBar
-            value={Math.round((validAnsweredQuestions.length / progress.total_questions) * 100)}
-            leftLabel={`${validAnsweredQuestions.length} / ${progress.total_questions} terjawab`}
-            rightLabel={`${Math.round((validAnsweredQuestions.length / progress.total_questions) * 100)}%`}
+            value={progressPercentage}
+            leftLabel={`${answeredCount} / ${totalQuestions} terjawab`}
+            rightLabel={`${progressPercentage}%`}
             className="px-6 py-4 flex-shrink-0"
           />
             <div className="flex-1 overflow-hidden">
@@ -303,6 +300,7 @@ const SurveyChatbot: React.FC = () => {
           addUserAndSystemMessage={addUserAndSystemMessage}
           refreshStatus={refreshStatusSilent}
           refreshAnsweredQuestions={refetchAnsweredQuestions}
+          refreshProgressSilent={refreshProgressSilent}
           setMessages={setMessages}
         />
 
@@ -334,7 +332,7 @@ const SurveyChatbot: React.FC = () => {
   // Fallback loading state
   return (
     <StyledBackground>
-      <ChatLayout messages={messages} addMessage={addMessage} updateLastMessage={updateLastMessage} addUserAndSystemMessage={addUserAndSystemMessage} refreshStatus={refreshStatusSilent} refreshAnsweredQuestions={refetchAnsweredQuestions} setMessages={setMessages} />
+      <ChatLayout messages={messages} addMessage={addMessage} updateLastMessage={updateLastMessage} addUserAndSystemMessage={addUserAndSystemMessage} refreshStatus={refreshStatusSilent} refreshAnsweredQuestions={refetchAnsweredQuestions} refreshProgressSilent={refreshProgressSilent} setMessages={setMessages} />
     </StyledBackground>
   );
 };

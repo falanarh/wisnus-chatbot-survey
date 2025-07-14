@@ -15,7 +15,7 @@ import LoadingState from "../../other/LoadingState";
 const EvaluationPage: React.FC = () => {
   const router = useRouter();
   // Use the survey status hook to check if survey is completed
-  const { isLoading: isStatusLoading, sessionData } = useSurveyStatus(true);
+  const { isLoading: isStatusLoading, sessionData, error: errorSurvey } = useSurveyStatus(true);
 
   // Redirect countdown state
   const [countdown, setCountdown] = useState(10);
@@ -26,7 +26,7 @@ const EvaluationPage: React.FC = () => {
     currentQuestionIndex,
     isLoading: isEvaluationLoading,
     isSubmitting,
-    error,
+    errorEvaluation,
     isComplete,
     questions,
     submitQuestionAnswer,
@@ -35,6 +35,7 @@ const EvaluationPage: React.FC = () => {
 
   // Combine loading states
   const isLoading = isStatusLoading || isEvaluationLoading;
+  const error = errorEvaluation || errorSurvey
 
   useEffect(() => {
     console.log("isStatusLoading: ", isStatusLoading);
@@ -123,7 +124,7 @@ const EvaluationPage: React.FC = () => {
     return null; // Or a better fallback UI
   }
 
-  if (showRedirectPopup) {
+  if (showRedirectPopup && !isLoading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
         <motion.div
@@ -149,10 +150,10 @@ const EvaluationPage: React.FC = () => {
               </svg>
             </div>
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-              Anda belum menyelesaikan survei Wisnus
+              Anda belum memulai sesi survei Wisnus
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Anda harus menyelesaikan survei Wisantara Nusantara sebelum dapat
+              Anda harus memulai sesi survei Wisantara Nusantara sebelum dapat
               mengakses halaman evaluasi. Anda akan dialihkan ke halaman survei
               dalam <span className="font-bold">{countdown}</span> detik.
             </p>
@@ -168,7 +169,7 @@ const EvaluationPage: React.FC = () => {
     );
   }
 
-  // Only show error after loading is complete
+  // Only show error after loading is complete and not during survey status loading
   if (!isLoading && error && !showRedirectPopup) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 dark:from-gray-900 dark:via-purple-900 dark:to-blue-900">

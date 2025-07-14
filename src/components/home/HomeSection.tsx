@@ -59,7 +59,6 @@ const HomeSection: React.FC<HomeSectionProps> = ({ onGuideClick, onAboutClick })
           <MapPin className="w-6 h-6 text-blue-500" />
         </div>
       </motion.div>
-
       <motion.div
         animate={floatAnimation}
         transition={{ delay: 1 }}
@@ -68,7 +67,6 @@ const HomeSection: React.FC<HomeSectionProps> = ({ onGuideClick, onAboutClick })
           <Star className="w-6 h-6 text-yellow-400" />
         </div>
       </motion.div>
-
       {/* Main Content */}
       <motion.div
         initial="hidden"
@@ -119,7 +117,6 @@ const HomeSection: React.FC<HomeSectionProps> = ({ onGuideClick, onAboutClick })
           </button>
         </motion.div>
       </motion.div>
-
       {/* Hero Image section */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -183,14 +180,14 @@ const HomeSection: React.FC<HomeSectionProps> = ({ onGuideClick, onAboutClick })
               </svg>
             </motion.button>
 
-            <Link href="/survey" passHref legacyBehavior>
-              <motion.a
+            <Link href="/survey">
+              <motion.div
                 whileHover={{ scale: 1.05, y: 5 }}
                 whileTap={{ scale: 0.95 }}
                 className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 dark:from-indigo-600 dark:to-purple-700 py-2 rounded-2xl text-center text-white font-bold text-sm cursor-pointer shadow-md"
               >
                 Mulai Survei
-              </motion.a>
+              </motion.div>
             </Link>
           </div>
         </motion.div>
@@ -215,14 +212,14 @@ const HomeSection: React.FC<HomeSectionProps> = ({ onGuideClick, onAboutClick })
               </svg>
             </motion.button>
 
-            <Link href="/survey" passHref legacyBehavior>
-              <motion.a
+            <Link href="/survey">
+              <motion.div
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 dark:from-indigo-600 dark:to-purple-700 py-2.5 rounded-2xl text-center text-white font-bold text-sm cursor-pointer shadow-md"
               >
                 Mulai Survei
-              </motion.a>
+              </motion.div>
             </Link>
           </div>
         </motion.div>
@@ -231,7 +228,6 @@ const HomeSection: React.FC<HomeSectionProps> = ({ onGuideClick, onAboutClick })
         <div className="absolute -z-10 -top-8 -left-8 w-20 h-20 rounded-full border-4 border-dashed border-blue-300 dark:border-blue-600 opacity-60"></div>
         <div className="absolute -z-10 -bottom-10 -right-5 w-16 h-16 rounded-full border-4 border-dashed border-rose-300 dark:border-rose-600 opacity-60"></div>
       </motion.div>
-
       {/* Feature Cards */}
       <motion.div
         initial="hidden"
@@ -260,7 +256,6 @@ const HomeSection: React.FC<HomeSectionProps> = ({ onGuideClick, onAboutClick })
           </motion.div>
         ))}
       </motion.div>
-
       {/* Statistics Counters */}
       <motion.div
         initial={{ opacity: 0 }}

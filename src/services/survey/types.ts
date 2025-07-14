@@ -219,3 +219,65 @@ export interface CurrentQuestionResponseResult extends ApiResponse<CurrentQuesti
   error?: string;
   data?: CurrentQuestionResponse;
 }
+
+/**
+ * Question status item for accurate progress
+ */
+export interface QuestionStatusItem {
+  question_code: string;
+  question_text: string;
+  index: number;
+  is_applicable: boolean;
+  is_answered: boolean;
+  is_skipped: boolean;
+  is_na: boolean;
+  answer: string | number | string[] | null;
+  skip_reason: string | null;
+  na_reason: string | null;
+}
+
+/**
+ * Survey metrics
+ */
+export interface SurveyMetrics {
+  is_breakoff: boolean;
+  avg_response_time: number;
+  item_nonresponse: number;
+  dont_know_response: number;
+}
+
+/**
+ * Accurate progress response data (updated to match actual API)
+ */
+export interface AccurateProgressData {
+  session_id: string;
+  status: "IN_PROGRESS" | "COMPLETED";
+  current_question_index: number;
+  current_question?: Question;
+  
+  total_questions: number;
+  total_applicable_questions: number;
+  answered_questions: number;
+  actually_answered_questions: number;
+  skipped_questions: number;
+  na_questions: number;
+  
+  basic_progress_percentage: number;
+  accurate_progress_percentage: number;
+  
+  skipped_questions_detail: QuestionStatusItem[];
+  na_questions_detail: QuestionStatusItem[];
+  question_status: QuestionStatusItem[];
+  responses_count: number;
+  metrics: SurveyMetrics;
+}
+
+/**
+ * Accurate progress response
+ */
+export interface AccurateProgressResponse extends ApiResponse<AccurateProgressData> {
+  success: boolean;
+  data?: AccurateProgressData;
+  message?: string;
+  error?: string;
+}
