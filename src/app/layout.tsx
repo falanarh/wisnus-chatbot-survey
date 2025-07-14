@@ -21,6 +21,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" suppressHydrationWarning>
+      <head>
+        <link rel="icon" type="image/png" href="/bps_mini_icon2.png" />
+      </head>
       <body
         className={`${mulish.className} antialiased`}
       >
