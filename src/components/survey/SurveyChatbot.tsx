@@ -24,6 +24,8 @@ import StyledBackground from "./StyledBackground";
 import LoadingState from "../other/LoadingState";
 import ErrorState from "./ErrorState";
 import { getValidAnsweredQuestions, sortQuestionCodes } from "@/utils/surveyUtils";
+import PreSurveyInfoPopup from "./PreSurveyInfoPopup";
+import { useRouter } from "next/navigation";
 
 const SurveyChatbot: React.FC = () => {
   const { isLoading: isLoadingSurveyStatus, error, sessionData, refreshStatus, refreshStatusSilent } = useSurveyStatus();
@@ -53,12 +55,14 @@ const SurveyChatbot: React.FC = () => {
   const [showEditSuccessToast, setShowEditSuccessToast] = useState(false);
   const [showCodePopup, setShowCodePopup] = useState(false);
   const [codeError, setCodeError] = useState<string | undefined>(undefined);
+  const [showPreSurveyPopup, setShowPreSurveyPopup] = useState(false);
+  const router = useRouter();
 
   // Cek apakah user sudah punya session dan kode unik
   useEffect(() => {
     const userData = getUserData();
     if (!userData?.activeSurveySessionId && !userData?.activeSurveyUniqueCode) {
-      setShowCodePopup(true);
+      setShowPreSurveyPopup(true);
     }
   }, []);
 
@@ -233,6 +237,21 @@ const SurveyChatbot: React.FC = () => {
     return <LoadingState message="Sedang memuat data survei..." />;
   }
 
+  // Tampilkan popup konfirmasi sebelum SurveyCodeInputPopup
+  if (showPreSurveyPopup) {
+    return (
+      <PreSurveyInfoPopup
+        open={showPreSurveyPopup}
+        onContinue={() => {
+          setShowPreSurveyPopup(false);
+          setShowCodePopup(true);
+        }}
+        onBack={() => {
+          router.push("/");
+        }}
+      />
+    );
+  }
   // Tampilkan popup kode unik jika perlu
   if (showCodePopup) {
     return (
