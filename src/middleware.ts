@@ -39,6 +39,6 @@ export function middleware(request: NextRequest) {
 // Konfigurasi path yang akan diperiksa oleh middleware
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|public|api).*)',
+    '/((?!_next/static|_next/image|bps_mini_icon2.png|public|api).*)',
   ],
 };
