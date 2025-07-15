@@ -23,7 +23,7 @@ import SuccessToast from "./SuccessToast";
 import StyledBackground from "./StyledBackground";
 import LoadingState from "../other/LoadingState";
 import ErrorState from "./ErrorState";
-import { getValidAnsweredQuestions, sortQuestionCodes } from "@/utils/surveyUtils";
+import { getValidAnsweredQuestions, replacePlaceholders, sortQuestionCodes } from "@/utils/surveyUtils";
 import PreSurveyInfoPopup from "./PreSurveyInfoPopup";
 import { useRouter } from "next/navigation";
 
@@ -95,12 +95,15 @@ const SurveyChatbot: React.FC = () => {
     answer: string | number | string[];
     displayNumber: number;
   }) => {
+    const answeredQuestionsData = answeredQuestions || [];
+    const validAnsweredQuestions = getValidAnsweredQuestions(answeredQuestionsData, sortQuestionCodes);
+
     setEditingQuestion(question);
     // Initialize chat messages with the question
     setEditChatMessages([
       {
         id: 'system-question',
-        text: question.question_text,
+        text: replacePlaceholders(question.question_text, validAnsweredQuestions),
         user: false,
         mode: 'survey',
         questionObject: {

@@ -22,7 +22,7 @@ export function getValidAnsweredQuestions(answeredQuestionsData: AnsweredQuestio
   return result;
 }
 
-function formatAnswer(answer: unknown): string {
+export function formatAnswer(answer: unknown): string {
   if (typeof answer === 'string') {
     return answer.trim() !== '' ? answer : '(Belum diisi)';
   }
@@ -91,3 +91,42 @@ export function sortQuestionCodes(a: string, b: string): number {
   // If everything is the same, sort alphabetically by full code
   return a.localeCompare(b);
 } 
+
+// export function formatAnswer(answer: unknown): string {
+//   if (typeof answer === 'string') {
+//     return answer.trim() !== '' ? answer : '(Belum diisi)';
+//   }
+//   if (typeof answer === 'number') {
+//     return answer.toString();
+//   }
+//   if (Array.isArray(answer)) {
+//     return answer.length > 0 ? answer.join(', ') : '(Belum diisi)';
+//   }
+//   return '(Belum diisi)';
+// }
+
+export function replacePlaceholders(text: string, questions: AnsweredQuestion[]): string {
+  // First replace currentMonth placeholder
+  const processedText = text.replace(/\$\{currentMonth\}/g, () => {
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    const currentMonth = new Date().getMonth();
+    return months[currentMonth];
+  });
+
+  // Then replace question code placeholders
+  return processedText.replace(/\$\{([^}]+)\}/g, (match, placeholder) => {
+    // Skip if it's currentMonth as it's already handled
+    if (placeholder === 'currentMonth') {
+      return match;
+    }
+    
+    const question = questions.find(q => q.question_code === placeholder);
+    if (question) {
+      return formatAnswer(question.answer);
+    }
+    return match; // Return original placeholder if not found
+  });
+}
