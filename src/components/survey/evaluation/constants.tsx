@@ -14,15 +14,15 @@ export const evaluationQuestions: EvaluationQuestion[] = [
     description: "Evaluasi kemudahan penggunaan dari kuesioner percakapan ini"
   },
   {
-    id: "participation_ease",
-    text: "Apakah kuesioner ini membantu Anda berpartisipasi dalam survei dengan lebih mudah?",
+    id: "usefulness",
+    text: "Apakah menurut Anda kuesioner ini memfasilitasi partisipasi Anda saat kegiatan survei berlangsung?",
     scaleType: "agreement",
     min: 1,
     max: 7,
     minLabel: "Sangat tidak setuju",
     maxLabel: "Sangat setuju",
     icon: <Award size={24} className="text-indigo-500" />,
-    description: "Nilai tingkat kemudahan partisipasi dalam format survei seperti ini"
+    description: "Evaluasi persepsi kegunaan dari format survei ini"
   },
   {
     id: "enjoyment",
